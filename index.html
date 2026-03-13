@@ -31,7 +31,7 @@
     button,input{font:inherit}
     img{display:block}
 
-    #bg-container{position:fixed;inset:0;z-index:-3;background:#000 url('assets/img/bg_cyber_loop_frame.png') center/cover no-repeat}
+    #bg-container{position:fixed;inset:0;z-index:-3;background:#000}
     #bg-video,#bg-video-hype{width:100%;height:100%;object-fit:cover}#bg-video{opacity:.62}#bg-video-hype{position:absolute;inset:0;opacity:0;transition:opacity .28s ease}#bg-container.hype #bg-video-hype{opacity:.82}
     #bg-vignette{position:fixed;inset:0;z-index:-2;background:
       radial-gradient(circle at top, rgba(255,47,146,.22), transparent 34%),
@@ -110,26 +110,27 @@
       box-shadow:inset 0 -40px 80px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.05)
     }
     #board-grid{position:absolute;inset:0;pointer-events:none;opacity:.34;background-image:linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);background-size:calc(100% / 6) calc(100% / 11);mask-image:linear-gradient(180deg, transparent 0%, black 12%, black 100%)}
-    #board-character{position:absolute;left:50%;bottom:-1%;width:107.25%;max-width:none;height:auto;min-height:0;aspect-ratio:1/1;transform:translateX(-50%);object-fit:contain;object-position:center bottom;pointer-events:none;z-index:4;opacity:1;filter:drop-shadow(0 0 24px rgba(255,47,146,.2)) saturate(1.04);will-change:opacity;contain:layout paint size}
+    .board-character-layer{position:absolute;left:50%;bottom:-1%;width:107.25%;max-width:none;height:107.25%;min-height:0;transform:translate3d(-50%,0,0);object-fit:contain;object-position:center bottom;pointer-events:none;z-index:4;opacity:0;filter:drop-shadow(0 0 24px rgba(255,47,146,.2)) saturate(1.04);will-change:opacity,transform;transition:opacity .12s linear;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:layout paint size}
+    .board-character-layer.active{opacity:1}
     #gameover-fx-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:24;opacity:0;transition:opacity .22s ease} 
     #gameover-fx-video.show{opacity:.9}
     #board-glass{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 60px rgba(0,236,255,.08), inset 0 -90px 110px rgba(255,47,146,.08)}
     #merge-canvas{display:none}
     #item-layer{position:absolute;inset:0;pointer-events:none;z-index:9;overflow:hidden}
-    .item-chip{position:absolute;left:0;top:0;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);border:2px solid rgba(255,255,255,.34);box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,255,255,.28);transition:box-shadow .14s,border-color .14s;will-change:transform,opacity;overflow:visible;isolation:isolate;contain:layout paint style;transform-origin:center center}
-    .item-chip::after{content:attr(data-emoji);position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;border-radius:999px;display:grid;place-items:center;font-size:12px;background:rgba(12,9,22,.92);border:1px solid rgba(255,255,255,.16);box-shadow:0 0 12px rgba(0,0,0,.28)}
-    .item-chip img{display:block;width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.38));opacity:1;transform:none;pointer-events:none;user-select:none}
+    .item-chip{position:absolute;left:0;top:0;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);border:2px solid rgba(255,255,255,.34);box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,255,255,.28);transition:box-shadow .14s,border-color .14s;will-change:transform,opacity;overflow:hidden;transform-origin:center center;contain:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+    .item-chip::after{display:none !important;content:''}
+    .item-chip img{display:block;width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.38));opacity:1;transform:translateZ(0);pointer-events:none;user-select:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
     .item-chip.trend{border-color:rgba(255,216,76,.92);box-shadow:0 0 0 2px rgba(255,216,76,.18), 0 0 22px rgba(255,216,76,.28), inset 0 0 18px rgba(255,255,255,.08)}
     .item-chip.near{box-shadow:0 0 0 2px rgba(0,236,255,.18), 0 0 20px rgba(0,236,255,.18), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.ready{box-shadow:0 0 0 2px rgba(255,244,163,.22), 0 0 24px rgba(255,216,76,.36), inset 0 0 18px rgba(255,255,255,.08); animation:pulse .9s infinite}
-    .item-chip.forecast{border-color:rgba(134,241,255,.78);box-shadow:0 0 0 3px rgba(134,241,255,.24), 0 0 28px rgba(134,241,255,.28), inset 0 0 18px rgba(255,255,255,.08);animation:pulse .9s infinite}
-    .item-chip.shift-glow{border-color:rgba(255,244,163,.96);box-shadow:0 0 0 3px rgba(255,244,163,.28),0 0 34px rgba(255,216,76,.42),0 0 56px rgba(0,236,255,.24),inset 0 0 20px rgba(255,255,255,.14);animation:pulse .58s infinite}
+    .item-chip.ready{box-shadow:0 0 0 2px rgba(255,244,163,.22), 0 0 24px rgba(255,216,76,.36), inset 0 0 18px rgba(255,255,255,.08)}
+    .item-chip.forecast{border-color:rgba(134,241,255,.78);box-shadow:0 0 0 3px rgba(134,241,255,.24), 0 0 28px rgba(134,241,255,.28), inset 0 0 18px rgba(255,255,255,.08)}
+    .item-chip.shift-glow{border-color:rgba(255,244,163,.96);box-shadow:0 0 0 3px rgba(255,244,163,.28),0 0 34px rgba(255,216,76,.42),0 0 56px rgba(0,236,255,.24),inset 0 0 20px rgba(255,255,255,.14)}
     .item-chip.hazard{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%);border-color:rgba(255,91,115,.92)}
     .item-chip.hazard::after{content:'🚨'}
     #danger-fog{position:absolute;inset:0;pointer-events:none;z-index:10;opacity:0;background:linear-gradient(180deg, rgba(255,59,91,.04), rgba(255,59,91,.18));transition:opacity .3s}
     #danger-fog.show{opacity:1}
     #particle-canvas,#fx-canvas{position:absolute;inset:0;pointer-events:none}
-    #chat-lane{position:absolute;left:0;right:0;top:52px;bottom:86px;pointer-events:none;z-index:8;overflow:hidden;opacity:.74}
+    #chat-lane{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:8;overflow:hidden;opacity:.82}
     #fx-canvas{z-index:16}
     #particle-canvas{z-index:18}
     #gameover-line{
@@ -148,7 +149,7 @@
 
     #drop-guide{position:absolute;top:0;bottom:0;width:2px;left:50%;transform:translateX(-1px);z-index:13;pointer-events:none;background:linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.08));opacity:.55;filter:drop-shadow(0 0 8px rgba(255,255,255,.8))}
     #preview-item{position:static;width:74%;height:74%;transform:none;object-fit:contain;object-position:center center;z-index:14;pointer-events:none;filter:drop-shadow(0 0 14px rgba(255,255,255,.7));opacity:1}
-    #preview-ring{position:absolute;top:calc(var(--gameover-line-y) - 74px);left:50%;width:74px;height:74px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(255,255,255,.3);box-shadow:0 0 18px rgba(255,255,255,.12);z-index:14;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%)}
+    #preview-ring{position:absolute;top:calc(var(--gameover-line-y) - 86px);left:50%;width:74px;height:74px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(255,255,255,.3);box-shadow:0 0 18px rgba(255,255,255,.12);z-index:14;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%)}
 
     .hud-chip{
       position:absolute;z-index:20;display:flex;align-items:center;gap:10px;pointer-events:auto;background:rgba(10,6,16,.94);border:1px solid rgba(255,255,255,.09);
@@ -232,8 +233,8 @@
     .action-btn{min-width:82px;min-height:82px;border:none;border-radius:22px;padding:8px;cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));color:#fff;font-weight:900;display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 22px rgba(0,0,0,.2)}
     .action-btn .icon{font-size:1.58rem;line-height:1}
     .action-btn .txt{font-size:.72rem;color:#fbecc4;margin-top:4px}
-    .action-btn.ready{background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08));color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.14), 0 0 26px rgba(255,216,76,.34), inset 0 1px 0 rgba(255,255,255,.1);animation:pulse 1s infinite}
-    .action-btn.warn{background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 22px rgba(0,0,0,.2)}
+    .action-btn.ready{background:linear-gradient(180deg, rgba(255,225,120,.95), rgba(255,130,64,.86));color:#2c1200;box-shadow:0 0 0 1px rgba(255,250,220,.42), 0 0 34px rgba(255,180,72,.44), 0 18px 32px rgba(255,120,44,.24), inset 0 1px 0 rgba(255,255,255,.4);animation:pulse 1s infinite}
+    .action-btn.warn{background:linear-gradient(180deg, rgba(255,138,138,.24), rgba(255,87,114,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 10px 22px rgba(0,0,0,.22)}
     #center-top #burst-btn{width:100%;min-width:88px;min-height:88px;border-radius:22px;padding:0;pointer-events:auto}
     #center-top #burst-btn .txt{font-size:.9rem;line-height:1.05}
     #center-top #burst-btn .icon{font-size:1.35rem}
@@ -241,7 +242,7 @@
     .action-btn.switch-flash{animation:burstReadyFlash .92s ease-out 1, pulse 1s .92s infinite}
     @keyframes burstReadyFlash{0%{box-shadow:0 0 0 rgba(255,216,76,0), inset 0 1px 0 rgba(255,255,255,.06);filter:brightness(1)}25%{box-shadow:0 0 0 8px rgba(255,216,76,.18),0 0 34px rgba(255,216,76,.45),0 0 68px rgba(0,236,255,.22);filter:brightness(1.15)}100%{box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 26px rgba(255,216,76,.34), inset 0 1px 0 rgba(255,255,255,.1);filter:brightness(1)}}
 
-    .rising-chat{position:absolute;left:0;bottom:-28px;max-width:min(82%, 270px);display:flex;align-items:center;gap:6px;background:rgba(9,6,16,.42);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:5px 7px;color:rgba(255,255,255,.82);font-size:.68rem;line-height:1.25;opacity:0;animation:chatRise linear forwards;will-change:transform,opacity;--rise-distance:520px}
+    .rising-chat{position:absolute;left:0;bottom:-28px;max-width:min(82%, 270px);display:flex;align-items:center;gap:6px;background:rgba(9,6,16,.42);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:5px 7px;color:rgba(255,255,255,.82);font-size:.68rem;line-height:1.25;opacity:0;animation:chatRise linear forwards;will-change:transform,opacity;--rise-distance:520px;--chat-drift:0px}
     .rising-chat .live{display:none}
     .rising-chat .badge{width:20px;height:20px;flex:0 0 20px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07);font-size:.72rem}
     .rising-chat .body{min-width:0;display:grid;gap:2px}
@@ -254,7 +255,7 @@
     .rising-chat.low{border-color:rgba(255,59,91,.26);background:rgba(32,10,18,.5)}
     .rising-chat.next{border-color:rgba(0,236,255,.26);background:rgba(8,18,28,.5)}
     .rising-chat.super{border-color:rgba(255,139,0,.32);background:rgba(34,18,10,.52)}
-    @keyframes chatRise{0%{transform:translate3d(0,0,0);opacity:0}8%{opacity:.9}84%{opacity:.78}100%{transform:translate3d(0,calc(-1 * var(--rise-distance, 520px)),0);opacity:0}}
+    @keyframes chatRise{0%{transform:translate3d(var(--chat-drift,0px),0,0);opacity:0}8%{opacity:.9}84%{opacity:.78}100%{transform:translate3d(calc(var(--chat-drift,0px) * -0.18),calc(-1 * var(--rise-distance, 520px)),0);opacity:0}}
 
     #trend-shift-banner{position:absolute;left:50%;top:124px;transform:translate(-50%,-14px) scale(.92);min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px;border-radius:24px;background:linear-gradient(180deg, rgba(15,8,25,.98), rgba(8,4,14,.94));border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 44px rgba(0,0,0,.38);pointer-events:none;z-index:26;display:grid;justify-items:center;gap:3px;opacity:0;transition:opacity .22s,transform .22s}
     #trend-shift-banner.show{opacity:1;transform:translate(-50%,0) scale(1)}
@@ -270,12 +271,16 @@
 
     #caption-box{position:absolute;left:50%;top:calc(var(--gameover-line-y) + 12px);transform:translateX(-50%);z-index:8;width:min(86%, 320px);background:rgba(10,6,14,.82);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:8px 14px;box-shadow:0 10px 22px rgba(0,0,0,.22);pointer-events:none;display:flex;align-items:center;justify-content:center;min-height:38px}
     #caption-text{min-height:1.35em;font-size:.74rem;color:#fff;text-align:center;line-height:1.35}
+    #speech-bubble{position:absolute;left:50%;top:58.5%;transform:translate(-50%,12px) scale(.96);z-index:19;min-width:132px;max-width:340px;padding:10px 16px;border-radius:24px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.30);box-shadow:0 14px 30px rgba(0,0,0,.14),0 0 0 1px rgba(255,255,255,.05);pointer-events:none;opacity:0;transition:opacity .18s ease,transform .18s ease;backdrop-filter:blur(8px)}
+    #speech-bubble.show{opacity:1;transform:translate(-50%,0) scale(1)}
+    #speech-bubble::after{content:'';position:absolute;left:50%;top:-12px;bottom:auto;width:0;height:0;transform:translateX(-50%);border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:12px solid rgba(255,255,255,.16);filter:drop-shadow(0 -1px 0 rgba(255,255,255,.30))}
+    #speech-text{min-height:1.4em;font-size:.82rem;font-weight:900;color:#ffffff;text-align:center;line-height:1.45;letter-spacing:.01em;word-break:keep-all;overflow-wrap:anywhere;opacity:1;text-shadow:0 1px 4px rgba(0,0,0,.28)}
     #board-combo-strip{position:absolute;left:50%;top:calc(var(--gameover-line-y) + 52px);transform:translateX(-50%);z-index:8;min-width:180px;padding:4px 10px;border-radius:12px;background:rgba(7,4,12,.72);border:1px solid rgba(255,255,255,.08);font-family:'Orbitron',sans-serif;font-size:.84rem;line-height:1.05;color:#fff;pointer-events:none;text-align:center}
     #board-combo-strip .combo{color:#ffe37a}
     #board-combo-strip .chain{color:#ffb7ff}
 
         .panel-mobile{width:min(100%, 420px)}
-    .title-panel{display:grid;gap:14px;background-image:linear-gradient(180deg, rgba(9,1,13,.82), rgba(9,1,13,.9)), url('assets/img/bg_cyber_loop_frame.png');background-size:cover;background-position:center}
+    .title-panel{display:grid;gap:14px;background:linear-gradient(180deg, rgba(9,1,13,.72), rgba(9,1,13,.84));background-size:cover;background-position:center}
     .compact-copy{font-size:.92rem;line-height:1.55}
     .mood.wide{min-height:2.6em;max-width:none}
     #trend-main{display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:8px;min-width:0;padding-left:10px;border-left:1px solid rgba(255,255,255,.08)}
@@ -371,8 +376,10 @@
       .action-btn{min-width:66px;min-height:66px;border-radius:18px}
       #caption-box{left:50%;right:auto;top:calc(var(--gameover-line-y) + 18px);width:min(84%, 320px);padding:7px 10px}
       #caption-text{font-size:.74rem}
+      #speech-bubble{top:59.5%;max-width:min(82%, 320px);padding:9px 14px}
+      #speech-text{font-size:.78rem}
       #preview-item{width:74%;height:74%}
-      #preview-ring{width:68px;height:68px;top:calc(var(--gameover-line-y) - 72px)}
+      #preview-ring{width:68px;height:68px;top:calc(var(--gameover-line-y) - 84px)}
       .item-chip{width:82px;height:82px}
       .item-chip::after{width:22px;height:22px;font-size:11px}
       .rising-chat{font-size:.62rem;max-width:74%;padding:5px 6px}
@@ -384,6 +391,7 @@
       #game-screen{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
       #game-shell{--top-hud-h:98px;--queue-w:70px;--bottom-info-h:100px;--bottom-controls-h:56px;width:min(calc((100dvh - 6px) * (1179 / 2556)), calc(100vw - 6px), 420px)}
       #caption-box{left:50%;right:auto;top:calc(var(--gameover-line-y) + 18px);width:min(84%, 310px)}
+      #speech-bubble{top:60.2%;max-width:min(84%, 300px)}
       #board-wrap{padding:calc(var(--top-hud-h) + 46px) 6px calc(var(--bottom-stack) + 6px)}
       #center-top{left:6px;right:6px;top:6px;width:auto;padding:8px;height:var(--top-hud-h)}
       #top-left{left:6px;right:6px;bottom:calc(var(--bottom-controls-h) + 8px);min-height:var(--bottom-info-h)}
@@ -432,7 +440,7 @@
       font-size:34px;
       letter-spacing:.1em;
     }
-    #title-art{width:760px;max-width:100%}
+    #title-art{width:100%;max-width:100%}
     .intro-copy{margin-top:18px;font-size:28px;line-height:1.72}
     .btn-row{gap:18px;margin-top:28px}
     .btn{
@@ -548,12 +556,38 @@
     #result-screen .panel{max-height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
     #game-shell{overflow:hidden}
 
+
+    #title-art-wrap{width:100%;justify-items:center}
+    #start-screen .title-sub{text-align:center;width:100%}
+    #start-screen .small-note{display:none}
+    #start-screen .daily-board-wrap{margin-top:4px}
+    #center-top #burst-btn.ready .txt{color:#3a1a00}
+    #center-top #burst-btn.ready .icon{filter:drop-shadow(0 0 6px rgba(255,255,255,.32))}
+    #game-shell{--top-hud-h:108px !important;--queue-w:78px !important;--bottom-info-h:112px !important;--bottom-controls-h:60px !important;width:var(--game-shell-w) !important;height:var(--game-shell-h) !important;max-width:none !important;max-height:none !important;aspect-ratio:auto !important;transform:scale(var(--game-shell-scale)) !important;transform-origin:center center !important}
+    #board-wrap{padding:calc(var(--top-hud-h) + 22px) 8px calc(var(--bottom-stack) - 7px) !important}
+    #center-top{left:8px !important;right:calc(var(--queue-w) + 16px) !important;top:8px !important;padding:10px 12px !important;height:var(--top-hud-h) !important;display:block !important;transform:none !important}
+    #drop-queue{top:8px !important;right:8px !important;width:var(--queue-w) !important;height:var(--top-hud-h) !important}
+    #top-left{left:8px !important;right:8px !important;bottom:calc(var(--bottom-controls-h) + 10px) !important;min-height:var(--bottom-info-h) !important;display:grid !important;grid-template-columns:minmax(0,1fr) auto !important}
+    #trend-main{grid-template-columns:72px minmax(0,1fr) !important;gap:8px !important;max-width:268px !important;width:268px !important;justify-self:center !important}
+    #trend-hero{width:72px !important}
+    #trend-side{min-width:0 !important;width:188px !important}
+    #next-block{width:86px !important;min-width:86px !important;position:relative !important;left:auto !important;right:auto !important;top:auto !important;transform:none !important;padding-left:10px !important;border-left:1px solid rgba(255,255,255,.08) !important}
+    #trend-shift-banner{min-width:420px !important;max-width:420px !important}
+    #caption-box{width:320px !important}
+    #speech-bubble{top:58.5% !important;max-width:340px !important}
+    #preview-ring{top:calc(var(--gameover-line-y) - 90px) !important}
+    #top-left .score-stack{display:grid;align-content:center;align-items:center;min-height:100%;gap:6px}
+    #mood-text{display:none !important}
+    #score-view{font-size:3.2rem !important;line-height:.94}
+    #top-left .mini-label{font-size:1.08rem}
+    #game-board{--gameover-line-y:96px !important;--danger-line-y:130px !important}
+
   </style>
 </head>
 <body>
   <div id="bg-container">
-    <video id="bg-video" src="assets/bg/bg_cyber.mp4" poster="assets/img/bg_cyber_loop_frame.png" autoplay loop muted playsinline></video>
-    <video id="bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" poster="assets/img/bg_cyber_loop_frame.png" autoplay loop muted playsinline></video>
+    <video id="bg-video" src="assets/bg/bg_cyber.mp4" autoplay loop muted playsinline></video>
+    <video id="bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" autoplay loop muted playsinline></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
@@ -589,9 +623,7 @@
         <div class="daily-title">DAILY 王冠レース（共通条件）</div>
         <div id="daily-board" class="daily-board"></div>
       </div>
-      <div class="small-note">
-        毎日同じ条件で競える<b>デイリー勝負</b>。<br>その日の需要順もピンコメ条件も共通、王冠ラインも同じ。次の波を読めるほど王冠に近づく。<br>結果をコピーして、そのまま配信者同士で貼れます。
-      </div>
+      <div class="small-note" aria-hidden="true"></div>
     </div>
   </div>
 
@@ -600,11 +632,13 @@
       <div id="board-wrap">
         <div id="game-board">
           <div id="board-grid"></div>
-          <img id="board-character" src="assets/img/char_normal.png" alt="配信者背景">
+          <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
+          <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
           <div id="danger-fog"></div>
           <div id="gameover-line"></div>
           <div id="top-danger-line"></div>
           <div id="chat-lane"></div>
+          <div id="speech-bubble" aria-hidden="true"><div id="speech-text"></div></div>
           <canvas id="merge-canvas"></canvas>
           <div id="caption-box"><div id="caption-text">タップして落とす。今の話題を3つ消す。次の波は上のアイコンで先読み。</div></div>
           <div id="board-combo-strip">COMBO <span id="combo-view" class="combo">x0</span> ・ <span id="chain-view" class="chain">0連鎖</span></div>
@@ -710,7 +744,7 @@
 
       <div id="top-left" class="hud-chip">
         <img id="avatar" src="assets/img/char_normal.png" alt="主人公" style="display:none">
-        <div>
+        <div class="score-stack">
           <div class="mini-label" style="font-size:1.04rem">SCORE <span id="stream-time-mini" style="margin-left:12px;color:#8ef8ff;font-size:1.08rem">残り100s</span></div>
           <div id="score-view" class="big-num" style="font-size:2.68rem">0</div>
           <div id="mood-text" class="mood wide">こんばんは、今日もバズらせにきた。</div>
@@ -838,6 +872,7 @@
       gameShell: document.getElementById('game-shell'),
       board: document.getElementById('game-board'),
       boardCharacter: document.getElementById('board-character'),
+      boardCharacterBack: document.getElementById('board-character-back'),
       gameoverFxVideo: document.getElementById('gameover-fx-video'),
       chatLane: document.getElementById('chat-lane'),
       mergeCanvas: document.getElementById('merge-canvas'),
@@ -863,6 +898,8 @@
       streamTimeMini: document.getElementById('stream-time-mini'),
       scoreView: document.getElementById('score-view'),
       moodText: document.getElementById('mood-text'),
+      speechBubble: document.getElementById('speech-bubble'),
+      speechText: document.getElementById('speech-text'),
       comboView: document.getElementById('combo-view'),
       chainView: document.getElementById('chain-view'),
       tensionFill: document.getElementById('tension-fill'),
@@ -1014,6 +1051,7 @@
     const missingAvatarFiles = new Set();
     let trendBannerTimer = 0;
     let lastCommentSpawnAt = 0;
+    let activeBoardCharacterLayer = 'front';
     const avatarVariants = {
       normal:['char_normal.png'],
       focus:['char_focus.png','char_normal.png'],
@@ -1036,6 +1074,46 @@
     }
     function preloadAllAvatars() {
       uniqueAvatarFiles.forEach(preloadAvatarFile);
+    }
+
+    function swapBoardCharacter(file, nextSrc) {
+      if (!dom.boardCharacterBack || !dom.boardCharacter) {
+        if (dom.boardCharacter) {
+          dom.boardCharacter.dataset.file = file;
+          dom.boardCharacter.src = nextSrc;
+        }
+        return;
+      }
+      const front = activeBoardCharacterLayer === 'front' ? dom.boardCharacter : dom.boardCharacterBack;
+      const back = activeBoardCharacterLayer === 'front' ? dom.boardCharacterBack : dom.boardCharacter;
+      if (front?.dataset?.file === file && front.classList.contains('active')) return;
+      const swapToken = ++boardCharacterSwapToken;
+      const finalizeSwap = () => {
+        if (swapToken !== boardCharacterSwapToken) return;
+        requestAnimationFrame(() => {
+          if (swapToken !== boardCharacterSwapToken) return;
+          if (front) front.classList.remove('active');
+          if (back) back.classList.add('active');
+          activeBoardCharacterLayer = activeBoardCharacterLayer === 'front' ? 'back' : 'front';
+        });
+      };
+      if (!back) return;
+      back.decoding = 'sync';
+      back.loading = 'eager';
+      back.dataset.file = file;
+      back.style.width = '107.25%';
+      back.style.height = '107.25%';
+      const activateWhenReady = () => {
+        Promise.resolve(back.decode?.()).catch(() => {}).finally(finalizeSwap);
+      };
+      if (back.src !== nextSrc) {
+        back.src = nextSrc;
+      }
+      if (back.complete && back.naturalWidth > 0) {
+        activateWhenReady();
+      } else {
+        back.addEventListener('load', activateWhenReady, { once:true });
+      }
     }
 
 
@@ -1146,6 +1224,7 @@
       hurry:'assets/audio/se_timer_hurry.wav'
     };
     const voiceCooldowns = { default:0, calm:0, clear:0, chain:0, hype:0, warning:0, fire:0, top:0, focus:0 };
+    const lastVoicePathByKind = Object.create(null);
     let lastVoiceAt = 0;
     let nextAmbientVoiceAt = 0;
     let resultStingerAudio = null;
@@ -1154,6 +1233,12 @@
     let avatarVisualFile = 'char_normal.png';
     let pendingAvatarMood = 'normal';
     let pendingAvatarMoodSince = 0;
+    let boardCharacterSwapToken = 0;
+    let warningVoiceLatched = false;
+    let topVoiceLatched = false;
+    let focusVoiceCooldownUntil = 0;
+    let calmVoiceCooldownUntil = 0;
+    let startupVoiceLockUntil = 0;
 
     const state = {
       active:false,
@@ -1242,6 +1327,8 @@
       boardStatsCacheAt:0,
       lastVoiceText:'',
       voiceSubtitleTimer:0,
+      speechBubbleText:'',
+      speechBubbleTimer:0,
       avatarMood:'normal',
       avatarVisualMood:'normal',
       shiftGlowIds:[],
@@ -1269,8 +1356,8 @@
     function fmt(num) { return Math.floor(num).toLocaleString('ja-JP'); }
     function getBoardMetrics() {
       const style = dom.board ? getComputedStyle(dom.board) : null;
-      const fullLineY = style ? (parseFloat(style.getPropertyValue('--gameover-line-y')) || 126) : 126;
-      const dangerLineY = style ? (parseFloat(style.getPropertyValue('--danger-line-y')) || 162) : 162;
+      const fullLineY = style ? (parseFloat(style.getPropertyValue('--gameover-line-y')) || 26) : 26;
+      const dangerLineY = style ? (parseFloat(style.getPropertyValue('--danger-line-y')) || 60) : 60;
       return { fullLineY, dangerLineY, sideInset:6, spawnInset:Math.max(10, fullLineY - 38) }; // spawn near full line
     }
     function playerName() {
@@ -1463,6 +1550,7 @@
       const moodMap = { apology:'apology', win:'win' };
       const lookup = moodMap[key] || key;
       const now = performance.now();
+      if (state.avatarVisualMood === lookup && pendingAvatarMood === lookup) return;
       if (pendingAvatarMood !== lookup) {
         pendingAvatarMood = lookup;
         pendingAvatarMoodSince = now;
@@ -1500,7 +1588,7 @@
           requestAnimationFrame(() => {
             if (state.avatarMood !== lookup) return;
             applyAvatarSrc(dom.avatar, file, nextSrc);
-            applyAvatarSrc(dom.boardCharacter, file, nextSrc);
+            swapBoardCharacter(file, nextSrc);
             avatarVisualFile = file;
             state.avatarVisualMood = lookup;
           });
@@ -1509,7 +1597,7 @@
       }
       requestAnimationFrame(() => {
         applyAvatarSrc(dom.avatar, 'char_normal.png', 'assets/img/char_normal.png');
-        applyAvatarSrc(dom.boardCharacter, 'char_normal.png', 'assets/img/char_normal.png');
+        swapBoardCharacter('char_normal.png', 'assets/img/char_normal.png');
         avatarVisualFile = 'char_normal.png';
         state.avatarVisualMood = 'normal';
       });
@@ -1622,10 +1710,10 @@
           Body.setVelocity(body, { x:0, y:0 });
           Body.setAngularVelocity(body, 0);
         }
-        const drawX = clamp(body.position.x, -diameter * 0.35, boardW - diameter * 0.65);
-        const drawY = clamp(body.position.y, -diameter * 0.35, boardH - diameter * 0.65);
+        const drawX = clamp(body.position.x, diameter / 2, boardW - diameter / 2);
+        const drawY = clamp(body.position.y, diameter / 2, boardH - diameter / 2);
         const scale = trendBody ? 1.06 : (forecastReady ? 1.03 : 1);
-        const transformValue = `translate(${Math.round((drawX - diameter / 2) * 10) / 10}px, ${Math.round((drawY - diameter / 2) * 10) / 10}px) rotate(${Math.round((body.angle || 0) * 100) / 100}rad) scale(${scale})`;
+        const transformValue = `translate3d(${Math.round((drawX - diameter / 2) * 10) / 10}px, ${Math.round((drawY - diameter / 2) * 10) / 10}px, 0) rotate(${Math.round((body.angle || 0) * 100) / 100}rad) scale(${scale})`;
         if (node.dataset.transform !== transformValue) {
           node.dataset.transform = transformValue;
           node.style.transform = transformValue;
@@ -1711,8 +1799,8 @@
       const line = voiceTextForPath(path);
       if (!line) return false;
       state.lastVoiceText = line;
-      state.voiceSubtitleTimer = Math.max(state.voiceSubtitleTimer || 0, hold);
-      setMoodLabel(line);
+      state.voiceSubtitleTimer = Math.max(state.voiceSubtitleTimer || 0, clamp(Number(hold) || 3, 2.8, 3.2));
+      showSpeechBubble(line, hold, { force:true, voice:true });
       return true;
     }
 
@@ -1735,6 +1823,16 @@
       dom.burstBtn.classList.add('switch-flash');
       clearTimeout(burstFlashTimer);
       burstFlashTimer = setTimeout(() => dom.burstBtn?.classList.remove('switch-flash'), 1100);
+    }
+
+    function setBurstButtonLabel(mode = 'default') {
+      if (!dom.burstBtn) return;
+      const html = mode === 'ready'
+        ? '<div><div class="icon">🧯</div><div class="txt">火消をする</div></div>'
+        : '<div><div class="icon">🧯</div><div class="txt">謝罪配信</div></div>';
+      if (dom.burstBtn.dataset.mode === mode && dom.burstBtn.innerHTML === html) return;
+      dom.burstBtn.dataset.mode = mode;
+      dom.burstBtn.innerHTML = html;
     }
 
     function toggleMute() {
@@ -1760,23 +1858,30 @@
       dom.bgmHyper.volume = muted ? 0 : 0;
       dom.bgmNormal.currentTime = 0;
       dom.bgmHyper.currentTime = 0;
+      try { dom.bgmHyper.pause(); } catch (_) {}
       dom.bgmNormal.play().catch(() => {});
-      dom.bgmHyper.play().catch(() => {});
       lastHyperBgmActive = false;
     }
 
     function setHyperMix(strength) {
       const s = clamp(strength, 0, 1);
       const hyperActive = !!(state.active && state.clipTime > 0);
-      if (hyperActive && !lastHyperBgmActive) {
-        try { dom.bgmHyper.currentTime = 0; } catch (_) {}
-        dom.bgmHyper.play().catch(() => {});
+      if (hyperActive !== lastHyperBgmActive) {
+        if (hyperActive) {
+          try { dom.bgmNormal.pause(); } catch (_) {}
+          try { dom.bgmHyper.currentTime = 0; } catch (_) {}
+          dom.bgmHyper.play().catch(() => {});
+        } else {
+          try { dom.bgmHyper.pause(); } catch (_) {}
+          dom.bgmNormal.play().catch(() => {});
+        }
       }
       lastHyperBgmActive = hyperActive;
       dom.bgmNormal.volume = muted ? 0 : (hyperActive ? 0 : 0.34);
       dom.bgmHyper.volume = muted ? 0 : (hyperActive ? 0.42 : 0);
       updateBackgroundState(s);
     }
+
 
 
     function updateBackgroundState(strength = 0) {
@@ -1800,10 +1905,26 @@
       return voiceCache.get(path);
     }
 
+    function pickRandomVoicePath(kind, pool = []) {
+      const list = Array.isArray(pool) ? pool.filter(Boolean) : [];
+      if (!list.length) return '';
+      if (list.length === 1) {
+        lastVoicePathByKind[kind] = list[0];
+        return list[0];
+      }
+      const last = lastVoicePathByKind[kind] || '';
+      const candidates = list.filter(path => path !== last);
+      const source = candidates.length ? candidates : list;
+      const chosen = source[Math.floor(rand() * source.length)] || list[0] || '';
+      lastVoicePathByKind[kind] = chosen;
+      return chosen;
+    }
+
     function tryPlayVoicePath(path, volume = 0.72) {
       const audio = getVoiceAudio(path);
       applyVoiceSubtitle(path);
       if (!audio || muted || audio.dataset.failed === '1') return !!voiceTextForPath(path);
+      stopAllVoiceAudio();
       try {
         audio.pause();
         audio.currentTime = 0;
@@ -1814,10 +1935,14 @@
     }
 
     function playVoice(kind) {
+      const pool = voicePools[kind] || [];
+      const chosen = pickRandomVoicePath(kind, pool);
+      if (chosen) return tryPlayVoicePath(chosen, kind === 'lose' ? 0.84 : 0.72);
       const map = { start:dom.voiceStart, fire:dom.voiceFire, win:dom.voiceWin, lose:dom.voiceLose };
       const audio = map[kind];
       applyVoiceSubtitle(audio?.currentSrc || audio?.src || '');
       if (!audio || muted) return !!voiceTextForPath(audio?.currentSrc || audio?.src || '');
+      stopAllVoiceAudio();
       audio.currentTime = 0;
       audio.volume = kind === 'lose' ? 0.84 : 0.72;
       audio.play().catch(() => {});
@@ -1849,12 +1974,13 @@
       bigBuzzBannerTimer = setTimeout(() => dom.bigBuzzBanner?.classList.remove('show'), 980);
     }
 
-    function triggerVoiceCue(kind, tier = 1) {
+    function triggerVoiceCue(kind, tier = 1, opts = {}) {
       const now = performance.now();
-      const cooldownMap = { clear:620, chain:980, hype:1200, warning:1400, fire:1500, apology_ready:1200, apology_fire:1400, rush:1100, jack:1200, big:1200, focus:900, top:1100, win:1400, lose:1400, default:900 };
-      if (now - lastVoiceAt < 380) return false;
+      const force = !!opts.force;
+      const cooldownMap = { clear:620, chain:980, hype:1200, warning:1400, fire:1500, apology_ready:1200, apology_fire:1400, rush:1100, jack:1200, big:1200, focus:900, top:1100, win:1400, lose:1400, start:2800, default:900 };
+      if (!force && now - lastVoiceAt < 380) return false;
       const slot = kind in voiceCooldowns ? kind : 'default';
-      if (voiceCooldowns[slot] > now) return false;
+      if (!force && voiceCooldowns[slot] > now) return false;
       const pool = voicePools[kind] || [];
       let variants = pool.slice();
       if (kind === 'chain') {
@@ -1864,7 +1990,7 @@
       } else if (kind === 'hype') {
         variants = tier >= 4 ? pool.slice(1) : pool.slice();
       }
-      const chosen = variants.length ? choiceGame(variants) : '';
+      const chosen = pickRandomVoicePath(kind, variants);
       let played = false;
       if (chosen) {
         played = tryPlayVoicePath(chosen, kind === 'chain' ? 0.84 : (kind === 'lose' ? 0.84 : 0.72));
@@ -1879,6 +2005,7 @@
       if (played) {
         lastVoiceAt = now;
         voiceCooldowns[slot] = now + (cooldownMap[slot] || 900);
+        if (kind === 'start') startupVoiceLockUntil = now + 3200;
       }
       return played;
     }
@@ -1998,40 +2125,59 @@
       state.showCaptionTimer = seconds;
     }
 
+    function normalizeSpeechText(text) {
+      return String(text || '').replace(/。+$/u, '').trim();
+    }
+
+    function isVoiceBubbleLocked() {
+      return (state.voiceSubtitleTimer || 0) > 0.05;
+    }
+
+    function refreshSpeechBubble() {
+      if (!dom.speechBubble || !dom.speechText) return;
+      const text = normalizeSpeechText(state.speechBubbleText || '');
+      const visible = !!(state.active && text && (state.speechBubbleTimer || 0) > 0);
+      if (dom.speechText.textContent !== text) dom.speechText.textContent = text;
+      dom.speechBubble.classList.toggle('show', visible);
+      dom.speechBubble.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    }
+
+    function showSpeechBubble(text, hold = 3, opts = {}) {
+      const next = normalizeSpeechText(text);
+      const force = !!opts.force;
+      const isVoiceLine = !!opts.voice;
+      if (!isVoiceLine) return false;
+      if (!force && isVoiceBubbleLocked()) return false;
+      state.speechBubbleText = next;
+      state.speechBubbleTimer = next ? clamp(Number(hold) || 3, 2.8, 3.2) : 0;
+      refreshSpeechBubble();
+      return true;
+    }
+
     function setMoodLabel(text) {
-      const next = String(text || '');
-      if (dom.moodText.textContent !== next) dom.moodText.textContent = next;
+      return false;
     }
 
     function pickAmbientLine(pool, hold = 2.8) {
       const nextLine = choice(pool);
       state.ambientMoodLine = nextLine;
       state.ambientMoodTimer = hold;
-      setMoodLabel(nextLine);
+      showSpeechBubble(nextLine, hold);
     }
     function say(mode, hold = 2.4) {
       const pool = PLAYER_LINES[mode] || PLAYER_LINES.calm;
       state.currentLine = choice(pool);
       state.moodTimer = hold;
-      setMoodLabel(state.currentLine);
+      if (!isVoiceBubbleLocked()) showSpeechBubble(state.currentLine, hold);
     }
 
     function updateMoodText(dt = 0) {
       state.voiceSubtitleTimer = Math.max(0, (state.voiceSubtitleTimer || 0) - dt);
-      if (state.lastVoiceText) {
-        setMoodLabel(state.lastVoiceText);
-        return;
-      }
-      if (state.moodTimer > 0) {
-        state.moodTimer = Math.max(0, state.moodTimer - dt);
-      }
-      if (state.moodTimer > 0) {
-        setMoodLabel(state.currentLine);
-        return;
-      }
-      if (state.ambientMoodLine) {
-        setMoodLabel(state.ambientMoodLine);
-      }
+      if (state.voiceSubtitleTimer <= 0) state.lastVoiceText = '';
+      if (state.moodTimer > 0) state.moodTimer = Math.max(0, state.moodTimer - dt);
+      state.speechBubbleTimer = Math.max(0, (state.speechBubbleTimer || 0) - dt);
+      if (state.speechBubbleTimer <= 0) state.speechBubbleText = '';
+      refreshSpeechBubble();
     }
 
     function updateSeedLabels() {
@@ -2094,7 +2240,7 @@
       updatePinCommentUi();
     }
 
-    function setTrend(index, withFlash = false, previousIndex = null) {
+    function setTrend(index, withFlash = false, previousIndex = null, opts = {}) {
       if (withFlash && state.runTime > 0 && !state.switchCleared) {
         if (state.jackChain > 0) {
           popText(dom.board.clientWidth / 2, 126, '先読みボーナス終了', '#ff8da5', 18);
@@ -2108,6 +2254,8 @@
       state.trendWarning = false;
       state.recentSwitchBonus = 0;
       state.rushWindow = 0;
+      const suppressSpeech = !!opts.suppressSpeech;
+      const suppressVoice = !!opts.suppressVoice;
       const trend = currentTrend();
       dom.trendThumb.src = trend.img;
       dom.trendName.textContent = trend.name;
@@ -2125,12 +2273,12 @@
       dom.nextBlock?.classList.remove('warning');
       setCaption(`いまは『${trend.name}』を3つ以上で消す。消えたら次は『${nextTrend().name}』。さらにその次は『${futureTrend().name}』。`, 2.8);
       spawnComment(true, null, 'hot');
-      say(withFlash ? 'switch' : 'focus', 2.4);
-      triggerVoiceCue(withFlash ? 'rush' : 'focus');
+      if (!suppressSpeech) say(withFlash ? 'switch' : 'focus', 2.4);
+      if (!suppressVoice) triggerVoiceCue(withFlash ? 'rush' : 'focus');
       rollPinnedComment(withFlash ? 'switch' : 'normal');
       if (withFlash) {
         spawnComment(false, `今は${trend.name}の先読みが刺さる`, 'super', '🚀');
-        say('rush', 2.2);
+        if (!suppressSpeech) say('rush', 2.2);
       }
       if (withFlash) {
         flashScreen(trend.accent);
@@ -2229,7 +2377,7 @@
       const metrics = getBoardMetrics();
       const ringSize = Math.round(size + 12);
       const itemSize = Math.max(48, Math.round(size * 0.82));
-      const previewTop = Math.max(8, metrics.fullLineY - ringSize - 4);
+      const previewTop = Math.max(8, metrics.fullLineY - ringSize - 16);
       dom.dropGuide.style.left = `${x}px`;
       dom.previewRing.style.left = `${x}px`;
       dom.previewRing.style.top = `${previewTop}px`;
@@ -2243,8 +2391,16 @@
     function createChatNode(text, cls = '', icon = '💬', username = null, topicInfo = null) {
       const node = document.createElement('div');
       node.className = `rising-chat ${cls}`.trim();
-      node.style.left = `${3 + rand() * 18}%`;
-      node.style.animationDuration = `${7.4 + rand() * 2.2}s`;
+      const fromLeft = rand() < 0.5;
+      if (fromLeft) {
+        node.style.left = `${2 + rand() * 18}%`;
+        node.style.right = 'auto';
+      } else {
+        node.style.right = `${2 + rand() * 18}%`;
+        node.style.left = 'auto';
+      }
+      node.style.setProperty('--chat-drift', `${fromLeft ? (12 + rand() * 18) : (-12 - rand() * 18)}px`);
+      node.style.animationDuration = `${6.4 + rand() * 1.7}s`;
       node.style.setProperty('--rise-distance', `${Math.max(320, (dom.chatLane?.clientHeight || dom.board?.clientHeight || 420) + 140)}px`);
       node.style.zIndex = '0';
 
@@ -2281,7 +2437,7 @@
     function spawnComment(forceTrend = false, forcedText = null, forcedClass = '', forcedIcon = null) {
       if (!dom.chatLane) return;
       const now = performance.now();
-      const cooldown = forcedClass === 'super' ? 0.72 : (forcedText ? 0.9 : 1.12);
+      const cooldown = forcedClass === 'super' ? 0.42 : (forcedText ? 0.54 : 0.62);
       if (now - lastCommentSpawnAt < cooldown * 1000) return;
       let text = forcedText || '';
       let cls = forcedClass || '';
@@ -2415,7 +2571,7 @@
       const node = createChatNode(text, cls, icon, null, topicInfo);
       dom.chatLane.appendChild(node);
       lastCommentSpawnAt = now;
-      while (dom.chatLane.childNodes.length > 8) dom.chatLane.firstChild.remove();
+      while (dom.chatLane.childNodes.length > 16) dom.chatLane.firstChild.remove();
     }
 
     function flashScreen(color = '#ffffff') {
@@ -2596,7 +2752,7 @@
 
     function boardStats(force = false) {
       const now = performance.now();
-      if (!force && state.boardStatsCache && now - state.boardStatsCacheAt < 110) return state.boardStatsCache;
+      if (!force && state.boardStatsCache && now - state.boardStatsCacheAt < 150) return state.boardStatsCache;
       state.boardStatsCache = computeBoardStats();
       state.boardStatsCacheAt = now;
       return state.boardStatsCache;
@@ -2605,8 +2761,8 @@
     function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
       if (!body) return;
       const radius = body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType === 'hazard');
-      const safeX = clamp(Number.isFinite(body.position.x) ? body.position.x : boardW / 2, radius + 8, boardW - radius - 8);
-      const safeY = clamp(Number.isFinite(body.position.y) ? body.position.y : radius + 14, radius + 14, boardH - radius - 10);
+      const safeX = clamp(Number.isFinite(body.position.x) ? body.position.x : boardW / 2, radius + 2, boardW - radius - 2);
+      const safeY = clamp(Number.isFinite(body.position.y) ? body.position.y : radius + 10, radius + 10, boardH - radius - 2);
       Sleeping.set(body, false);
       Body.setPosition(body, { x:safeX, y:safeY });
       Body.setVelocity(body, { x: clamp(Number.isFinite(body.velocity.x) ? body.velocity.x : 0, -3.2, 3.2) * 0.32, y: Math.max(0.7, Math.min(4.2, (Number.isFinite(body.velocity.y) ? body.velocity.y : 0) + 0.45)) });
@@ -2708,9 +2864,9 @@
       const boardH = dom.board.clientHeight || boardLogicalRect().height;
       if (wallBodies.length) wallBodies.forEach(body => Composite.remove(engine.world, body, true));
       wallBodies = [
-        Bodies.rectangle(boardW / 2, boardH + 34, boardW + 80, 68, { isStatic:true, render:{ visible:false } }),
-        Bodies.rectangle(-32, boardH / 2, 64, boardH + 80, { isStatic:true, render:{ visible:false } }),
-        Bodies.rectangle(boardW + 32, boardH / 2, 64, boardH + 80, { isStatic:true, render:{ visible:false } })
+        Bodies.rectangle(boardW / 2, boardH + 36, boardW + 220, 96, { isStatic:true, render:{ visible:false } }),
+        Bodies.rectangle(-32, boardH / 2, 96, boardH + 180, { isStatic:true, render:{ visible:false } }),
+        Bodies.rectangle(boardW + 32, boardH / 2, 96, boardH + 180, { isStatic:true, render:{ visible:false } })
       ];
       wallBodies.forEach(body => { body.gameType = 'wall'; });
       wallBodies.forEach(body => Composite.add(engine.world, body));
@@ -2909,11 +3065,13 @@
         if (crownRush) popText(center.x, center.y - 136, `王冠チャンス +${fmt(crownRushBonus)}`, '#ffe37a', 20);
         spawnComment(false, choice(COMMENT_BANK.jack), 'super', '⚡');
         say('jack', 2.0);
+        triggerVoiceCue('jack', state.jackChain);
         flashScreen('#fff0a3');
         sfx('ready', 1.2);
       } else if (rushBonus) {
         spawnComment(false, choice(COMMENT_BANK.jack), 'super', '🚀');
         say('jack', 1.7);
+        triggerVoiceCue(state.jackChain >= 2 ? 'jack' : 'rush', state.jackChain || 1);
       }
       if (alreadyLeading && crownKeepBonus) {
         if (state.crownHoldStreak === 1) {
@@ -2955,6 +3113,7 @@
         sfx('big', 1.28);
       }
       if (pinBonus) {
+        triggerVoiceCue('big', Math.max(group.length, state.pinMinLen));
         spawnComment(false, `${state.pinText} それ！`, 'super', state.pinIcon || '📌');
         if (Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score)) <= 2500 && crownTargetScore(state.seed) > 0) {
           spawnComment(false, 'あと少しで1位いける', 'super', '👑');
@@ -2963,6 +3122,7 @@
         rollPinnedComment(state.clipTime > 0 ? 'clip' : 'normal');
       }
       if (clutchBonus) {
+        triggerVoiceCue('big', Math.max(group.length, 4));
         spawnComment(false, 'うわその返しで流れ戻した', 'super', '🩷');
         spawnComment(false, 'いまの逆転アツい', 'super', '🔥');
         say('big', 1.7);
@@ -2982,6 +3142,7 @@
         spawnComment(false, choice(COMMENT_BANK.super), 'super', '🚀');
         sfx('big', Math.min(1.4, 1 + group.length * 0.08));
         if (group.length >= 6 || collateral >= 5) triggerVoiceCue('hype', Math.max(chainTier, 2));
+        else triggerVoiceCue('big', Math.max(group.length, collateral));
       } else {
         say('clear', 1.9);
         spawnComment(false, '今の当たり！', 'hot', '✅');
@@ -3007,7 +3168,7 @@
       if (state.buzz >= 100 && !state.buzzReady && state.buzzMode <= 0) {
         state.buzzReady = true;
         dom.burstBtn.classList.add('ready');
-        dom.burstBtn.innerHTML = '<div><div class="icon">🧯</div><div class="txt">火消をする</div></div>'; flashBurstButton();
+        setBurstButtonLabel('ready'); flashBurstButton();
         setCaption('謝罪配信の準備完了。押すと今ある炎上をまとめて消せる。危ない時の立て直しに使いたい。', 2.4);
         spawnComment(false, '今なら火消しできる', 'super', '🧯');
         triggerVoiceCue('apology_ready');
@@ -3134,11 +3295,22 @@
       state.boardStatsCacheAt = 0;
       state.lastVoiceText = '';
       state.voiceSubtitleTimer = 0;
+      state.speechBubbleText = '';
+      state.speechBubbleTimer = 0;
       state.shiftGlowIds = [];
       state.shiftGlowTimer = 0;
       state.finishing = false;
       state.paused = false;
       state.resultVoicePlayed = false;
+      warningVoiceLatched = false;
+      topVoiceLatched = false;
+      focusVoiceCooldownUntil = 0;
+      calmVoiceCooldownUntil = 0;
+      startupVoiceLockUntil = 0;
+      lastVoiceAt = 0;
+      nextAmbientVoiceAt = 0;
+      Object.keys(voiceCooldowns).forEach(key => voiceCooldowns[key] = 0);
+      stopAllVoiceAudio();
       updateSeedLabels();
     }
 
@@ -3175,12 +3347,19 @@
       dom.howtoScreen?.classList.add('hidden');
       dom.startScreen.classList.remove('hidden');
       avatarVisualFile = 'char_normal.png';
+      activeBoardCharacterLayer = 'front';
       pendingAvatarMood = 'normal';
       if (dom.boardCharacter) dom.boardCharacter.dataset.file = 'char_normal.png';
       if (dom.avatar) dom.avatar.dataset.file = 'char_normal.png';
+      if (dom.boardCharacter) dom.boardCharacter.dataset.file = 'char_normal.png';
+      if (dom.boardCharacterBack) dom.boardCharacterBack.dataset.file = 'char_normal.png';
       requestAnimationFrame(alignTrendMainToGameCenter);
       try { dom.bgmNormal.pause(); dom.bgmHyper.pause(); } catch(_) {}
       lastHyperBgmActive = false;
+      warningVoiceLatched = false;
+      topVoiceLatched = false;
+      focusVoiceCooldownUntil = 0;
+      calmVoiceCooldownUntil = 0;
       setHyperMix(0);
     }
 
@@ -3211,8 +3390,10 @@
       dom.pauseOverlay?.classList.add('hidden');
       requestAnimationFrame(alignTrendMainToGameCenter);
       if (dom.avatar) { dom.avatar.src = 'assets/img/char_normal.png'; dom.avatar.dataset.file = 'char_normal.png'; }
-      if (dom.boardCharacter) { dom.boardCharacter.src = 'assets/img/char_normal.png'; dom.boardCharacter.dataset.file = 'char_normal.png'; }
+      if (dom.boardCharacter) { dom.boardCharacter.src = 'assets/img/char_normal.png'; dom.boardCharacter.dataset.file = 'char_normal.png'; dom.boardCharacter.classList.add('active'); }
+      if (dom.boardCharacterBack) { dom.boardCharacterBack.src = 'assets/img/char_normal.png'; dom.boardCharacterBack.dataset.file = 'char_normal.png'; dom.boardCharacterBack.classList.remove('active'); activeBoardCharacterLayer = 'front'; }
       avatarVisualFile = 'char_normal.png';
+      activeBoardCharacterLayer = 'front';
       pendingAvatarMood = 'normal';
       state.avatarMood = 'normal';
       state.avatarVisualMood = 'normal';
@@ -3224,8 +3405,8 @@
       destroyEngine();
       resizeCanvas();
       initEngine();
-      setTrend(state.trendIndex, false);
-      triggerVoiceCue('start');
+      setTrend(state.trendIndex, false, null, { suppressSpeech:true, suppressVoice:true });
+      triggerVoiceCue('start', 1, { force:true });
       refreshQueue();
       updateUi();
       requestLoop(0);
@@ -3238,7 +3419,7 @@
       state.buzzMode = 0;
       state.buzzActivations += 1;
       dom.burstBtn.classList.remove('ready');
-      dom.burstBtn.innerHTML = '<div><div class="icon">🧯</div><div class="txt">謝罪配信</div></div>';
+      setBurstButtonLabel('default');
       setAvatarVisual('apology');
       const clearedHazards = clearAllHazards(true);
       if (!clearedHazards) {
@@ -3406,7 +3587,7 @@
       setAvatarVisual(pickAvatarMood());
       if (!state.buzzReady && state.buzzMode <= 0) {
         dom.burstBtn.classList.remove('ready');
-        dom.burstBtn.innerHTML = '<div><div class="icon">🧯</div><div class="txt">謝罪配信</div></div>';
+        setBurstButtonLabel('default');
       }
       dom.topDangerLine.classList.toggle('show', state.topDangerTime > 0.45 || state.overfillTime > 0.35);
       if (dom.streamTimeMini) dom.streamTimeMini.textContent = `残り${Math.max(0, Math.ceil(state.streamTime || 0))}s`; 
@@ -3458,6 +3639,41 @@
       updatePinCommentUi();
       if (state.fireMode > 0) dom.burstBtn.classList.add('warn');
       else dom.burstBtn.classList.remove('warn');
+    }
+
+    function updateDynamicVoiceCues(now = performance.now()) {
+      if (now < startupVoiceLockUntil) return;
+      const previewLen = biggestPreviewLen();
+      const nextPreviewLen = biggestNextPreviewLen();
+      const warningActive = state.trendWarning && nextPreviewLen >= 2 && state.fireMode <= 0 && state.clipTime <= 0;
+      const topActive = (state.topDangerTime > 0.78 || state.overfillTime > 0.48) && state.fireMode <= 0;
+      const focusActive = previewLen >= 2 && !warningActive && !topActive && state.fireMode <= 0 && state.clipTime <= 0;
+      const calmActive = state.active && !focusActive && !warningActive && !topActive && state.fireMode <= 0 && state.clipTime <= 0;
+
+      if (warningActive) {
+        if (!warningVoiceLatched && triggerVoiceCue('warning', nextPreviewLen)) warningVoiceLatched = true;
+      } else if (nextPreviewLen <= 1) {
+        warningVoiceLatched = false;
+      }
+
+      if (topActive) {
+        if (!topVoiceLatched && triggerVoiceCue('top')) topVoiceLatched = true;
+      } else if (state.topDangerTime < 0.18 && state.overfillTime < 0.14) {
+        topVoiceLatched = false;
+      }
+
+      if (focusActive && now >= focusVoiceCooldownUntil) {
+        if (triggerVoiceCue('focus', previewLen)) {
+          focusVoiceCooldownUntil = now + (previewLen >= 3 ? 6200 : 7600);
+          calmVoiceCooldownUntil = Math.max(calmVoiceCooldownUntil, now + 4200);
+        }
+      }
+
+      if (calmActive && state.runTime > 6 && now >= calmVoiceCooldownUntil) {
+        if (triggerVoiceCue('calm')) {
+          calmVoiceCooldownUntil = now + 14000 + Math.round(gameRand() * 2600);
+        }
+      }
     }
 
     function requestLoop(ts) {
@@ -3549,7 +3765,8 @@
       if (state.pinTimer <= 0) {
         rollPinnedComment(state.clipTime > 0 ? 'clip' : 'normal');
       }
-      const chatInterval = state.clipTime > 0 ? 2.4 : 3.5;
+      updateDynamicVoiceCues(ts);
+      const chatInterval = state.clipTime > 0 ? 1.15 : 1.75;
       if (state.commentTimer >= chatInterval) {
         state.commentTimer = 0;
         spawnComment(false);
@@ -3599,7 +3816,7 @@
         syncBodyVisuals();
         state.visualTimer = 0;
       }
-      if (state.uiTimer >= 0.09) {
+      if (state.uiTimer >= 0.12) {
         updateUi();
         state.uiTimer = 0;
       }
@@ -3692,6 +3909,10 @@
         }
         try { dom.bgmNormal.pause(); dom.bgmHyper.pause(); } catch(_) {}
         lastHyperBgmActive = false;
+      warningVoiceLatched = false;
+      topVoiceLatched = false;
+      focusVoiceCooldownUntil = 0;
+      calmVoiceCooldownUntil = 0;
       setHyperMix(0);
         destroyEngine();
         state.finishing = false;
@@ -3768,6 +3989,20 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
         const failed = dom.avatar.dataset.file;
         if (failed) missingAvatarFiles.add(failed);
         if (dom.avatar.dataset.file !== 'char_normal.png') setAvatarVisual(state.avatarMood || 'normal');
+      };
+    }
+    if (dom.boardCharacter) {
+      dom.boardCharacter.onerror = () => {
+        const failed = dom.boardCharacter.dataset.file;
+        if (failed) missingAvatarFiles.add(failed);
+        if (dom.boardCharacter.dataset.file !== 'char_normal.png') setAvatarVisual(state.avatarMood || 'normal');
+      };
+    }
+    if (dom.boardCharacterBack) {
+      dom.boardCharacterBack.onerror = () => {
+        const failed = dom.boardCharacterBack.dataset.file;
+        if (failed) missingAvatarFiles.add(failed);
+        if (dom.boardCharacterBack.dataset.file !== 'char_normal.png') setAvatarVisual(state.avatarMood || 'normal');
       };
     }
     preloadAllAvatars();
