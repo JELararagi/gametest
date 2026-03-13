@@ -101,7 +101,7 @@
     #game-shell.shake{animation:shake .24s linear 1}
     @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
 
-    #board-wrap{position:absolute;inset:0;padding:calc(var(--top-hud-h) + 22px) 8px calc(var(--bottom-stack) + 6px);display:flex;justify-content:center;align-items:stretch}
+    #board-wrap{position:absolute;inset:0;padding:calc(var(--top-hud-h) + 52px) 8px calc(var(--bottom-stack) + 6px);display:flex;justify-content:center;align-items:stretch}
     #game-board{
       --gameover-line-y:126px;
       --danger-line-y:162px;
@@ -110,7 +110,7 @@
       box-shadow:inset 0 -40px 80px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.05)
     }
     #board-grid{position:absolute;inset:0;pointer-events:none;opacity:.34;background-image:linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);background-size:calc(100% / 6) calc(100% / 11);mask-image:linear-gradient(180deg, transparent 0%, black 12%, black 100%)}
-    #board-character{position:absolute;left:50%;bottom:-1%;width:71.5%;max-width:none;height:auto;transform:translateX(-50%);object-fit:contain;object-position:center bottom;pointer-events:none;z-index:4;opacity:1;filter:drop-shadow(0 0 24px rgba(255,47,146,.2)) saturate(1.04)}
+    #board-character{position:absolute;left:50%;bottom:-1%;width:107.25%;max-width:none;height:auto;transform:translateX(-50%);object-fit:contain;object-position:center bottom;pointer-events:none;z-index:4;opacity:1;filter:drop-shadow(0 0 24px rgba(255,47,146,.2)) saturate(1.04)}
     #gameover-fx-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:24;opacity:0;transition:opacity .22s ease} 
     #gameover-fx-video.show{opacity:.9}
     #board-glass{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 60px rgba(0,236,255,.08), inset 0 -90px 110px rgba(255,47,146,.08)}
@@ -123,6 +123,7 @@
     .item-chip.near{box-shadow:0 0 0 2px rgba(0,236,255,.18), 0 0 20px rgba(0,236,255,.18), inset 0 0 18px rgba(255,255,255,.08)}
     .item-chip.ready{box-shadow:0 0 0 2px rgba(255,244,163,.22), 0 0 24px rgba(255,216,76,.36), inset 0 0 18px rgba(255,255,255,.08); animation:pulse .9s infinite}
     .item-chip.forecast{border-color:rgba(134,241,255,.78);box-shadow:0 0 0 3px rgba(134,241,255,.24), 0 0 28px rgba(134,241,255,.28), inset 0 0 18px rgba(255,255,255,.08);animation:pulse .9s infinite}
+    .item-chip.shift-glow{border-color:rgba(255,244,163,.96);box-shadow:0 0 0 3px rgba(255,244,163,.28),0 0 34px rgba(255,216,76,.42),0 0 56px rgba(0,236,255,.24),inset 0 0 20px rgba(255,255,255,.14);animation:pulse .58s infinite}
     .item-chip.hazard{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%);border-color:rgba(255,91,115,.92)}
     .item-chip.hazard::after{content:'🚨'}
     #danger-fog{position:absolute;inset:0;pointer-events:none;z-index:10;opacity:0;background:linear-gradient(180deg, rgba(255,59,91,.04), rgba(255,59,91,.18));transition:opacity .3s}
@@ -154,7 +155,7 @@
       border-radius:22px;box-shadow:0 12px 28px rgba(0,0,0,.26)
     }
     #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;min-width:0;max-width:none;align-items:center;gap:12px;min-height:var(--bottom-info-h);display:grid;grid-template-columns:minmax(0,1fr) auto;z-index:22}
-    #center-top{top:8px;left:8px;right:8px;transform:none;padding:8px 10px;gap:8px;width:auto;min-width:0;max-width:none;display:grid;grid-template-columns:86px minmax(0,1fr) 86px;align-items:center;height:var(--top-hud-h);transition:box-shadow .18s,border-color .18s,transform .18s;overflow:visible;pointer-events:none}
+    #center-top{top:8px;left:8px;right:8px;transform:none;padding:8px 10px;gap:8px;width:auto;min-width:0;max-width:none;display:grid;grid-template-columns:72px 86px minmax(0,1fr) 86px 72px;align-items:center;height:var(--top-hud-h);transition:box-shadow .18s,border-color .18s,transform .18s;overflow:visible;pointer-events:none}
     #center-top.warning{border-color:rgba(255,216,76,.48);box-shadow:0 0 28px rgba(255,216,76,.18),0 12px 28px rgba(0,0,0,.26)}
     #top-right{display:none}
     #drop-queue{position:absolute;top:8px;right:8px;width:var(--queue-w);height:var(--top-hud-h);padding:8px 4px;display:grid;grid-template-rows:1fr 1fr auto;gap:6px;justify-items:center;align-content:stretch;z-index:21;background:rgba(10,6,16,.94);border:1px solid rgba(255,255,255,.09);border-radius:22px;box-shadow:0 12px 28px rgba(0,0,0,.26)}
@@ -184,7 +185,7 @@
     #pin-side{display:none}
     #pin-text{font-size:.8rem;line-height:1.25}
     #pin-main .mini-label{display:none}
-    #score-view{font-size:clamp(2rem,6.8vw,2.9rem)}
+    #score-view{font-size:clamp(2.35rem,7.8vw,3.35rem)}
     #top-left > div{min-width:0}
 
     #trend-main{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;justify-content:center;gap:8px;min-width:0;max-width:min(48vw, 210px);justify-self:center}
@@ -194,7 +195,7 @@
     #trend-progress{display:none}
     #trend-progress-fill{display:block;height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#ffd84c,#ff7dd4,#00ecff);box-shadow:0 0 16px rgba(255,216,76,.34);transition:width .18s linear}
     #trend-timer{display:block;font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;color:#fff0a3;white-space:nowrap}
-    #next-block{display:grid;justify-items:center;align-content:center;gap:4px;border-top:none;border-left:1px solid rgba(255,255,255,.08);padding-top:0;padding-left:10px;transition:transform .16s,box-shadow .16s,border-color .16s;width:86px;min-width:86px;position:relative;right:56px}
+    #next-block{display:grid;justify-items:center;align-content:center;gap:4px;border-top:none;border-left:1px solid rgba(255,255,255,.08);padding-top:0;padding-left:10px;transition:transform .16s,box-shadow .16s,border-color .16s;width:86px;min-width:86px;position:relative;right:auto}
     #next-block.warning{border-color:rgba(0,236,255,.42);box-shadow:0 0 22px rgba(0,236,255,.14);animation:pulse .88s infinite}
     .tiny-stack{display:grid;grid-template-columns:repeat(2, 42px);gap:7px}
     .tiny-stack img{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.34));border-radius:999px;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);padding:5px;border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 0 14px rgba(255,255,255,.22)}
@@ -288,7 +289,7 @@
     #next-switch-copy{display:none}
     #center-top .hero-label{font-size:.66rem}
     #center-top > .trend-copy{display:none}
-    #top-left #burst-btn{min-width:96px;min-height:96px;border-radius:22px;padding:0}
+    #top-left #burst-btn{min-width:96px;min-height:96px;border-radius:22px;padding:0;margin-top:-10px}
     #top-left #burst-btn .icon{font-size:1.35rem}
     #top-left #burst-btn .txt{font-size:.88rem;line-height:1.08}
     #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;height:var(--bottom-info-h);min-height:var(--bottom-info-h);max-height:var(--bottom-info-h);min-width:0;max-width:none;align-items:center;gap:12px;justify-content:space-between;display:grid;grid-template-columns:minmax(0,1fr) 96px;z-index:22}
@@ -298,9 +299,9 @@
     #play-controls{position:absolute;left:8px;right:8px;bottom:8px;padding:8px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;z-index:23;height:var(--bottom-controls-h)}
     .play-mini-btn{font-size:.98rem}
 
-    #future-block{grid-column:1;justify-self:end;align-self:center}
-    #center-top #trend-main{grid-column:2;display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:8px;min-width:0;padding-left:0;border-left:none;justify-content:center}
-    #center-top #next-block{grid-column:3;justify-self:start;align-self:center;margin-right:calc(var(--queue-w) + 10px);min-width:74px;border-left:none;padding-left:0}
+    #future-block{grid-column:1;justify-self:start;align-self:center;width:72px;min-width:72px}
+    #center-top #trend-main{grid-column:3;display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:8px;min-width:0;padding-left:0;border-left:none;justify-content:center;justify-self:center}
+    #center-top #next-block{grid-column:2;justify-self:center;align-self:center;margin-right:0;min-width:74px;border-left:none;padding-left:0}
     @media (max-width:760px){
       #trend-main{grid-template-columns:80px minmax(0,1fr) auto}
       #trend-thumb{width:80px;height:80px}
@@ -327,11 +328,11 @@
     .howto-note{margin-top:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;line-height:1.7;color:#e8def5;font-size:.86rem}
     .howto-note strong{color:#fff}
     #big-buzz-banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:32;opacity:0}
-    #big-buzz-banner .core{max-width:min(90%, 320px);padding:14px 16px;border-radius:28px;background:radial-gradient(circle at center, rgba(255,216,76,.38), rgba(255,47,146,.2) 48%, rgba(8,4,14,0) 76%);font-family:'Orbitron',sans-serif;font-size:clamp(1.45rem,7vw,2.9rem);font-weight:900;letter-spacing:.02em;line-height:1;white-space:nowrap;text-align:center;color:#fff4a3;text-shadow:0 0 18px rgba(255,216,76,.9),0 0 44px rgba(255,47,146,.72),0 0 82px rgba(255,255,255,.26);transform:scale(.8) rotate(-1deg)}
+    #big-buzz-banner .core{max-width:min(92%, 420px);padding:18px 20px;border-radius:32px;background:radial-gradient(circle at center, rgba(255,216,76,.45), rgba(255,47,146,.28) 48%, rgba(8,4,14,0) 76%);font-family:'Orbitron',sans-serif;font-size:clamp(2.2rem,11vw,4.4rem);font-weight:900;letter-spacing:.01em;line-height:1;white-space:nowrap;text-align:center;color:#fff4a3;text-shadow:0 0 22px rgba(255,216,76,.95),0 0 58px rgba(255,47,146,.78),0 0 96px rgba(255,255,255,.3);transform:scale(.8) rotate(-1deg)}
     #big-buzz-banner.show{animation:bigBuzzBurst .96s cubic-bezier(.19,.89,.24,1)}
     #big-buzz-banner.show .core{animation:bigBuzzPulse .96s cubic-bezier(.19,.89,.24,1)}
     @keyframes bigBuzzBurst{0%{opacity:0}16%{opacity:1}72%{opacity:1}100%{opacity:0}}
-    @keyframes bigBuzzPulse{0%{transform:scale(.64) rotate(-6deg);filter:blur(8px)}22%{transform:scale(1.18) rotate(1deg);filter:blur(0)}56%{transform:scale(1) rotate(0)}100%{transform:scale(.92) rotate(0);filter:blur(1px)}}
+    @keyframes bigBuzzPulse{0%{transform:scale(.58) rotate(-5deg);filter:blur(8px)}22%{transform:scale(1.12) rotate(1deg);filter:blur(0)}56%{transform:scale(1) rotate(0)}100%{transform:scale(.95) rotate(0);filter:blur(1px)}}
 
     #howto-screen,#result-screen{align-items:flex-start;overflow:auto;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
     #start-screen .title-actions{grid-template-columns:1fr;gap:10px}
@@ -348,11 +349,11 @@
       .panel{padding:18px;border-radius:26px}
       .chip-row{grid-template-columns:1fr}
       #game-shell{--top-hud-h:102px;--queue-w:72px;--bottom-info-h:102px;--bottom-controls-h:58px;width:min(calc(100vw - 8px), 420px);height:min(calc(100dvh - 8px), var(--app-height));border-radius:24px}
-      #board-wrap{padding:calc(var(--top-hud-h) + 18px) 8px calc(var(--bottom-stack) + 8px)}
+      #board-wrap{padding:calc(var(--top-hud-h) + 48px) 8px calc(var(--bottom-stack) + 8px)}
       #chat-lane{top:46px;bottom:86px}
       #game-board{width:100%}
       #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);min-width:0;padding:10px 12px;gap:10px;min-height:var(--bottom-info-h);grid-template-columns:minmax(0,1fr) 90px}
-      #center-top{top:8px;left:8px;right:8px;transform:none;min-width:0;width:auto;padding:8px 10px;display:grid;grid-template-columns:78px minmax(0,1fr) 78px;gap:8px;height:var(--top-hud-h)}
+      #center-top{top:8px;left:8px;right:8px;transform:none;min-width:0;width:auto;padding:8px 10px;display:grid;grid-template-columns:66px 78px minmax(0,1fr) 78px 66px;gap:8px;height:var(--top-hud-h)}
       #trend-main{display:grid;grid-template-columns:70px minmax(0,1fr);gap:8px;justify-content:stretch;align-items:center;text-align:left;max-width:min(50vw, 190px);justify-self:center}
       #trend-thumb{width:66px;height:66px}
       .trend-name{font-size:1.1rem}
@@ -381,14 +382,150 @@
       #game-screen{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
       #game-shell{--top-hud-h:98px;--queue-w:70px;--bottom-info-h:100px;--bottom-controls-h:56px;width:min(calc((100dvh - 6px) * (1179 / 2556)), calc(100vw - 6px), 420px)}
       #caption-box{left:50%;right:auto;top:calc(var(--gameover-line-y) + 18px);width:min(84%, 310px)}
-      #board-wrap{padding:calc(var(--top-hud-h) + 16px) 6px calc(var(--bottom-stack) + 6px)}
-      #center-top{left:6px;right:6px;top:6px;width:auto;grid-template-columns:74px minmax(0,1fr) 74px;padding:8px;height:var(--top-hud-h)}
+      #board-wrap{padding:calc(var(--top-hud-h) + 46px) 6px calc(var(--bottom-stack) + 6px)}
+      #center-top{left:6px;right:6px;top:6px;width:auto;grid-template-columns:58px 72px minmax(0,1fr) 72px 58px;padding:8px;height:var(--top-hud-h)}
       #top-left{left:6px;right:6px;bottom:calc(var(--bottom-controls-h) + 8px);min-height:var(--bottom-info-h)}
       #drop-queue{top:6px;right:6px;width:var(--queue-w);height:var(--top-hud-h)}
       #avatar{width:110px;height:110px;flex-basis:110px}
       #score-view{font-size:2.1rem}
       #game-board{--gameover-line-y:118px;--danger-line-y:150px}
     }
+
+    /* --- base 1206x2412 unified stage patch --- */
+    :root{
+      --stage-w:1206px;
+      --stage-h:2412px;
+      --stage-scale:1;
+      --game-shell-scale:2.55;
+    }
+    .screen{
+      left:50%;
+      top:50%;
+      right:auto;
+      bottom:auto;
+      width:var(--stage-w);
+      height:var(--stage-h);
+      transform:translate(-50%,-50%) scale(var(--stage-scale));
+      transform-origin:center center;
+      padding:64px;
+      overflow:hidden;
+    }
+    #start-screen,#result-screen{align-items:center;justify-content:center;padding:72px 76px}
+    #howto-screen{align-items:flex-start;justify-content:center;padding:72px 76px;overflow:hidden}
+    #game-screen{padding:0;align-items:center;justify-content:center;overflow:hidden}
+
+    .panel{
+      width:980px;
+      max-width:980px;
+      border-radius:48px;
+      padding:54px;
+    }
+    .title-main{
+      font-size:84px;
+      text-shadow:0 0 24px rgba(255,47,146,.8);
+    }
+    .title-sub{
+      font-size:34px;
+      letter-spacing:.1em;
+    }
+    #title-art{width:760px;max-width:100%}
+    .intro-copy{margin-top:18px;font-size:28px;line-height:1.72}
+    .btn-row{gap:18px;margin-top:28px}
+    .btn{
+      min-height:112px;
+      padding:22px 28px;
+      border-radius:28px;
+      font-size:34px;
+    }
+    .small-note{margin-top:18px;font-size:24px;line-height:1.75}
+    .name-box{gap:10px;border-radius:24px;padding:18px}
+    .name-box span{font-size:24px}
+    .name-box input{
+      min-height:96px;
+      border-radius:20px;
+      padding:0 24px;
+      font-size:34px;
+    }
+    .daily-board-wrap{border-radius:26px;padding:20px}
+    .daily-title{font-size:28px;margin-bottom:12px}
+    .rank-row{
+      grid-template-columns:64px 1fr auto;
+      gap:14px;
+      padding:14px 18px;
+      border-radius:20px;
+    }
+    .rank-row .rk{font-size:30px}
+    .rank-row .nm{font-size:28px}
+    .rank-row .sc{font-size:28px}
+    .rank-empty{font-size:24px}
+
+    #start-screen .panel{
+      max-height:2268px;
+      overflow:hidden;
+      display:grid;
+      gap:24px;
+    }
+    #start-screen .title-actions{grid-template-columns:1fr;gap:18px}
+    #start-screen .small-note{margin-top:0}
+    #start-screen .daily-board-wrap{margin-top:0}
+
+    #howto-screen .panel,#result-screen .panel{
+      width:980px;
+      max-width:980px;
+      margin:0;
+    }
+    #howto-screen .panel{
+      max-height:2268px;
+      overflow:auto;
+      padding-right:22px;
+    }
+    #result-screen .panel{
+      max-height:2268px;
+      overflow:auto;
+      padding-right:22px;
+    }
+    #howto-screen .title-main,#result-screen .title-main{font-size:72px !important}
+    .howto-diagram{margin-top:22px;gap:18px}
+    .howto-row{
+      grid-template-columns:132px 1fr;
+      gap:18px;
+      padding:18px;
+      border-radius:24px;
+      font-size:26px;
+      line-height:1.65;
+    }
+    .howto-icons{gap:10px}
+    .howto-icons img{
+      width:56px;
+      height:56px;
+      padding:8px;
+    }
+    .howto-note{
+      margin-top:20px;
+      border-radius:24px;
+      padding:22px;
+      font-size:24px;
+      line-height:1.76;
+    }
+    .result-grid{gap:16px;margin-top:22px}
+    .result-card{
+      border-radius:24px;
+      padding:18px;
+    }
+    .result-card .label{font-size:22px}
+    .result-card .value{font-size:52px}
+
+    #game-shell{
+      width:430px !important;
+      height:932px !important;
+      max-height:none !important;
+      aspect-ratio:auto !important;
+      margin:0 !important;
+      transform:scale(var(--game-shell-scale));
+      transform-origin:center center;
+      border-radius:32px;
+    }
+    #game-screen #game-shell{position:relative}
 
   </style>
 </head>
@@ -425,7 +562,7 @@
       <div class="btn-row title-actions">
         <button id="start-btn" class="btn btn-main">配信開始</button>
         <button id="howto-btn" class="btn btn-sub">遊び方</button>
-        <button id="mute-btn" class="btn btn-sub" style="display:none">🔊 サウンド ON / OFF</button>
+        <button id="mute-btn" class="btn btn-sub">🔊 サウンド ON / OFF</button>
       </div>
       <div class="daily-board-wrap">
         <div class="daily-title">DAILY 王冠レース（共通条件）</div>
@@ -653,7 +790,7 @@
       <div class="btn-row">
         <button id="retry-btn" class="btn btn-main">もう一回配信する</button>
         <button id="share-btn" class="btn btn-sub">📋 結果をコピー</button>
-        <button id="result-title-btn" class="btn btn-sub">タイトルに戻る</button><button id="result-mute-btn" class="btn btn-sub" style="display:none">🔊 サウンド ON / OFF</button>
+        <button id="result-title-btn" class="btn btn-sub">タイトルに戻る</button><button id="result-mute-btn" class="btn btn-sub">🔊 サウンド ON / OFF</button>
       </div>
     </div>
   </div>
@@ -884,6 +1021,77 @@
       win:['assets/audio/voice_mc_win_01.wav','assets/audio/voice_mc_win_02.wav','assets/audio/voice_mc_win_03.wav','assets/audio/voice_mc_win_04.wav'],
       lose:['assets/audio/voice_mc_lose_01.wav','assets/audio/voice_mc_lose_02.wav','assets/audio/voice_mc_lose_03.wav','assets/audio/voice_mc_lose_04.wav']
     };
+
+    const VOICE_TEXT_MAP = {
+      'voice_mc_start_01.wav':'配信スタートっ！ねぇ、私がいっちばん可愛いでしょ？',
+      'voice_mc_start_02.wav':'はーい、今日も承認欲求満たしにきたよー♡',
+      'voice_mc_start_03.wav':'待ってた？ 今日も同接トップ狙っていくからねっ！',
+      'voice_mc_start_04.wav':'さっそく、同接（すうじ）稼いでこっか！',
+      'voice_mc_calm_01.wav':'んー、まずはこんなもんかな？',
+      'voice_mc_calm_02.wav':'まあまあ、天才だから余裕だし？',
+      'voice_mc_calm_03.wav':'綺麗に積んでくよー、見ててね。',
+      'voice_mc_calm_04.wav':'いい調子！ いっぱいコメントしてね♡',
+      'voice_mc_focus_01.wav':'欲しいのはこれ！ 逃がさないよっ。',
+      'voice_mc_focus_02.wav':'今の空気、完全に理解した！',
+      'voice_mc_focus_03.wav':'はい、狙い撃ちー♡',
+      'voice_mc_focus_04.wav':'私の目に狂いはないんだからっ！',
+      'voice_mc_warning_01.wav':'なんか…でっかい波、来そうじゃない？',
+      'voice_mc_warning_02.wav':'みんな、準備はいい？ いくよっ！',
+      'voice_mc_warning_03.wav':'そろそろ本気、出しちゃおっかなー。',
+      'voice_mc_warning_04.wav':'今のうちに、媚びとこっと♡',
+      'voice_mc_clear_01.wav':'はいっ、天才ー！',
+      'voice_mc_clear_02.wav':'んふふ、いい感じじゃん。',
+      'voice_mc_clear_03.wav':'刺さったでしょ、今の！',
+      'voice_mc_clear_04.wav':'おっ、コメ欄あったまってきたねー。',
+      'voice_mc_clear_05.wav':'助かる！ えらいっ！',
+      'voice_mc_chain_02.wav':'まだまだ！ もっと私を見てーっ！',
+      'voice_mc_chain_03.wav':'ｷﾀｺﾚ！ 脳汁やばいっ！',
+      'voice_mc_chain_04.wav':'ぁあっ、これめっちゃ気持ちいい…！',
+      'voice_mc_chain_05.wav':'ここ！ 絶対クリップしてね！！',
+      'voice_mc_chain_06.wav':'止まんない止まんない！ あはははっ！',
+      'voice_mc_hype_01.wav':'覇権キタコレ！ ちょ、同接バグってない！？',
+      'voice_mc_hype_02.wav':'全部私のモノ！ ネットの話題、独占しちゃうから！',
+      'voice_mc_hype_03.wav':'もっと！ もっと私を肯定してぇぇっ！',
+      'voice_mc_hype_04.wav':'圧倒的感謝！ お前ら愛してるぞーっ！',
+      'voice_mc_hype_05.wav':'神回！ はい今、神回ですこれ！！',
+      'voice_mc_fire_01.wav':'ちょ、待って！ 荒らさないでよ！',
+      'voice_mc_fire_02.wav':'やばいやばい、アンチわきすぎっ！',
+      'voice_mc_fire_03.wav':'私は悪くないもん！…だよね！？',
+      'voice_mc_fire_04.wav':'見捨てないで…！ まだ頑張れるからぁ！',
+      'voice_mc_apology_ready_01.wav':'んっんー、よし、泣く準備おっけー。',
+      'voice_mc_apology_ready_02.wav':'ここは一旦、下に出とこっか。',
+      'voice_mc_apology_ready_03.wav':'伝家の宝刀、抜いちゃいますか。',
+      'voice_mc_apology_fire_01.wav':'この度は、誠に申し訳ございませんでしたぁっ！（嘘泣き）',
+      'voice_mc_apology_fire_02.wav':'ごめん、ごめんなさい！ だから見捨てないでぇ！',
+      'voice_mc_apology_fire_03.wav':'反省してます、めっちゃ反省してますぅー！',
+      'voice_mc_apology_fire_04.wav':'ぴえん！ 許して、ね？ お願いっ♡',
+      'voice_mc_rush_01.wav':'私の計算通り！ さっすがー！',
+      'voice_mc_rush_02.wav':'リスナーの心、完全に掌握したわ♡',
+      'voice_mc_rush_03.wav':'手のひらの上ってやつ？ ふふっ。',
+      'voice_mc_rush_04.wav':'はい伏線回収ー！ 私かしこすぎない？',
+      'voice_mc_jack_01.wav':'え、私ニュータイプかもしれない！',
+      'voice_mc_jack_02.wav':'全っ部見えてる！ 配信の神に愛されてるし！',
+      'voice_mc_jack_03.wav':'怖い怖い、自分が天才すぎて怖い！',
+      'voice_mc_jack_04.wav':'圧倒的神プレイ！ 褒めて褒めてー！',
+      'voice_mc_big_01.wav':'っでか！！ これスパチャ飛ぶでしょ！',
+      'voice_mc_big_02.wav':'はい、今日のサムネ決定！',
+      'voice_mc_big_03.wav':'んぁ〜っ、最高に気持ちいいんですけどぉ！',
+      'voice_mc_big_04.wav':'切り抜き師さーん！ 出番ですよーっ！',
+      'voice_mc_big_05.wav':'同接（すうじ）の暴力！ 味わえーっ！',
+      'voice_mc_top_01.wav':'ぎゃーっ！ 詰む詰む！ 画面やばい！',
+      'voice_mc_top_02.wav':'待って待って、溢れる！ 窒息しちゃう！',
+      'voice_mc_top_03.wav':'とりあえず消す！ 誰か助けてーっ！',
+      'voice_mc_top_04.wav':'ああああ！ もう、なんでこうなるのぉ！？',
+      'voice_mc_win_01.wav':'見たかお前ら！ これが最強の可愛さだーっ！',
+      'voice_mc_win_02.wav':'世界でいっちばん、私が可愛いんだよぉぉっ！',
+      'voice_mc_win_03.wav':'お前ら最高！ 一生私についてこいっ♡',
+      'voice_mc_win_04.wav':'大勝利！ はぁ〜、承認欲求満たされたぁ…。',
+      'voice_mc_lose_01.wav':'もう無理…病んだ。配信切るね…。',
+      'voice_mc_lose_02.wav':'違うもん、今の絶対ラグだもんっ！',
+      'voice_mc_lose_03.wav':'あーあ、オワコンになっちゃった…ぴえん。',
+      'voice_mc_lose_04.wav':'…うっ、なんで誰も見てくれないのぉ…。'
+    };
+
     const voiceCache = new Map();
     const sfxCache = new Map();
     const sfxFileMap = {
@@ -992,7 +1200,12 @@
       cleanupTimer:0,
       rescueTimer:0,
       boardStatsCache:null,
-      boardStatsCacheAt:0
+      boardStatsCacheAt:0,
+      lastVoiceText:'',
+      voiceSubtitleTimer:0,
+      shiftGlowIds:[],
+      shiftGlowTimer:0,
+      finishing:false
     };
 
     function mulberry32(a) {
@@ -1283,6 +1496,8 @@
         node.textContent = node.dataset.emoji || '💬';
       }, { once:true });
       node.appendChild(img);
+      node.style.display = 'grid';
+      node.style.visibility = 'visible';
       dom.itemLayer.appendChild(node);
       bodyVisuals.set(body.id, node);
       return node;
@@ -1321,6 +1536,12 @@
         node.classList.toggle('forecast', forecastReady);
         const opacityValue = '1';
         if (node.style.opacity !== opacityValue) node.style.opacity = opacityValue;
+        if (node.style.display !== 'grid') node.style.display = 'grid';
+        if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
+        const zValue = String(100 + Math.round(body.position.y));
+        if (node.style.zIndex !== zValue) node.style.zIndex = zValue;
+        const glowActive = state.shiftGlowTimer > 0 && state.shiftGlowIds.includes(body.id);
+        node.classList.toggle('shift-glow', glowActive);
         const filterValue = body.gameType === 'hazard' ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
         if (node.style.filter !== filterValue) node.style.filter = filterValue;
       });
@@ -1333,14 +1554,57 @@
       renderMergeLinks();
     }
 
+    const BASE_STAGE_W = 1206;
+    const BASE_STAGE_H = 2412;
+
     function applyAppHeight() {
       appHeight = window.innerHeight;
-      document.documentElement.style.setProperty('--app-height', `${appHeight}px`);
+      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+      const stageScale = Math.min(vw / BASE_STAGE_W, vh / BASE_STAGE_H) || 1;
+      document.documentElement.style.setProperty('--app-height', `${vh}px`);
+      document.documentElement.style.setProperty('--stage-scale', `${stageScale}`);
       resizeCanvas();
+    }
+
+    function boardLogicalRect() {
+      const rect = dom.board?.getBoundingClientRect?.() || { left:0, top:0, right:0, bottom:0, width:0, height:0 };
+      const width = dom.board?.clientWidth || dom.board?.offsetWidth || Math.round(rect.width) || 1;
+      const height = dom.board?.clientHeight || dom.board?.offsetHeight || Math.round(rect.height) || 1;
+      return {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width,
+        height,
+        scaleX: rect.width ? (width / rect.width) : 1,
+        scaleY: rect.height ? (height / rect.height) : 1
+      };
     }
 
     function persistSave() {
       localStorage.setItem(storageKey, JSON.stringify(save));
+    }
+
+
+    function voiceTextForPath(path) {
+      const file = String(path || '').split('/').pop();
+      return VOICE_TEXT_MAP[file] || '';
+    }
+
+    function applyVoiceSubtitle(path, hold = 3.8) {
+      const line = voiceTextForPath(path);
+      if (!line) return false;
+      state.lastVoiceText = line;
+      state.voiceSubtitleTimer = Math.max(state.voiceSubtitleTimer || 0, hold);
+      setMoodLabel(line);
+      return true;
+    }
+
+    function stopAllVoiceAudio() {
+      try { [dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(a => { if (a) { a.pause(); a.currentTime = 0; } }); } catch (_) {}
+      voiceCache.forEach(audio => { try { audio.pause(); audio.currentTime = 0; } catch (_) {} });
     }
 
     function updateMuteButtons() {
@@ -1414,7 +1678,8 @@
 
     function tryPlayVoicePath(path, volume = 0.72) {
       const audio = getVoiceAudio(path);
-      if (!audio || muted || audio.dataset.failed === '1') return false;
+      applyVoiceSubtitle(path);
+      if (!audio || muted || audio.dataset.failed === '1') return !!voiceTextForPath(path);
       try {
         audio.pause();
         audio.currentTime = 0;
@@ -1427,7 +1692,8 @@
     function playVoice(kind) {
       const map = { start:dom.voiceStart, fire:dom.voiceFire, win:dom.voiceWin, lose:dom.voiceLose };
       const audio = map[kind];
-      if (!audio || muted) return false;
+      applyVoiceSubtitle(audio?.currentSrc || audio?.src || '');
+      if (!audio || muted) return !!voiceTextForPath(audio?.currentSrc || audio?.src || '');
       audio.currentTime = 0;
       audio.volume = kind === 'lose' ? 0.84 : 0.72;
       audio.play().catch(() => {});
@@ -1466,20 +1732,18 @@
       const slot = kind in voiceCooldowns ? kind : 'default';
       if (voiceCooldowns[slot] > now) return false;
       const pool = voicePools[kind] || [];
-      let variants = pool;
+      let variants = pool.slice();
       if (kind === 'chain') {
         variants = tier >= 5 ? pool.slice(3) : (tier >= 4 ? pool.slice(2) : (tier >= 3 ? pool.slice(1, 3) : pool.slice(0, 1)));
       } else if (kind === 'clear') {
         variants = tier >= 4 ? pool.slice(1) : pool.slice(0, 2);
       } else if (kind === 'hype') {
-        variants = tier >= 4 ? pool.slice(1) : pool;
+        variants = tier >= 4 ? pool.slice(1) : pool.slice();
       }
+      const chosen = variants.length ? choiceGame(variants) : '';
       let played = false;
-      for (const path of variants) {
-        if (tryPlayVoicePath(path, kind === 'chain' ? 0.84 : 0.72)) {
-          played = true;
-          break;
-        }
+      if (chosen) {
+        played = tryPlayVoicePath(chosen, kind === 'chain' ? 0.84 : (kind === 'lose' ? 0.84 : 0.72));
       }
       if (!played) {
         if (kind === 'warning') played = playVoice('fire');
@@ -1574,24 +1838,24 @@
 
     function resizeCanvas() {
       if (!dom.board) return;
-      const rect = dom.board.getBoundingClientRect();
-      dom.particleCanvas.width = rect.width;
-      dom.particleCanvas.height = rect.height;
-      dom.fxCanvas.width = rect.width;
-      dom.fxCanvas.height = rect.height;
-      dom.mergeCanvas.width = rect.width;
-      dom.mergeCanvas.height = rect.height;
+      const info = boardLogicalRect();
+      dom.particleCanvas.width = info.width;
+      dom.particleCanvas.height = info.height;
+      dom.fxCanvas.width = info.width;
+      dom.fxCanvas.height = info.height;
+      dom.mergeCanvas.width = info.width;
+      dom.mergeCanvas.height = info.height;
       particleCtx = dom.particleCanvas.getContext('2d');
       fxCtx = dom.fxCanvas.getContext('2d');
       mergeCtx = dom.mergeCanvas.getContext('2d');
       if (render) {
-        render.canvas.width = rect.width;
-        render.canvas.height = rect.height;
-        render.options.width = rect.width;
-        render.options.height = rect.height;
+        render.canvas.width = info.width;
+        render.canvas.height = info.height;
+        render.options.width = info.width;
+        render.options.height = info.height;
       }
       if (engine) updateWorldBounds();
-      hoverX = rect.width / 2;
+      hoverX = info.width / 2;
       renderPreview();
     }
 
@@ -1629,6 +1893,11 @@
     }
 
     function updateMoodText(dt = 0) {
+      state.voiceSubtitleTimer = Math.max(0, (state.voiceSubtitleTimer || 0) - dt);
+      if (state.lastVoiceText) {
+        setMoodLabel(state.lastVoiceText);
+        return;
+      }
       if (state.moodTimer > 0) {
         state.moodTimer = Math.max(0, state.moodTimer - dt);
       }
@@ -1636,17 +1905,9 @@
         setMoodLabel(state.currentLine);
         return;
       }
-      state.ambientMoodTimer = Math.max(0, state.ambientMoodTimer - dt);
-      if (state.ambientMoodTimer > 0) {
+      if (state.ambientMoodLine) {
         setMoodLabel(state.ambientMoodLine);
-        return;
       }
-      if (state.buzzMode > 0 || state.buzzReady) pickAmbientLine(PLAYER_LINES.buzz, 3.2);
-      else if (state.fireMode > 0) pickAmbientLine(PLAYER_LINES.fire, 2.8);
-      else if (state.topDangerTime > 0.8) pickAmbientLine(PLAYER_LINES.top, 2.6);
-      else if (state.tension > 70) { pickAmbientLine(PLAYER_LINES.focus, 3.2); maybeAmbientVoice('focus', 18); }
-      else if (state.tension > 40) { pickAmbientLine(PLAYER_LINES.calm, 3.0); maybeAmbientVoice('calm', 16); }
-      else pickAmbientLine(PLAYER_LINES.low, 2.6);
     }
 
     function updateSeedLabels() {
@@ -1721,8 +1982,8 @@
       state.trendTotalTime = 1;
       state.trendTimer = 1;
       state.trendWarning = false;
-      state.recentSwitchBonus = 4.8;
-      state.rushWindow = 6.2;
+      state.recentSwitchBonus = 0;
+      state.rushWindow = 0;
       const trend = currentTrend();
       dom.trendThumb.src = trend.img;
       dom.trendName.textContent = trend.name;
@@ -1732,7 +1993,7 @@
       dom.nextTrendThumb.src = nextTrend().img;
       dom.nextTrendName.textContent = nextTrend().name;
       dom.nextTrendName.style.color = nextTrend().accent;
-      if (dom.nextSwitchCopy) dom.nextSwitchCopy.textContent = ''; 
+      if (dom.nextSwitchCopy) dom.nextSwitchCopy.textContent = '';
       dom.futureTrendThumb.src = futureTrend().img;
       dom.futureTrendName.textContent = futureTrend().name;
       dom.futureTrendName.style.color = futureTrend().accent;
@@ -1753,14 +2014,21 @@
         showTrendShiftBanner('shift', previousIndex == null ? index : previousIndex, index, state.futureTrendIndex);
       }
       state.setupCarryLen = 0;
+      state.shiftGlowIds = [];
+      state.shiftGlowTimer = 0;
       if (withFlash && engine) {
-        scanGroups();
-        const preloadLen = biggestPreviewLen();
+        const groups = scanGroups();
+        const preloadGroup = groups.sort((a, b) => b.length - a.length)[0] || null;
+        const preloadLen = preloadGroup ? preloadGroup.length : 0;
         if (preloadLen >= 2) {
           state.setupCarryLen = preloadLen;
+          state.recentSwitchBonus = 4.8;
           state.rushWindow = Math.max(state.rushWindow, preloadLen >= 3 ? 8.8 : 7.8);
+          state.shiftGlowIds = preloadGroup.map(body => body.id);
+          state.shiftGlowTimer = 1.2;
           popText(dom.board.clientWidth / 2, 154, preloadLen >= 3 ? '先読みOK!' : '次の波OK', '#8ef8ff', preloadLen >= 3 ? 26 : 20);
           spawnComment(false, preloadLen >= 3 ? `もう${trend.name}がつながってる` : `次の波へ仕込みが残ってる`, 'super', '🌊');
+          addRing(dom.board.clientWidth / 2, 148, '#8ef8ff', 18, 220);
           say('rush', 1.7);
         }
       }
@@ -1771,10 +2039,10 @@
     }
 
     function findSafeDropX(targetX, radius, spawnY = radius + getBoardMetrics().spawnInset) {
-      const rect = dom.board.getBoundingClientRect();
+      const boardW = dom.board.clientWidth || boardLogicalRect().width;
       const { sideInset, fullLineY } = getBoardMetrics();
       const minX = radius + sideInset;
-      const maxX = rect.width - radius - sideInset;
+      const maxX = boardW - radius - sideInset;
       const desired = clamp(targetX, minX, maxX);
       const spawnBandBottom = Math.max(fullLineY - 6, spawnY + radius + 18);
       const blockers = worldBodies().filter(body =>
@@ -1830,9 +2098,9 @@
     }
 
     function renderPreview() {
-      const rect = dom.board.getBoundingClientRect();
+      const boardW = dom.board.clientWidth || boardLogicalRect().width;
       const radius = dropRadiusFor();
-      const x = clamp(hoverX, radius + 6, rect.width - radius - 6);
+      const x = clamp(hoverX, radius + 6, boardW - radius - 6);
       const size = visualDiameter(radius, false);
       const metrics = getBoardMetrics();
       const ringSize = Math.round(size + 12);
@@ -2213,7 +2481,8 @@
     function cleanupOffscreenBodies() {
       const bodies = worldBodies();
       if (!bodies.length) return;
-      const rect = dom.board.getBoundingClientRect();
+      const boardW = dom.board.clientWidth || boardLogicalRect().width;
+      const boardH = dom.board.clientHeight || boardLogicalRect().height;
       for (const body of bodies) {
         const age = performance.now() - (body.spawnAt || 0);
         if (age < 320) continue;
@@ -2221,10 +2490,10 @@
           Body.setPosition(body, { x: clamp(body.position.x, body.circleRadius + 6, dom.board.clientWidth - body.circleRadius - 6), y: body.circleRadius + 14 });
           Body.setVelocity(body, { x: body.velocity.x * 0.2, y: Math.max(0, body.velocity.y) });
         } else if (body.position.x < -body.circleRadius) {
-          Body.setPosition(body, { x: body.circleRadius + 8, y: clamp(body.position.y, body.circleRadius + 14, rect.height - body.circleRadius - 8) });
+          Body.setPosition(body, { x: body.circleRadius + 8, y: clamp(body.position.y, body.circleRadius + 14, boardH - body.circleRadius - 8) });
           Body.setVelocity(body, { x: Math.max(0, Math.abs(body.velocity.x) * 0.35), y: body.velocity.y });
-        } else if (body.position.x > rect.width + body.circleRadius) {
-          Body.setPosition(body, { x: rect.width - body.circleRadius - 8, y: clamp(body.position.y, body.circleRadius + 14, rect.height - body.circleRadius - 8) });
+        } else if (body.position.x > boardW + body.circleRadius) {
+          Body.setPosition(body, { x: boardW - body.circleRadius - 8, y: clamp(body.position.y, body.circleRadius + 14, boardH - body.circleRadius - 8) });
           Body.setVelocity(body, { x: -Math.max(0, Math.abs(body.velocity.x) * 0.35), y: body.velocity.y });
         }
       }
@@ -2291,12 +2560,13 @@
 
     function updateWorldBounds() {
       if (!engine) return;
-      const rect = dom.board.getBoundingClientRect();
+      const boardW = dom.board.clientWidth || boardLogicalRect().width;
+      const boardH = dom.board.clientHeight || boardLogicalRect().height;
       if (wallBodies.length) wallBodies.forEach(body => Composite.remove(engine.world, body, true));
       wallBodies = [
-        Bodies.rectangle(rect.width / 2, rect.height + 34, rect.width + 80, 68, { isStatic:true, render:{ visible:false } }),
-        Bodies.rectangle(-32, rect.height / 2, 64, rect.height + 80, { isStatic:true, render:{ visible:false } }),
-        Bodies.rectangle(rect.width + 32, rect.height / 2, 64, rect.height + 80, { isStatic:true, render:{ visible:false } })
+        Bodies.rectangle(boardW / 2, boardH + 34, boardW + 80, 68, { isStatic:true, render:{ visible:false } }),
+        Bodies.rectangle(-32, boardH / 2, 64, boardH + 80, { isStatic:true, render:{ visible:false } }),
+        Bodies.rectangle(boardW + 32, boardH / 2, 64, boardH + 80, { isStatic:true, render:{ visible:false } })
       ];
       wallBodies.forEach(body => { body.gameType = 'wall'; });
       wallBodies.forEach(body => Composite.add(engine.world, body));
@@ -2393,8 +2663,8 @@
       state.peakChain = Math.max(state.peakChain, state.chainCount);
       const chainTier = state.chainCount;
       const statsNow = boardStats(true);
-      const rushBonus = state.rushWindow > 0;
-      const switchBonus = state.recentSwitchBonus > 0 ? 1800 : 0;
+      const rushBonus = state.rushWindow > 0 && state.setupCarryLen >= 2;
+      const switchBonus = rushBonus && state.recentSwitchBonus > 0 ? 1800 : 0;
       const mainIndex = group[0]?.contentIndex ?? state.trendIndex;
       const base = group.length * contentScoreValue(mainIndex);
       const comboBonus = state.combo * 400;
@@ -2448,6 +2718,8 @@
       }
       const gain = base + comboBonus + collateralBonus + switchBonus + clipBonus + pinBonus + rushBonusValue + jackBonus + clutchBonus + crownRushBonus + crownKeepBonus + forecastBonus + crownClutchBonus + waveLinkBonus + chainBonus;
       state.score += gain;
+      const timeBonus = group.length >= 3 ? (state.clipTime > 0 ? 20 : 10) : 0;
+      if (timeBonus > 0) state.streamTime = Math.min(state.streamTotal + 45, state.streamTime + timeBonus);
       const topGapAfter = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
       const tookCrown = topGapBefore > 0 && topGapAfter <= 0 && crownTargetScore(state.seed) > 0;
       state.clearCount += 1;
@@ -2482,6 +2754,7 @@
       if (pinBonus) popText(center.x, center.y + 152, state.pinClass === 'next' ? '次の波ピンコメ!' : 'ピンコメ達成!', '#8ef8ff', 18);
       if (clutchBonus) popText(center.x, center.y - 108, `逆転 +${fmt(clutchBonus)}`, '#ffb7d6', 20);
       if (state.combo >= 2) popText(center.x, center.y - 42, `COMBO x${state.combo}`, '#ffe37a', 22);
+      if (timeBonus > 0) popText(center.x, center.y - 84, `TIME +${timeBonus}s`, '#8ef8ff', 20);
 
       if (jackLevelUp) {
         state.clipTime = Math.max(state.clipTime, 10);
@@ -2715,6 +2988,11 @@
       state.rescueTimer = 0;
       state.boardStatsCache = null;
       state.boardStatsCacheAt = 0;
+      state.lastVoiceText = '';
+      state.voiceSubtitleTimer = 0;
+      state.shiftGlowIds = [];
+      state.shiftGlowTimer = 0;
+      state.finishing = false;
       state.paused = false;
       state.resultVoicePlayed = false;
       updateSeedLabels();
@@ -2776,7 +3054,6 @@
       persistPlayerName();
       ensureAudio();
       playBgm();
-      triggerVoiceCue('start');
       dom.startScreen.classList.add('hidden');
       dom.howtoScreen?.classList.add('hidden');
       dom.resultScreen.classList.add('hidden');
@@ -2793,6 +3070,7 @@
       resizeCanvas();
       initEngine();
       setTrend(state.trendIndex, false);
+      triggerVoiceCue('start');
       refreshQueue();
       updateUi();
       requestLoop(0);
@@ -2834,8 +3112,8 @@
     }
 
     function spawnHazard() {
-      const rect = dom.board.getBoundingClientRect();
-      const x = 40 + gameRand() * (rect.width - 80);
+      const boardW = dom.board.clientWidth || boardLogicalRect().width;
+      const x = 40 + gameRand() * (boardW - 80);
       const body = makeBody(x, 44, -1, true);
       state.boardStatsCache = null;
       Body.setAngularVelocity(body, (gameRand() - 0.5) * 0.14);
@@ -2892,13 +3170,13 @@
 
     function dropAt(clientX) {
       if (!state.active || !engine || state.paused) return;
-      const rect = dom.board.getBoundingClientRect();
-      if (clientX < rect.left || clientX > rect.right) return;
+      const info = boardLogicalRect();
+      if (clientX < info.left || clientX > info.right) return;
       const idx = state.queue[0];
       const radius = dropRadiusFor(idx);
       const metrics = getBoardMetrics();
       const spawnY = Math.max(radius + 6, metrics.fullLineY - radius - 6);
-      const desiredX = clamp(clientX - rect.left, radius + 6, rect.width - radius - 6);
+      const desiredX = clamp((clientX - info.left) * info.scaleX, radius + 6, info.width - radius - 6);
       const safeDrop = findSafeDropX(desiredX, radius, spawnY);
       hoverX = safeDrop.x;
       renderPreview();
@@ -3041,6 +3319,7 @@
       state.fireCooldown = Math.max(0, state.fireCooldown - dt);
       state.showCaptionTimer = Math.max(0, state.showCaptionTimer - dt);
       state.recentSwitchBonus = Math.max(0, state.recentSwitchBonus - dt);
+      state.shiftGlowTimer = Math.max(0, state.shiftGlowTimer - dt);
       state.pinTimer = Math.max(0, state.pinTimer - dt);
       state.rushWindow = Math.max(0, state.rushWindow - dt);
       state.hintCooldown = Math.max(0, state.hintCooldown - dt);
@@ -3181,7 +3460,8 @@
     }
 
     function finishGame() {
-      if (!state.active) return;
+      if (!state.active || state.finishing) return;
+      state.finishing = true;
       state.active = false;
       cancelAnimationFrame(rafId);
       rafId = 0;
@@ -3197,6 +3477,7 @@
       addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, fxColor, 40, 360);
       addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#ffffff', 64, 260);
       setAvatarVisual(isTimeUp ? 'yami' : 'panic');
+      stopAllVoiceAudio();
       state.resultVoicePlayed = triggerVoiceCue((crownTargetScore(state.seed) > 0 && Math.floor(state.score) >= crownTargetScore(state.seed)) ? 'win' : 'lose');
       sfx(isTimeUp ? 'big' : 'bad', 1.28);
       sfx('burst', isTimeUp ? 0.92 : 1.05);
@@ -3257,6 +3538,7 @@
         lastHyperBgmActive = false;
       setHyperMix(0);
         destroyEngine();
+        state.finishing = false;
       }, resultDelay);
     }
 
@@ -3305,8 +3587,8 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     if (dom.shareBtn) dom.shareBtn.addEventListener('click', copyResult);
     dom.burstBtn.addEventListener('click', activateBurst);
     dom.board.addEventListener('pointermove', event => {
-      const rect = dom.board.getBoundingClientRect();
-      hoverX = clamp(event.clientX - rect.left, 34, rect.width - 34);
+      const info = boardLogicalRect();
+      hoverX = clamp((event.clientX - info.left) * info.scaleX, 34, info.width - 34);
       renderPreview();
     });
     dom.board.addEventListener('pointerdown', event => {
