@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>トレバズ！</title>
+  <title>限界メルトダウン（Limit Meltdown）</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#09010d">
-  <meta property="og:title" content="トレバズ！">
+  <meta property="og:title" content="限界メルトダウン（Limit Meltdown）">
   <meta property="og:description" content="今バズる話題をつなぎ、次の波を先読みして王冠ラインを超える。配信向けの物理演算トレンドパズル。">
   <meta property="og:image" content="assets/img/ogp_image.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -31,8 +31,8 @@
     button,input{font:inherit}
     img{display:block}
 
-    #bg-container{position:fixed;inset:0;z-index:-3;background:#000}
-    #bg-video{width:100%;height:100%;object-fit:cover;opacity:.62}
+    #bg-container{position:fixed;inset:0;z-index:-3;background:#000 url('assets/img/bg_cyber_loop_frame.png') center/cover no-repeat}
+    #bg-video,#bg-video-hype{width:100%;height:100%;object-fit:cover}#bg-video{opacity:.62}#bg-video-hype{position:absolute;inset:0;opacity:0;transition:opacity .28s ease}#bg-container.hype #bg-video-hype{opacity:.82}
     #bg-vignette{position:fixed;inset:0;z-index:-2;background:
       radial-gradient(circle at top, rgba(255,47,146,.22), transparent 34%),
       radial-gradient(circle at bottom, rgba(0,236,255,.14), transparent 38%),
@@ -47,6 +47,8 @@
       box-shadow:0 28px 80px rgba(0,0,0,.46),0 0 40px rgba(255,47,146,.15);backdrop-filter:blur(16px);padding:24px;
     }
     .title-main{font-family:'Orbitron',sans-serif;font-size:clamp(2.2rem,7vw,4.5rem);line-height:1;color:var(--pink);text-shadow:0 0 18px rgba(255,47,146,.8)}
+    #title-art-wrap{display:grid;justify-items:center;gap:8px}
+    #title-art{width:min(100%, 360px);height:auto;object-fit:contain;filter:drop-shadow(0 10px 32px rgba(255,47,146,.28))}
     .title-sub{margin-top:8px;color:var(--cyan);letter-spacing:.16em;font-weight:900}
     .intro-copy{margin-top:16px;color:#f2e8ff;line-height:1.75;font-size:clamp(.96rem,2.6vw,1.05rem)}
     #top-gap-text{margin-top:6px;font-size:.74rem;color:#ffe9a1;line-height:1.35;font-weight:900}
@@ -81,6 +83,12 @@
 
     #game-screen{padding:max(4px,env(safe-area-inset-top)) max(4px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
     #game-shell{
+      --safe-gap:10px;
+      --top-hud-h:106px;
+      --queue-w:74px;
+      --bottom-controls-h:58px;
+      --bottom-info-h:104px;
+      --bottom-stack:calc(var(--bottom-controls-h) + var(--bottom-info-h) + 18px);
       position:relative;
       width:min(calc((100dvh - 8px) * (1179 / 2556)), calc(100vw - 8px), 430px);
       aspect-ratio:1179 / 2556;
@@ -88,36 +96,39 @@
       max-height:min(calc(100dvh - 8px), var(--app-height));
       margin:auto;border-radius:32px;overflow:hidden;
       border:2px solid rgba(255,47,146,.35);box-shadow:0 24px 80px rgba(0,0,0,.54),0 0 62px rgba(255,47,146,.18);
-      background:rgba(3,0,6,.66)
+      background:rgba(3,0,6,.66);touch-action:none
     }
     #game-shell.shake{animation:shake .24s linear 1}
     @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
 
-    #board-wrap{position:absolute;inset:0;padding:118px 10px 190px;display:flex;justify-content:center;align-items:stretch}
+    #board-wrap{position:absolute;inset:0;padding:calc(var(--top-hud-h) + 22px) 8px calc(var(--bottom-stack) + 6px);display:flex;justify-content:center;align-items:stretch}
     #game-board{
       --gameover-line-y:126px;
       --danger-line-y:162px;
       position:relative;width:min(100%, 560px);height:100%;border-radius:28px;overflow:hidden;border:3px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));touch-action:none;
       box-shadow:inset 0 -40px 80px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.05)
     }
-    #board-grid{position:absolute;inset:0;pointer-events:none;opacity:.42;background-image:linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);background-size:calc(100% / 6) calc(100% / 11);mask-image:linear-gradient(180deg, transparent 0%, black 12%, black 100%)}
+    #board-grid{position:absolute;inset:0;pointer-events:none;opacity:.34;background-image:linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);background-size:calc(100% / 6) calc(100% / 11);mask-image:linear-gradient(180deg, transparent 0%, black 12%, black 100%)}
+    #board-character{position:absolute;left:50%;bottom:-1%;width:71.5%;max-width:none;height:auto;transform:translateX(-50%);object-fit:contain;object-position:center bottom;pointer-events:none;z-index:4;opacity:1;filter:drop-shadow(0 0 24px rgba(255,47,146,.2)) saturate(1.04)}
+    #gameover-fx-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:24;opacity:0;transition:opacity .22s ease} 
+    #gameover-fx-video.show{opacity:.9}
     #board-glass{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 60px rgba(0,236,255,.08), inset 0 -90px 110px rgba(255,47,146,.08)}
     #merge-canvas{display:none}
     #item-layer{position:absolute;inset:0;pointer-events:none;z-index:9;overflow:hidden}
-    .item-chip{position:absolute;left:0;top:0;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 25%, rgba(255,255,255,.28), rgba(255,255,255,.06) 40%, rgba(12,9,22,.9) 70%);border:2px solid rgba(255,255,255,.18);box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 18px rgba(255,255,255,.08);transition:box-shadow .14s,border-color .14s;will-change:transform}
+    .item-chip{position:absolute;left:0;top:0;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);border:2px solid rgba(255,255,255,.34);box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,255,255,.28);transition:box-shadow .14s,border-color .14s;will-change:transform}
     .item-chip::after{content:attr(data-emoji);position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;border-radius:999px;display:grid;place-items:center;font-size:12px;background:rgba(12,9,22,.92);border:1px solid rgba(255,255,255,.16);box-shadow:0 0 12px rgba(0,0,0,.28)}
-    .item-chip img{width:74%;height:74%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.38))}
+    .item-chip img{width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.38));opacity:1}
     .item-chip.trend{border-color:rgba(255,216,76,.92);box-shadow:0 0 0 2px rgba(255,216,76,.18), 0 0 22px rgba(255,216,76,.28), inset 0 0 18px rgba(255,255,255,.08)}
     .item-chip.near{box-shadow:0 0 0 2px rgba(0,236,255,.18), 0 0 20px rgba(0,236,255,.18), inset 0 0 18px rgba(255,255,255,.08)}
     .item-chip.ready{box-shadow:0 0 0 2px rgba(255,244,163,.22), 0 0 24px rgba(255,216,76,.36), inset 0 0 18px rgba(255,255,255,.08); animation:pulse .9s infinite}
     .item-chip.forecast{border-color:rgba(134,241,255,.78);box-shadow:0 0 0 3px rgba(134,241,255,.24), 0 0 28px rgba(134,241,255,.28), inset 0 0 18px rgba(255,255,255,.08);animation:pulse .9s infinite}
-    .item-chip.hazard{background:radial-gradient(circle at 30% 25%, rgba(255,120,135,.28), rgba(255,59,91,.18) 45%, rgba(30,8,14,.88) 78%);border-color:rgba(255,91,115,.56);opacity:.72}
+    .item-chip.hazard{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%);border-color:rgba(255,91,115,.92)}
     .item-chip.hazard::after{content:'🚨'}
     #danger-fog{position:absolute;inset:0;pointer-events:none;z-index:10;opacity:0;background:linear-gradient(180deg, rgba(255,59,91,.04), rgba(255,59,91,.18));transition:opacity .3s}
     #danger-fog.show{opacity:1}
     #particle-canvas,#fx-canvas{position:absolute;inset:0;pointer-events:none}
-    #chat-lane{position:absolute;left:0;right:0;top:54px;bottom:58px;pointer-events:none;z-index:8;overflow:hidden;opacity:.72}
+    #chat-lane{position:absolute;left:0;right:0;top:52px;bottom:86px;pointer-events:none;z-index:8;overflow:hidden;opacity:.74}
     #fx-canvas{z-index:16}
     #particle-canvas{z-index:18}
     #gameover-line{
@@ -126,7 +137,7 @@
       box-shadow:0 0 16px rgba(255,59,91,.34)
     }
     #gameover-line::before{
-      content:'満杯ライン';position:absolute;right:8px;top:-18px;
+      content:'限界ライン';position:absolute;right:8px;top:-18px;
       padding:2px 8px;border-radius:999px;background:rgba(19,9,22,.9);border:1px solid rgba(255,104,145,.38);
       color:#ffb3d3;font-size:.64rem;font-weight:900;letter-spacing:.08em
     }
@@ -135,17 +146,22 @@
     @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
     #drop-guide{position:absolute;top:0;bottom:0;width:2px;left:50%;transform:translateX(-1px);z-index:13;pointer-events:none;background:linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.08));opacity:.55;filter:drop-shadow(0 0 8px rgba(255,255,255,.8))}
-    #preview-item{position:absolute;top:18px;left:50%;width:64px;height:64px;transform:translateX(-50%);object-fit:contain;z-index:14;pointer-events:none;filter:drop-shadow(0 0 14px rgba(255,255,255,.7))}
-    #preview-ring{position:absolute;top:16px;left:50%;width:74px;height:74px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(255,255,255,.3);box-shadow:0 0 18px rgba(255,255,255,.12);z-index:13;pointer-events:none}
+    #preview-item{position:static;width:74%;height:74%;transform:none;object-fit:contain;object-position:center center;z-index:14;pointer-events:none;filter:drop-shadow(0 0 14px rgba(255,255,255,.7));opacity:1}
+    #preview-ring{position:absolute;top:calc(var(--gameover-line-y) - 78px);left:50%;width:74px;height:74px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(255,255,255,.3);box-shadow:0 0 18px rgba(255,255,255,.12);z-index:14;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%)}
 
     .hud-chip{
       position:absolute;z-index:20;display:flex;align-items:center;gap:10px;pointer-events:auto;background:rgba(10,6,16,.94);border:1px solid rgba(255,255,255,.09);
       border-radius:22px;box-shadow:0 12px 28px rgba(0,0,0,.26)
     }
-    #top-left{top:auto;bottom:50px;left:10px;right:10px;padding:10px 12px;min-width:0;max-width:none;align-items:center;gap:12px;min-height:126px}
-    #center-top{top:10px;left:10px;right:10px;transform:none;padding:10px 12px;gap:12px;width:auto;min-width:0;max-width:none;justify-content:stretch;display:grid;grid-template-columns:76px minmax(0,1fr) 116px;align-items:center;transition:box-shadow .18s,border-color .18s,transform .18s}
+    #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;min-width:0;max-width:none;align-items:center;gap:12px;min-height:var(--bottom-info-h);display:grid;grid-template-columns:minmax(0,1fr) auto;z-index:22}
+    #center-top{top:8px;left:8px;right:8px;transform:none;padding:8px 10px;gap:8px;width:auto;min-width:0;max-width:none;display:grid;grid-template-columns:86px minmax(0,1fr) 86px;align-items:center;height:var(--top-hud-h);transition:box-shadow .18s,border-color .18s,transform .18s;overflow:visible;pointer-events:none}
     #center-top.warning{border-color:rgba(255,216,76,.48);box-shadow:0 0 28px rgba(255,216,76,.18),0 12px 28px rgba(0,0,0,.26)}
     #top-right{display:none}
+    #drop-queue{position:absolute;top:8px;right:8px;width:var(--queue-w);height:var(--top-hud-h);padding:8px 4px;display:grid;grid-template-rows:1fr 1fr auto;gap:6px;justify-items:center;align-content:stretch;z-index:21;background:rgba(10,6,16,.94);border:1px solid rgba(255,255,255,.09);border-radius:22px;box-shadow:0 12px 28px rgba(0,0,0,.26)}
+    .queue-title{text-align:center;font-size:.6rem;line-height:1.05;align-self:end;color:#d9caeb}
+    .queue-token{position:relative !important;width:46px;height:46px;display:grid;place-items:center;padding:0;justify-self:center}
+    .queue-token img{width:70%;height:70%;object-fit:contain;object-position:center center;display:block}
+    .queue-token::after{display:none}
     #bottom-left{display:none}
     #bottom-right{display:none}
     #pin-comment{display:none}
@@ -160,34 +176,39 @@
     #pin-need{font-size:.98rem;color:#fff4a3}
     #pin-bonus{font-size:.76rem;color:#8ef8ff}
 
-    #avatar{width:136px;height:136px;border-radius:50%;object-fit:cover;border:4px solid var(--cyan);box-shadow:0 0 34px rgba(0,236,255,.26);background:radial-gradient(circle at 30% 20%, rgba(255,255,255,.22), rgba(7,4,13,.88));flex:0 0 136px}
+    #avatar{display:none}
     .mini-label{font-size:.7rem;color:#c7b8d8;letter-spacing:.1em;font-weight:900}
     .big-num{font-family:'Orbitron',sans-serif;font-size:clamp(1.55rem,4vw,2.35rem);line-height:1}
-    .mood{font-size:.84rem;color:#fff;line-height:1.32;min-height:2.7em;max-width:unset;opacity:.94;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .mood{font-size:.82rem;color:#fff;line-height:1.28;min-height:2.4em;max-width:unset;opacity:.94;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     #top-gap-text,#crown-track,#crown-mini{display:none}
     #pin-side{display:none}
     #pin-text{font-size:.8rem;line-height:1.25}
     #pin-main .mini-label{display:none}
-    #score-view{font-size:clamp(1.28rem,3.4vw,1.9rem)}
+    #score-view{font-size:clamp(2rem,6.8vw,2.9rem)}
     #top-left > div{min-width:0}
 
-    #trend-main{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0}
-    #trend-thumb{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(255,255,255,.36))}
-    .trend-name{font-size:1.34rem;font-weight:900;line-height:1.05}
-    .trend-copy{font-size:.78rem;color:#d9caeb}
+    #trend-main{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;justify-content:center;gap:8px;min-width:0;max-width:min(48vw, 210px);justify-self:center}
+    #trend-thumb{width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(255,255,255,.36))}
+    .trend-name{font-size:1.18rem;font-weight:900;line-height:1.04;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .trend-copy{font-size:.9rem;color:#fff0a3;font-weight:900}
     #trend-progress{display:none}
     #trend-progress-fill{display:block;height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#ffd84c,#ff7dd4,#00ecff);box-shadow:0 0 16px rgba(255,216,76,.34);transition:width .18s linear}
-    #trend-timer{display:none}
-    #next-block{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;border-top:none;border-left:1px solid rgba(255,255,255,.08);padding-top:0;padding-left:10px;transition:transform .16s,box-shadow .16s,border-color .16s;flex:0 0 auto;width:auto;min-width:132px}
+    #trend-timer{display:block;font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;color:#fff0a3;white-space:nowrap}
+    #next-block{display:grid;justify-items:center;align-content:center;gap:4px;border-top:none;border-left:1px solid rgba(255,255,255,.08);padding-top:0;padding-left:10px;transition:transform .16s,box-shadow .16s,border-color .16s;width:86px;min-width:86px;position:relative;right:56px}
     #next-block.warning{border-color:rgba(0,236,255,.42);box-shadow:0 0 22px rgba(0,236,255,.14);animation:pulse .88s infinite}
-    .tiny-stack{display:grid;grid-template-columns:repeat(2, 34px);gap:6px}
-    .tiny-stack img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.34));border-radius:10px;background:rgba(255,255,255,.06);padding:3px;border:1px solid rgba(255,255,255,.08)}
-    .future-stack{display:none}
+    .tiny-stack{display:grid;grid-template-columns:repeat(2, 42px);gap:7px}
+    .tiny-stack img{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.34));border-radius:999px;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);padding:5px;border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 0 14px rgba(255,255,255,.22)}
+    .future-stack{display:grid;gap:4px;justify-items:center;width:86px;min-width:86px;padding-top:2px;border-top:1px solid rgba(255,255,255,.08)}
     .future-stack img{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.3))}
-    .future-name{font-size:.68rem;font-weight:900;line-height:1.15;color:#d9caeb;text-align:center}
-    #next-trend-thumb{width:40px;height:40px;object-fit:contain}
-    #next-switch-copy{margin-top:2px;font-size:.68rem;font-weight:900;color:#8ef8ff;line-height:1.2}
+    .future-name{font-size:.68rem;font-weight:900;line-height:1.15;color:#d9caeb;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    #next-trend-thumb{width:38px;height:38px;object-fit:contain}
+    #next-switch-copy{margin-top:2px;font-size:.68rem;font-weight:900;color:#8ef8ff;line-height:1.2;text-align:center}
     #next-block > .queue-preview{display:flex;flex-direction:column;gap:4px;width:100%}
+    #future-block{justify-self:start}
+    #next-block{justify-self:end}
+    #trend-hero{display:grid;justify-items:center;gap:2px;min-width:0}
+    #trend-side{display:grid;gap:4px;min-width:0;align-content:center}
+    #trend-timer,#trend-copy{text-align:left}
     .trend-shift-badge{display:inline-flex;align-items:center;gap:8px}
     .trend-shift-badge img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,255,255,.3))}
     .trend-shift-badge.mini img{width:24px;height:24px}
@@ -212,9 +233,9 @@
     .action-btn .txt{font-size:.72rem;color:#fbecc4;margin-top:4px}
     .action-btn.ready{background:linear-gradient(180deg, rgba(255,216,76,.96), rgba(255,142,0,.88));color:#2e1200;box-shadow:0 0 30px rgba(255,216,76,.56);animation:pulse 1s infinite}
     .action-btn.warn{background:linear-gradient(180deg, rgba(255,59,91,.95), rgba(255,8,72,.85));box-shadow:0 0 26px rgba(255,59,91,.36)}
-    #center-top #burst-btn{width:100%;min-width:0;min-height:72px;border-radius:18px;padding:0}
-    #center-top #burst-btn .txt{font-size:.82rem;line-height:1.05}
-    #center-top #burst-btn .icon{font-size:1.15rem}
+    #center-top #burst-btn{width:100%;min-width:88px;min-height:88px;border-radius:22px;padding:0;pointer-events:auto}
+    #center-top #burst-btn .txt{font-size:.9rem;line-height:1.05}
+    #center-top #burst-btn .icon{font-size:1.35rem}
     @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 
     .rising-chat{position:absolute;left:0;bottom:-28px;max-width:min(82%, 270px);display:flex;align-items:center;gap:6px;background:rgba(9,6,16,.42);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:5px 7px;color:rgba(255,255,255,.82);font-size:.68rem;line-height:1.25;opacity:0;animation:chatRise linear forwards;will-change:transform,opacity;--rise-distance:520px}
@@ -244,10 +265,80 @@
     .pop-text{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:30;font-weight:900;text-shadow:0 0 15px rgba(0,0,0,.66);animation:popText 1.05s ease forwards}
     @keyframes popText{0%{opacity:0;transform:translate(-50%,-10%) scale(.6)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.18)}100%{opacity:0;transform:translate(-50%,-200%) scale(.9)}}
 
-    #caption-box{position:absolute;left:10px;right:10px;bottom:10px;transform:none;z-index:21;width:auto;background:rgba(10,6,14,.94);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:7px 12px;box-shadow:0 10px 22px rgba(0,0,0,.22);pointer-events:none;margin-top:0;display:flex;align-items:center;justify-content:center;min-height:34px}
-    #caption-text{min-height:1.35em;font-size:.74rem;color:#fff;text-align:center;line-height:1.3}
+    #caption-box{position:absolute;left:50%;top:calc(var(--gameover-line-y) + 18px);transform:translateX(-50%);z-index:8;width:min(86%, 320px);background:rgba(10,6,14,.82);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:8px 14px;box-shadow:0 10px 22px rgba(0,0,0,.22);pointer-events:none;display:flex;align-items:center;justify-content:center;min-height:38px}
+    #caption-text{min-height:1.35em;font-size:.74rem;color:#fff;text-align:center;line-height:1.35}
+    #board-combo-strip{position:absolute;left:50%;top:calc(var(--gameover-line-y) + 64px);transform:translateX(-50%);z-index:8;min-width:180px;padding:4px 10px;border-radius:12px;background:rgba(7,4,12,.72);border:1px solid rgba(255,255,255,.08);font-family:'Orbitron',sans-serif;font-size:.84rem;line-height:1.05;color:#fff;pointer-events:none;text-align:center}
+    #board-combo-strip .combo{color:#ffe37a}
+    #board-combo-strip .chain{color:#ffb7ff}
 
-    #result-screen .panel{max-width:560px}
+        .panel-mobile{width:min(100%, 420px)}
+    .title-panel{display:grid;gap:14px;background-image:linear-gradient(180deg, rgba(9,1,13,.82), rgba(9,1,13,.9)), url('assets/img/bg_cyber_loop_frame.png');background-size:cover;background-position:center}
+    .compact-copy{font-size:.92rem;line-height:1.55}
+    .mood.wide{min-height:2.6em;max-width:none}
+    #trend-main{display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:8px;min-width:0;padding-left:10px;border-left:1px solid rgba(255,255,255,.08)}
+    #trend-hero{display:grid;justify-items:center;gap:3px;min-width:0}
+    #trend-side{display:grid;gap:5px;align-content:center;min-width:0}
+    #trend-thumb{width:66px;height:66px}
+    .trend-name{font-size:1.1rem;font-weight:900;line-height:1.02;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;color:#fff;text-shadow:0 0 12px rgba(0,0,0,.45)}
+    #next-block{min-height:100%;padding-top:2px;padding-bottom:2px;border-left:1px solid rgba(255,255,255,.08);padding-left:8px;display:grid;justify-items:center;align-content:center;gap:4px;text-align:center;min-width:0}
+    #next-trend-thumb,#future-trend-thumb{width:42px;height:42px}
+    .future-stack{display:grid;gap:4px;justify-items:center;width:100%;padding-top:0;border-top:none;min-width:74px;align-self:stretch;align-content:center;text-align:center}
+    .future-stack img{width:38px;height:38px}
+    .future-name{font-size:.76rem;font-weight:900;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    #next-switch-copy{display:none}
+    #center-top .hero-label{font-size:.66rem}
+    #center-top > .trend-copy{display:none}
+    #top-left #burst-btn{min-width:96px;min-height:96px;border-radius:22px;padding:0}
+    #top-left #burst-btn .icon{font-size:1.35rem}
+    #top-left #burst-btn .txt{font-size:.88rem;line-height:1.08}
+    #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;height:var(--bottom-info-h);min-height:var(--bottom-info-h);max-height:var(--bottom-info-h);min-width:0;max-width:none;align-items:center;gap:12px;justify-content:space-between;display:grid;grid-template-columns:minmax(0,1fr) 96px;z-index:22}
+    #top-left .mini-label{font-size:1.04rem}
+    #score-view.big-num{font-size:2.6rem}
+    #stream-time-mini{font-family:'Orbitron',sans-serif}
+    #play-controls{position:absolute;left:8px;right:8px;bottom:8px;padding:8px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;z-index:23;height:var(--bottom-controls-h)}
+    .play-mini-btn{font-size:.98rem}
+
+    #future-block{grid-column:1;justify-self:end;align-self:center}
+    #center-top #trend-main{grid-column:2;display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:8px;min-width:0;padding-left:0;border-left:none;justify-content:center}
+    #center-top #next-block{grid-column:3;justify-self:start;align-self:center;margin-right:calc(var(--queue-w) + 10px);min-width:74px;border-left:none;padding-left:0}
+    @media (max-width:760px){
+      #trend-main{grid-template-columns:80px minmax(0,1fr) auto}
+      #trend-thumb{width:80px;height:80px}
+      .trend-name{font-size:1.08rem}
+      #next-trend-thumb{width:38px;height:38px}
+      .future-stack img{width:34px;height:34px}
+      #top-left #burst-btn{min-width:86px;min-height:86px}
+      #score-view.big-num{font-size:2.15rem}
+    }
+
+    #play-controls{position:absolute;left:8px;right:8px;bottom:8px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;z-index:23;height:var(--bottom-controls-h)}
+    .play-controls{display:none}
+    .play-mini-btn{min-width:0;min-height:calc(var(--bottom-controls-h) - 16px);border:none;border-radius:16px;padding:0 10px;background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.05));color:#fff;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 18px rgba(0,0,0,.16)}
+    .play-mini-btn.wide{min-width:88px}
+    #pause-overlay{position:absolute;inset:0;z-index:40;background:rgba(6,3,10,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px}
+    #pause-overlay .pause-card{width:min(82%,320px);background:rgba(12,6,18,.94);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:18px;display:grid;gap:10px;box-shadow:0 18px 44px rgba(0,0,0,.36)}
+    .howto-diagram{margin-top:18px;display:grid;gap:12px}
+    .howto-row{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:12px}
+    .howto-icons{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .howto-icons img{width:30px;height:30px;object-fit:contain;border-radius:999px;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);padding:4px;border:1px solid rgba(255,255,255,.16)}
+    .howto-panel{max-height:min(92dvh, 900px);overflow:auto;padding-right:12px}
+    .howto-panel::-webkit-scrollbar{width:10px}
+    .howto-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
+    .howto-note{margin-top:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;line-height:1.7;color:#e8def5;font-size:.86rem}
+    .howto-note strong{color:#fff}
+    #big-buzz-banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:32;opacity:0}
+    #big-buzz-banner .core{max-width:min(90%, 320px);padding:14px 16px;border-radius:28px;background:radial-gradient(circle at center, rgba(255,216,76,.38), rgba(255,47,146,.2) 48%, rgba(8,4,14,0) 76%);font-family:'Orbitron',sans-serif;font-size:clamp(1.45rem,7vw,2.9rem);font-weight:900;letter-spacing:.02em;line-height:1;white-space:nowrap;text-align:center;color:#fff4a3;text-shadow:0 0 18px rgba(255,216,76,.9),0 0 44px rgba(255,47,146,.72),0 0 82px rgba(255,255,255,.26);transform:scale(.8) rotate(-1deg)}
+    #big-buzz-banner.show{animation:bigBuzzBurst .96s cubic-bezier(.19,.89,.24,1)}
+    #big-buzz-banner.show .core{animation:bigBuzzPulse .96s cubic-bezier(.19,.89,.24,1)}
+    @keyframes bigBuzzBurst{0%{opacity:0}16%{opacity:1}72%{opacity:1}100%{opacity:0}}
+    @keyframes bigBuzzPulse{0%{transform:scale(.64) rotate(-6deg);filter:blur(8px)}22%{transform:scale(1.18) rotate(1deg);filter:blur(0)}56%{transform:scale(1) rotate(0)}100%{transform:scale(.92) rotate(0);filter:blur(1px)}}
+
+    #howto-screen,#result-screen{align-items:flex-start;overflow:auto;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
+    #start-screen .title-actions{grid-template-columns:1fr;gap:10px}
+    #howto-screen .panel,#result-screen .panel{width:min(100%,420px);margin:0 auto}
+    #result-screen .panel{max-width:560px;max-height:min(92dvh, 900px);overflow:auto;padding-right:12px}
+    #result-screen .panel::-webkit-scrollbar{width:10px}
+    #result-screen .panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
     .result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
     .result-card{background:rgba(255,255,255,.06);border-radius:20px;padding:14px;border:1px solid rgba(255,255,255,.06)}
     .result-card .label{font-size:.72rem;color:#c6bad8;letter-spacing:.1em}
@@ -256,30 +347,30 @@
     @media (max-width: 760px){
       .panel{padding:18px;border-radius:26px}
       .chip-row{grid-template-columns:1fr}
-      #game-shell{width:min(calc(100vw - 8px), 420px);height:min(calc(100dvh - 8px), var(--app-height));border-radius:24px}
-      #board-wrap{padding:114px 8px 182px}
-      #chat-lane{top:46px;bottom:52px}
+      #game-shell{--top-hud-h:102px;--queue-w:72px;--bottom-info-h:102px;--bottom-controls-h:58px;width:min(calc(100vw - 8px), 420px);height:min(calc(100dvh - 8px), var(--app-height));border-radius:24px}
+      #board-wrap{padding:calc(var(--top-hud-h) + 18px) 8px calc(var(--bottom-stack) + 8px)}
+      #chat-lane{top:46px;bottom:86px}
       #game-board{width:100%}
-      #top-left{top:auto;left:8px;right:8px;bottom:44px;min-width:0;padding:8px 10px;gap:8px;min-height:112px}
-      #center-top{top:8px;left:8px;right:8px;transform:none;min-width:0;width:auto;padding:8px 10px;display:grid;grid-template-columns:70px minmax(0,1fr) 104px;gap:10px}
-      #trend-main{display:flex;gap:10px;justify-content:center;align-items:center;text-align:left}
-      #trend-thumb{width:64px;height:64px}
+      #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);min-width:0;padding:10px 12px;gap:10px;min-height:var(--bottom-info-h);grid-template-columns:minmax(0,1fr) 90px}
+      #center-top{top:8px;left:8px;right:8px;transform:none;min-width:0;width:auto;padding:8px 10px;display:grid;grid-template-columns:78px minmax(0,1fr) 78px;gap:8px;height:var(--top-hud-h)}
+      #trend-main{display:grid;grid-template-columns:70px minmax(0,1fr);gap:8px;justify-content:stretch;align-items:center;text-align:left;max-width:min(50vw, 190px);justify-self:center}
+      #trend-thumb{width:66px;height:66px}
       .trend-name{font-size:1.1rem}
       .trend-copy{display:block;font-size:.62rem;line-height:1.2}
-      #next-block{border-left:1px solid rgba(255,255,255,.08);border-top:none;padding-left:8px;padding-top:0;display:flex;gap:6px;justify-content:flex-start;align-items:center;min-width:104px}
+      #next-block{border-left:1px solid rgba(255,255,255,.08);border-top:none;padding-left:8px;padding-top:0;display:grid;gap:4px;justify-items:center;align-content:center;min-width:0;width:78px;position:relative;right:50px}
       #next-trend-thumb{width:34px;height:34px}
-      .tiny-stack,.future-stack,#top-right,#bottom-left,#pin-comment{display:none}
+      #top-right,#bottom-left,#pin-comment{display:none}
       #bottom-right{display:none}
       #avatar{width:120px;height:120px;flex-basis:120px}
       .big-num{font-size:1.18rem}
       .mood{font-size:.72rem;min-height:2.5em}
       #top-gap-text,#crown-track,#crown-mini{display:none}
       .action-btn{min-width:66px;min-height:66px;border-radius:18px}
-      #caption-box{left:8px;right:8px;bottom:8px;width:auto;padding:7px 10px}
+      #caption-box{left:50%;right:auto;top:calc(var(--gameover-line-y) + 18px);width:min(84%, 320px);padding:7px 10px}
       #caption-text{font-size:.74rem}
-      #preview-item{width:60px;height:60px;top:18px}
-      #preview-ring{width:68px;height:68px;top:14px}
-      .item-chip{width:88px;height:88px}
+      #preview-item{width:74%;height:74%}
+      #preview-ring{width:68px;height:68px;top:calc(var(--gameover-line-y) - 72px)}
+      .item-chip{width:82px;height:82px}
       .item-chip::after{width:22px;height:22px;font-size:11px}
       .rising-chat{font-size:.62rem;max-width:74%;padding:5px 6px}
       #trend-shift-banner{top:116px;min-width:min(88vw,340px);padding:9px 10px}
@@ -288,13 +379,14 @@
 
     @media (max-width: 430px){
       #game-screen{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
-      #game-shell{width:min(calc((100dvh - 6px) * (1179 / 2556)), calc(100vw - 6px), 420px)}
-      #caption-box{left:6px;right:6px;bottom:6px;width:auto}
-      #board-wrap{padding:110px 6px 178px}
-      #center-top{left:6px;right:6px;top:6px;width:auto;grid-template-columns:64px minmax(0,1fr) 98px;padding:8px}
-      #top-left{left:6px;right:6px;bottom:40px;min-height:106px}
+      #game-shell{--top-hud-h:98px;--queue-w:70px;--bottom-info-h:100px;--bottom-controls-h:56px;width:min(calc((100dvh - 6px) * (1179 / 2556)), calc(100vw - 6px), 420px)}
+      #caption-box{left:50%;right:auto;top:calc(var(--gameover-line-y) + 18px);width:min(84%, 310px)}
+      #board-wrap{padding:calc(var(--top-hud-h) + 16px) 6px calc(var(--bottom-stack) + 6px)}
+      #center-top{left:6px;right:6px;top:6px;width:auto;grid-template-columns:74px minmax(0,1fr) 74px;padding:8px;height:var(--top-hud-h)}
+      #top-left{left:6px;right:6px;bottom:calc(var(--bottom-controls-h) + 8px);min-height:var(--bottom-info-h)}
+      #drop-queue{top:6px;right:6px;width:var(--queue-w);height:var(--top-hud-h)}
       #avatar{width:110px;height:110px;flex-basis:110px}
-      #score-view{font-size:1.12rem}
+      #score-view{font-size:2.1rem}
       #game-board{--gameover-line-y:118px;--danger-line-y:150px}
     }
 
@@ -302,45 +394,42 @@
 </head>
 <body>
   <div id="bg-container">
-    <video id="bg-video" src="assets/bg/bg_cyber.mp4" autoplay loop muted playsinline></video>
+    <video id="bg-video" src="assets/bg/bg_cyber.mp4" poster="assets/img/bg_cyber_loop_frame.png" autoplay loop muted playsinline></video>
+    <video id="bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" poster="assets/img/bg_cyber_loop_frame.png" autoplay loop muted playsinline></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
 
   <audio id="audio-bgm-lofi" src="assets/audio/bgm_lofi.wav" loop preload="auto"></audio>
   <audio id="audio-bgm-hyper" src="assets/audio/bgm_hyper.wav" loop preload="auto"></audio>
-  <audio id="audio-merge" src="assets/audio/se_merge.wav" preload="auto"></audio>
-  <audio id="voice-start" src="assets/audio/voice_story_start.wav" preload="auto"></audio>
-  <audio id="voice-alert" src="assets/audio/voice_ai_hack.wav" preload="auto"></audio>
-  <audio id="voice-win" src="assets/audio/voice_win.wav" preload="auto"></audio>
-  <audio id="voice-lose" src="assets/audio/voice_lose.wav" preload="auto"></audio>
+  <audio id="audio-merge" src="assets/audio/se_clear_small_01.wav" preload="auto"></audio>
+  <audio id="voice-start" src="assets/audio/voice_mc_start_01.wav" preload="auto"></audio>
+  <audio id="voice-alert" src="assets/audio/voice_mc_fire_01.wav" preload="auto"></audio>
+  <audio id="voice-win" src="assets/audio/voice_mc_win_01.wav" preload="auto"></audio>
+  <audio id="voice-lose" src="assets/audio/voice_mc_lose_01.wav" preload="auto"></audio>
 
   <div id="start-screen" class="screen">
-    <div class="panel">
-      <div class="title-main">トレバズ！</div>
-      <div class="title-sub">今を取れ。次を読め。今日の王冠ラインを超えろ。</div>
-      <div class="intro-copy">
-        <b>今バズる話題</b>だけを3つ以上つなげる。<br><b>次の波</b>は切替前に仕込める。<br><b>ピンコメ</b>と<b>大バズり中</b>を重ねて、その日の<b>王冠ライン</b>を超える。
-      </div>
-      <div class="chip-row">
-        <div class="intro-chip"><div class="ic">🎯</div><strong>今バズる話題</strong><span>今ほしい話題だけ3つ以上で消える</span></div>
-        <div class="intro-chip"><div class="ic">🌊</div><strong>次の波</strong><span>切替前に仕込んで初動を奪う</span></div>
-        <div class="intro-chip"><div class="ic">📌</div><strong>ピンコメ</strong><span>コメ欄のお題達成で追加点</span></div>
-        <div class="intro-chip"><div class="ic">👑</div><strong>今日の王冠</strong><span>同じ日の条件と王冠ラインで勝負</span></div>
-      </div>
-      <div class="start-tools">
-        <label class="name-box">
-          <span>配信名</span>
-          <input id="handle-input" type="text" maxlength="14" placeholder="例：ねむりねこ">
-        </label>
-        <div class="daily-board-wrap">
-          <div class="daily-title">DAILY 王冠レース（共通条件）</div>
-          <div id="daily-board" class="daily-board"></div>
+    <div class="panel panel-mobile title-panel">
+      <div id="title-art-wrap">
+        <img id="title-art" src="assets/img/title_logo.png" alt="限界メルトダウン（Limit Meltdown）" onerror="this.style.display='none';document.getElementById('title-fallback').style.display='block'">
+        <div id="title-fallback" style="display:none">
+          <div class="title-main">限界メルトダウン</div>
+          <div class="title-sub">Limit Meltdown</div>
         </div>
       </div>
-      <div class="btn-row">
+      <div class="title-sub">バズれ、狂え、私を見ろ！最推し確定宣言</div>
+      <label class="name-box">
+        <span>配信名</span>
+        <input id="handle-input" type="text" maxlength="14" placeholder="例：ねむりねこ">
+      </label>
+      <div class="btn-row title-actions">
         <button id="start-btn" class="btn btn-main">配信開始</button>
-        <button id="mute-btn" class="btn btn-sub">🔊 サウンド ON / OFF</button>
+        <button id="howto-btn" class="btn btn-sub">遊び方</button>
+        <button id="mute-btn" class="btn btn-sub" style="display:none">🔊 サウンド ON / OFF</button>
+      </div>
+      <div class="daily-board-wrap">
+        <div class="daily-title">DAILY 王冠レース（共通条件）</div>
+        <div id="daily-board" class="daily-board"></div>
       </div>
       <div class="small-note">
         毎日同じ条件で競える<b>デイリー勝負</b>。<br>その日の需要順もピンコメ条件も共通、王冠ラインも同じ。次の波を読めるほど王冠に近づく。<br>結果をコピーして、そのまま配信者同士で貼れます。
@@ -353,73 +442,57 @@
       <div id="board-wrap">
         <div id="game-board">
           <div id="board-grid"></div>
+          <img id="board-character" src="assets/img/char_normal.png" alt="配信者背景">
           <div id="danger-fog"></div>
           <div id="gameover-line"></div>
           <div id="top-danger-line"></div>
           <div id="chat-lane"></div>
           <canvas id="merge-canvas"></canvas>
+          <div id="caption-box"><div id="caption-text">タップして落とす。今の話題を3つ消す。次の波は上のアイコンで先読み。</div></div>
+          <div id="board-combo-strip">COMBO <span id="combo-view" class="combo">x0</span> ・ <span id="chain-view" class="chain">0連鎖</span></div>
           <div id="item-layer"></div>
           <canvas id="fx-canvas"></canvas>
           <canvas id="particle-canvas"></canvas>
           <div id="drop-guide"></div>
-          <div id="preview-ring"></div>
-          <img id="preview-item" src="assets/img/item_1.png" alt="next item">
+          <div id="preview-ring" class="item-chip preview-token" data-emoji="💬"><img id="preview-item" src="assets/img/item_1.png" alt="next item"></div>
           <div id="board-glass"></div>
-        </div>
-      </div>
-
-      <div id="top-left" class="hud-chip">
-        <img id="avatar" src="assets/img/char_normal.png" alt="主人公">
-        <div>
-          <div class="mini-label">SCORE <span id="stream-time-mini" style="margin-left:8px;color:#8ef8ff">残り100s</span></div>
-          <div id="score-view" class="big-num">0</div>
-          <div id="mood-text" class="mood">今日はちゃんと刺さる気がする。</div>
-          <div class="mini-label" style="margin-top:4px">COMBO <span id="combo-view" style="color:#ffe37a">x0</span> ・ <span id="chain-view" style="color:#ffb7ff">0連鎖</span></div>
-          <div id="top-gap-text">👑 まずは今日の1位を作ろう</div>
-          <div id="crown-track"><span id="crown-fill"></span></div>
-          <div id="crown-mini">1位レース開始前</div>
+          <div id="big-buzz-banner" aria-hidden="true"><div class="core">大バズり!!</div></div>
+          <video id="gameover-fx-video" src="assets/bg/overlay_gameover_glitch.mp4" playsinline muted preload="auto"></video>
         </div>
       </div>
 
       <div id="center-top" class="hud-chip">
-        <button id="burst-btn" class="action-btn"><div><div class="icon">🧯</div><div class="txt">謝罪配信</div></div></button>
-        <div id="trend-main">
-          <img id="trend-thumb" src="assets/img/item_1.png" alt="trend">
-          <div>
-            <div class="mini-label">今のトレンド</div>
-            <div id="trend-name" class="trend-name">雑談</div>
-            <div id="trend-copy" class="trend-copy">3つ以上で消える</div>
-            <div id="trend-progress"><span id="trend-progress-fill"></span></div>
-          </div>
-          <div id="trend-timer">15</div>
+        <div id="future-block" class="side-trend-block future-stack">
+          <div class="mini-label">次の次</div>
+          <img id="future-trend-thumb" src="assets/img/item_3.png" alt="future trend">
+          <div id="future-trend-name" class="future-name">歌枠</div>
         </div>
-        <div id="next-block">
-          <div>
-            <div class="mini-label">次のトレンド</div>
-            <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-top:2px">
-              <img id="next-trend-thumb" src="assets/img/item_2.png" alt="next trend">
-              <div>
-                <div id="next-trend-name" style="font-size:.78rem;font-weight:900;color:#d9caeb">ゲーム配信</div>
-                <div id="next-switch-copy">次に変わる</div>
-              </div>
-            </div>
+        <div id="trend-main">
+          <div id="trend-hero">
+            <div class="mini-label hero-label">今のトレンド</div>
+            <img id="trend-thumb" src="assets/img/item_1.png" alt="trend">
+            <div id="trend-name" class="trend-name">雑談</div>
           </div>
-          <div class="queue-preview">
-            <div class="mini-label" style="text-align:left">次に落とす</div>
-            <div class="tiny-stack" style="margin-top:2px">
-              <img id="next-mini-1" src="assets/img/item_2.png" alt="next drop">
-              <img id="next-mini-2" src="assets/img/item_3.png" alt="after next drop">
-            </div>
+          <div id="trend-side">
+            <div id="trend-timer">あと3消し！</div>
+            <div id="trend-progress"><span id="trend-progress-fill"></span></div>
+            <div id="trend-copy" class="trend-copy">3つ以上で消える</div>
           </div>
-          <div class="future-stack">
-            <div class="mini-label" style="text-align:center">次の次</div>
-            <img id="future-trend-thumb" src="assets/img/item_3.png" alt="future trend">
-            <div id="future-trend-name" class="future-name">歌枠</div>
-          </div>
+        </div>
+        <div id="next-block" class="side-trend-block">
+          <div class="mini-label">次のトレンド</div>
+          <img id="next-trend-thumb" src="assets/img/item_2.png" alt="next trend">
+          <div id="next-trend-name" class="future-name">ゲーム配信</div>
+          <div id="next-switch-copy"></div>
         </div>
       </div>
+      <div id="drop-queue" class="hud-chip">
+        <div class="queue-token item-chip" data-emoji="💬"><img id="next-mini-2" src="assets/img/item_3.png" alt="after next drop"></div>
+        <div class="queue-token item-chip" data-emoji="💬"><img id="next-mini-1" src="assets/img/item_2.png" alt="next drop"></div>
+        <div class="queue-title">次に落とす</div>
+      </div>
 
-      <div id="pin-comment" class="hud-chip hot">
+      <div id="pin-comment" class="hud-chip hot" style="display:none">
         <div id="pin-badge">📌</div>
         <div id="pin-main">
           <div class="mini-label">ピンコメ</div>
@@ -477,14 +550,93 @@
         </div>
       </div>
 
-      <div id="bottom-right" class="hud-chip"></div>
+      <div id="top-left" class="hud-chip">
+        <img id="avatar" src="assets/img/char_normal.png" alt="主人公" style="display:none">
+        <div>
+          <div class="mini-label" style="font-size:1.04rem">SCORE <span id="stream-time-mini" style="margin-left:12px;color:#8ef8ff;font-size:1.08rem">残り100s</span></div>
+          <div id="score-view" class="big-num" style="font-size:2.68rem">0</div>
+          <div id="mood-text" class="mood wide">こんばんは、今日もバズらせにきた。</div>
+          <div id="top-gap-text" style="display:none">👑 まずは今日の1位を作ろう</div>
+          <div id="crown-track" style="display:none"><span id="crown-fill"></span></div>
+          <div id="crown-mini" style="display:none">1位レース開始前</div>
+        </div>
+        <button id="burst-btn" class="action-btn"><div><div class="icon">🧯</div><div class="txt">謝罪配信</div></div></button>
+      </div>
 
-      <div id="caption-box"><div id="caption-text">タップして落とす。今の話題を3つで消す。次の波は上のアイコンで先読み。</div></div>
+      <div id="play-controls">
+        <button id="pause-btn" class="play-mini-btn">一時停止</button>
+        <button id="retry-play-btn" class="play-mini-btn">やり直し</button>
+        <button id="title-btn" class="play-mini-btn wide">タイトル</button>
+      </div>
+
+      <div id="pause-overlay" class="hidden">
+        <div class="pause-card">
+          <div class="title-sub" style="letter-spacing:.08em">PAUSE</div>
+          <button id="resume-btn" class="btn btn-main">再開する</button>
+          <button id="pause-retry-btn" class="btn btn-sub">やり直す</button>
+          <button id="pause-title-btn" class="btn btn-sub">タイトルに戻る</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="howto-screen" class="screen hidden">
+    <div class="panel howto-panel">
+      <div class="title-main" style="font-size:clamp(1.8rem,5vw,3rem)">遊び方</div>
+      <div class="intro-copy" style="margin-top:12px">
+        <b>今のトレンド</b>を3つ以上くっつけて消しながら、<b>次のトレンド</b>と<b>次の次</b>を先に仕込んでいくゲームです。<br>
+        いま取るか、先に未来を置くかを考えるほど強くなれます。
+      </div>
+      <div class="howto-diagram">
+        <div class="howto-row">
+          <div class="howto-icons"><img src="assets/img/item_1.png"><img src="assets/img/item_1.png"><img src="assets/img/item_1.png"></div>
+          <div><b>1. 今のトレンドを3つ以上つなぐ</b><br><span style="color:#d8ccea;line-height:1.7">今のトレンドに書かれている話題だけが消せます。まずはその話題を3つ以上くっつけて、盤面を広くしよう。</span></div>
+        </div>
+        <div class="howto-row">
+          <div class="howto-icons"><img src="assets/img/item_2.png"><span style="font-weight:900;color:#8ef8ff">→</span><img src="assets/img/item_3.png"></div>
+          <div><b>2. 消えたらトレンドが次へ進む</b><br><span style="color:#d8ccea;line-height:1.7">今のトレンドが消えた瞬間、上の「次のトレンド」が本命になります。さらに「次の次」まで見て置くと、続けて消しやすいです。</span></div>
+        </div>
+        <div class="howto-row">
+          <div class="howto-icons"><img src="assets/img/item_1.png"><img src="assets/img/item_2.png"><img src="assets/img/item_2.png"></div>
+          <div><b>3. 先読みが強い</b><br><span style="color:#d8ccea;line-height:1.7">切り替わる前に次のトレンドを2個以上置いておくと、切替直後の消しで大きなボーナスが入ります。3個以上あるとさらに強いです。</span></div>
+        </div>
+        <div class="howto-row">
+          <div class="howto-icons"><span style="font-weight:900;color:#ffe37a">COMBO</span><span style="font-weight:900;color:#ffb7ff">連鎖</span></div>
+          <div><b>4. コンボと連鎖で点がどんどん増える</b><br><span style="color:#d8ccea;line-height:1.7">続けて消すとコンボが伸びます。同じ1回の落下で何回も消えると連鎖になり、大きな追加点になります。</span></div>
+        </div>
+        <div class="howto-row">
+          <div class="howto-icons"><span style="font-weight:900;color:#fff4a3">大バズり!!</span></div>
+          <div><b>5. 大バズりは時間でやってくる見せ場</b><br><span style="color:#d8ccea;line-height:1.7">しばらく遊ぶと大バズりタイムが始まります。始まったら大きい消し、連鎖、先読み成功をまとめて取りにいくと一気に稼げます。</span></div>
+        </div>
+        <div class="howto-row">
+          <div class="howto-icons"><img src="assets/img/hazard.png"><button class="play-mini-btn wide" style="pointer-events:none">謝罪配信</button></div>
+          <div><b>6. 大炎上と謝罪配信</b><br><span style="color:#d8ccea;line-height:1.7">上に積みすぎたり、空気を外しすぎたりすると大炎上になります。炎上中は邪魔ブロックが落ちます。キラキラゲージが100になると「謝罪配信」が使えて、今ある炎上をまとめて消せます。</span></div>
+        </div>
+        <div class="howto-row">
+          <div class="howto-icons"><span style="color:#ff9bb1;font-weight:900">限界ライン</span></div>
+          <div><b>7. 限界ラインをこえると危険</b><br><span style="color:#d8ccea;line-height:1.7">上のピンクの線より上に物がたまり続けるとゲームオーバーです。高い山を作りすぎず、まず消せるものを優先しよう。</span></div>
+        </div>
+      </div>
+      <div class="howto-note">
+        <strong>点数の目安</strong><br>
+        ・基本点は <b>雑談 280</b> / <b>ゲーム 330</b> / <b>歌枠 390</b> / <b>ASMR 460</b> / <b>恋バナ 560</b> / <b>暴露 700</b> / <b>限界チャレンジ 880</b>。むずかしい話題ほど高得点です。<br>
+        ・コンボは <b>1回増えるごとに +400</b>。連鎖はその回の得点に大きく上乗せされます。<br>
+        ・ピンコメのお題を達成すると <b>+920〜+2580</b> 前後。大バズり中のお題はさらに高くなります。<br>
+        ・先読み成功は <b>+2100 以上</b>、仕込みまでつながる波読みは <b>+1180〜+1960 以上</b>。<br>
+        ・危ない場面で消すとクラッチ点、1位に近い時は王冠ボーナスも入ります。<br>
+        ・炎上を謝罪配信で消すと、炎上1個につき <b>+480</b> もらえます。<br><br>
+        <strong>子ども向けのコツ</strong><br>
+        「今を消す」→「次を置く」→「切り替わったらすぐ消す」の順番で考えると強いです。迷ったら高く積まず、今すぐ消せる場所を作るのが安全です。
+      </div>
+      <div class="btn-row">
+        <button id="howto-start-btn" class="btn btn-main">このまま遊ぶ</button>
+        <button id="howto-back-btn" class="btn btn-sub">タイトルへ戻る</button>
+      </div>
     </div>
   </div>
 
   <div id="result-screen" class="screen hidden">
-    <div class="panel">
+    <div class="panel result-panel">
       <div class="title-main" style="font-size:clamp(1.8rem,5vw,3.2rem)">配信リザルト</div>
       <div id="result-copy" class="intro-copy" style="margin-top:14px">今の話題と次の波を読んで王冠を狙った。</div>
       <div class="result-grid">
@@ -501,7 +653,7 @@
       <div class="btn-row">
         <button id="retry-btn" class="btn btn-main">もう一回配信する</button>
         <button id="share-btn" class="btn btn-sub">📋 結果をコピー</button>
-        <button id="result-mute-btn" class="btn btn-sub">🔊 サウンド ON / OFF</button>
+        <button id="result-title-btn" class="btn btn-sub">タイトルに戻る</button><button id="result-mute-btn" class="btn btn-sub" style="display:none">🔊 サウンド ON / OFF</button>
       </div>
     </div>
   </div>
@@ -512,15 +664,22 @@
 
     const dom = {
       startScreen: document.getElementById('start-screen'),
+      howtoScreen: document.getElementById('howto-screen'),
       gameScreen: document.getElementById('game-screen'),
       resultScreen: document.getElementById('result-screen'),
       startBtn: document.getElementById('start-btn'),
+      howtoBtn: document.getElementById('howto-btn'),
+      howtoStartBtn: document.getElementById('howto-start-btn'),
+      howtoBackBtn: document.getElementById('howto-back-btn'),
       retryBtn: document.getElementById('retry-btn'),
       shareBtn: document.getElementById('share-btn'),
       muteBtn: document.getElementById('mute-btn'),
       resultMuteBtn: document.getElementById('result-mute-btn'),
+      resultTitleBtn: document.getElementById('result-title-btn'),
       gameShell: document.getElementById('game-shell'),
       board: document.getElementById('game-board'),
+      boardCharacter: document.getElementById('board-character'),
+      gameoverFxVideo: document.getElementById('gameover-fx-video'),
       chatLane: document.getElementById('chat-lane'),
       mergeCanvas: document.getElementById('merge-canvas'),
       itemLayer: document.getElementById('item-layer'),
@@ -555,6 +714,13 @@
       heatNum: document.getElementById('heat-num'),
       buzzNum: document.getElementById('buzz-num'),
       avatar: document.getElementById('avatar'),
+      pauseBtn: document.getElementById('pause-btn'),
+      retryPlayBtn: document.getElementById('retry-play-btn'),
+      titleBtn: document.getElementById('title-btn'),
+      pauseOverlay: document.getElementById('pause-overlay'),
+      resumeBtn: document.getElementById('resume-btn'),
+      pauseRetryBtn: document.getElementById('pause-retry-btn'),
+      pauseTitleBtn: document.getElementById('pause-title-btn'),
       burstBtn: document.getElementById('burst-btn'),
       captionText: document.getElementById('caption-text'),
       dropGuide: document.getElementById('drop-guide'),
@@ -594,11 +760,15 @@
       resultDailyBoard: document.getElementById('result-daily-board'),
       bgmNormal: document.getElementById('audio-bgm-lofi'),
       bgmHyper: document.getElementById('audio-bgm-hyper'),
+      bgVideo: document.getElementById('bg-video'),
+      bgVideoHype: document.getElementById('bg-video-hype'),
+      bgContainer: document.getElementById('bg-container'),
       audioMerge: document.getElementById('audio-merge'),
       voiceStart: document.getElementById('voice-start'),
       voiceFire: document.getElementById('voice-alert'),
       voiceWin: document.getElementById('voice-win'),
-      voiceLose: document.getElementById('voice-lose')
+      voiceLose: document.getElementById('voice-lose'),
+      bigBuzzBanner: document.getElementById('big-buzz-banner')
     };
 
     const CONTENTS = [
@@ -631,7 +801,7 @@
         '次のトレンド来る、仕込む。','切り替わる前に形を作る。','次の波、あと少しで来る。','今のうちに次の準備をする。','切替直後を取りたい。','次の本命、見えてきた。','今のうちに種をまく。','次の需要に合わせて寄せる。'
       ],
       top:[
-        '上が近い…ここで雑に置けない。','これ以上積むと危ない。','まずは盤面を開ける。','満杯ライン近い、慎重にいく。','事故る前に今消せるやつを取る。','ここで欲張ると終わる。','上が詰まってる、崩し優先。','一手ミスると配信事故。'
+        '上が近い…ここで雑に置けない。','これ以上積むと危ない。','まずは盤面を開ける。','限界ライン近い、慎重にいく。','事故る前に今消せるやつを取る。','ここで欲張ると終わる。','上が詰まってる、崩し優先。','一手ミスると配信事故。'
       ],
       switch:[
         '来た、流れ変わった。','トレンド更新、ここから乗る。','今の本命が切り替わった。','次の話題へ乗り換える。','よし、新しい波を取りにいく。','ここから盤面の意味が変わる。','トレンド変化、すぐ合わせる。','今の一手が分岐になる。'
@@ -661,7 +831,7 @@
     };
     const USERNAMES = ['ねこもち','kome','夜行性','ぷるる','mira','noa','ゆら','okome','melt','しろみ','nagi','さめ','momo','mii','nanase','るる','haru','mina','chip','切り抜き担当','ROM勢','初見です','社不ねむ','スパチャ待機','天才視聴者','深夜の民','古参オタク','限界オタク','寝落ち勢','同接監視員','アーカイブ勢','おすすめ欄から来た','高評価した','初スパ投げたい'];
 
-    const storageKey = 'trendbuzz_v56';
+    const storageKey = 'trendbuzz_v58';
     const save = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
     let engine = null;
@@ -690,23 +860,53 @@
       hype:['char_hype.png','char_focus.png','char_normal.png'],
       warning:['char_warning.png','char_focus.png','char_normal.png'],
       panic:['char_panic.png','char_yami.png','char_normal.png'],
-      yami:['char_yami.png','char_panic.png','char_normal.png']
+      yami:['char_yami.png','char_panic.png','char_normal.png'],
+      apology:['char_apology.png','char_normal.png'],
+      win:['char_win.png','char_hype.png','char_normal.png']
     };
 
 
     const voicePools = {
-      start:['assets/audio/voice_mc_start_01.wav','assets/audio/voice_mc_start_02.wav','assets/audio/voice_story_start.wav'],
-      warning:['assets/audio/voice_mc_warning_01.wav','assets/audio/voice_mc_warning_02.wav','assets/audio/voice_warning_1.wav','assets/audio/voice_warning_2.wav'],
-      clear:['assets/audio/voice_mc_clear_01.wav','assets/audio/voice_mc_clear_02.wav','assets/audio/voice_mc_clear_03.wav','assets/audio/voice_clear_1.wav','assets/audio/voice_clear_2.wav','assets/audio/voice_clear_3.wav'],
-      chain:['assets/audio/voice_mc_chain_02.wav','assets/audio/voice_mc_chain_03.wav','assets/audio/voice_mc_chain_04.wav','assets/audio/voice_mc_chain_05.wav','assets/audio/voice_chain_2.wav','assets/audio/voice_chain_3.wav','assets/audio/voice_chain_4.wav','assets/audio/voice_chain_5.wav'],
-      hype:['assets/audio/voice_mc_hype_01.wav','assets/audio/voice_mc_hype_02.wav','assets/audio/voice_mc_hype_03.wav','assets/audio/voice_hype_1.wav','assets/audio/voice_hype_2.wav','assets/audio/voice_hype_3.wav'],
-      fire:['assets/audio/voice_mc_fire_01.wav','assets/audio/voice_mc_fire_02.wav','assets/audio/voice_ai_hack.wav'],
-      win:['assets/audio/voice_mc_win_01.wav','assets/audio/voice_mc_win_02.wav','assets/audio/voice_win.wav'],
-      lose:['assets/audio/voice_mc_lose_01.wav','assets/audio/voice_mc_lose_02.wav','assets/audio/voice_lose.wav']
+      start:['assets/audio/voice_mc_start_01.wav','assets/audio/voice_mc_start_02.wav','assets/audio/voice_mc_start_03.wav','assets/audio/voice_mc_start_04.wav'],
+      calm:['assets/audio/voice_mc_calm_01.wav','assets/audio/voice_mc_calm_02.wav','assets/audio/voice_mc_calm_03.wav','assets/audio/voice_mc_calm_04.wav'],
+      focus:['assets/audio/voice_mc_focus_01.wav','assets/audio/voice_mc_focus_02.wav','assets/audio/voice_mc_focus_03.wav','assets/audio/voice_mc_focus_04.wav'],
+      warning:['assets/audio/voice_mc_warning_01.wav','assets/audio/voice_mc_warning_02.wav','assets/audio/voice_mc_warning_03.wav','assets/audio/voice_mc_warning_04.wav'],
+      clear:['assets/audio/voice_mc_clear_01.wav','assets/audio/voice_mc_clear_02.wav','assets/audio/voice_mc_clear_03.wav','assets/audio/voice_mc_clear_04.wav','assets/audio/voice_mc_clear_05.wav'],
+      chain:['assets/audio/voice_mc_chain_02.wav','assets/audio/voice_mc_chain_03.wav','assets/audio/voice_mc_chain_04.wav','assets/audio/voice_mc_chain_05.wav','assets/audio/voice_mc_chain_06.wav'],
+      hype:['assets/audio/voice_mc_hype_01.wav','assets/audio/voice_mc_hype_02.wav','assets/audio/voice_mc_hype_03.wav','assets/audio/voice_mc_hype_04.wav','assets/audio/voice_mc_hype_05.wav'],
+      fire:['assets/audio/voice_mc_fire_01.wav','assets/audio/voice_mc_fire_02.wav','assets/audio/voice_mc_fire_03.wav','assets/audio/voice_mc_fire_04.wav'],
+      apology_ready:['assets/audio/voice_mc_apology_ready_01.wav','assets/audio/voice_mc_apology_ready_02.wav','assets/audio/voice_mc_apology_ready_03.wav'],
+      apology_fire:['assets/audio/voice_mc_apology_fire_01.wav','assets/audio/voice_mc_apology_fire_02.wav','assets/audio/voice_mc_apology_fire_03.wav','assets/audio/voice_mc_apology_fire_04.wav'],
+      rush:['assets/audio/voice_mc_rush_01.wav','assets/audio/voice_mc_rush_02.wav','assets/audio/voice_mc_rush_03.wav','assets/audio/voice_mc_rush_04.wav'],
+      jack:['assets/audio/voice_mc_jack_01.wav','assets/audio/voice_mc_jack_02.wav','assets/audio/voice_mc_jack_03.wav','assets/audio/voice_mc_jack_04.wav'],
+      big:['assets/audio/voice_mc_big_01.wav','assets/audio/voice_mc_big_02.wav','assets/audio/voice_mc_big_03.wav','assets/audio/voice_mc_big_04.wav','assets/audio/voice_mc_big_05.wav'],
+      top:['assets/audio/voice_mc_top_01.wav','assets/audio/voice_mc_top_02.wav','assets/audio/voice_mc_top_03.wav','assets/audio/voice_mc_top_04.wav'],
+      win:['assets/audio/voice_mc_win_01.wav','assets/audio/voice_mc_win_02.wav','assets/audio/voice_mc_win_03.wav','assets/audio/voice_mc_win_04.wav'],
+      lose:['assets/audio/voice_mc_lose_01.wav','assets/audio/voice_mc_lose_02.wav','assets/audio/voice_mc_lose_03.wav','assets/audio/voice_mc_lose_04.wav']
     };
     const voiceCache = new Map();
-    const voiceCooldowns = { default:0, clear:0, chain:0, hype:0, warning:0, fire:0 };
+    const sfxCache = new Map();
+    const sfxFileMap = {
+      drop:'assets/audio/se_drop_soft_01.wav',
+      clear:'assets/audio/se_clear_small_01.wav',
+      big:'assets/audio/se_clear_big_01.wav',
+      chain_2:'assets/audio/se_chain_02.wav',
+      chain_3:'assets/audio/se_chain_03.wav',
+      chain_4:'assets/audio/se_chain_04.wav',
+      warn:'assets/audio/se_trend_warning.wav',
+      switch:'assets/audio/se_trend_shift.wav',
+      ready:'assets/audio/se_apology_ready.wav',
+      burst:'assets/audio/se_apology_fire.wav',
+      bad:'assets/audio/se_gameover_blast.wav',
+      hazard:'assets/audio/se_hazard_spawn.wav',
+      hurry:'assets/audio/se_timer_hurry.wav'
+    };
+    const voiceCooldowns = { default:0, calm:0, clear:0, chain:0, hype:0, warning:0, fire:0, top:0, focus:0 };
     let lastVoiceAt = 0;
+    let nextAmbientVoiceAt = 0;
+    let resultStingerAudio = null;
+    let bigBuzzBannerTimer = 0;
+    let lastHyperBgmActive = false;
 
     const state = {
       active:false,
@@ -755,6 +955,7 @@
       currentLine:'今日はちゃんとバズらせたい。',
       ambientMoodLine:'今日はちゃんとバズらせたい。',
       ambientMoodTimer:0,
+      resultVoicePlayed:false,
       runTime:0,
       clearCount:0,
       seed:0,
@@ -816,7 +1017,7 @@
       const style = dom.board ? getComputedStyle(dom.board) : null;
       const fullLineY = style ? (parseFloat(style.getPropertyValue('--gameover-line-y')) || 126) : 126;
       const dangerLineY = style ? (parseFloat(style.getPropertyValue('--danger-line-y')) || 162) : 162;
-      return { fullLineY, dangerLineY, sideInset:6, spawnInset:14 };
+      return { fullLineY, dangerLineY, sideInset:6, spawnInset:Math.max(10, fullLineY - 38) }; // spawn near full line
     }
     function playerName() {
       const raw = (dom.handleInput?.value || save.playerName || '名無し配信者').trim();
@@ -873,12 +1074,12 @@
       persistSave();
       return save.dailyRankings[seed].findIndex(r => r.at === rows.find(x => x.at === r.at)?.at);
     }
-    const CONTENT_BASE_WEIGHTS = [24, 20, 17, 14, 11, 8, 6];
+    const CONTENT_BASE_WEIGHTS = [14, 14, 14, 14, 14, 14, 14];
     const CONTENT_SCORE_VALUES = [280, 330, 390, 460, 560, 700, 880];
 
     function contentBodyRadius(index, isHazard = false) {
-      if (isHazard) return 34;
-      const map = [32, 34, 36, 38, 40, 43, 46];
+      if (isHazard) return 31;
+      const map = [28, 30, 32, 34, 36, 38, 40];
       return map[index] || 36;
     }
     function contentSpawnWeight(index) {
@@ -1006,17 +1207,21 @@
     }
 
     function setAvatarVisual(key = 'normal') {
-      const pool = avatarVariants[key] || avatarVariants.normal;
-      state.avatarMood = key;
+      const moodMap = { apology:'apology', win:'win' };
+      const lookup = moodMap[key] || key;
+      const pool = avatarVariants[lookup] || avatarVariants.normal;
+      state.avatarMood = lookup;
       for (const file of pool) {
         if (missingAvatarFiles.has(file)) continue;
-        if (dom.avatar.dataset.file === file) return;
-        dom.avatar.dataset.file = file;
-        dom.avatar.src = `assets/img/${file}`;
+        if (dom.avatar) { dom.avatar.dataset.file = file; dom.avatar.src = `assets/img/${file}`; }
+        if (dom.boardCharacter && dom.boardCharacter.dataset.file !== file) {
+          dom.boardCharacter.dataset.file = file;
+          dom.boardCharacter.src = `assets/img/${file}`;
+        }
         return;
       }
-      dom.avatar.dataset.file = 'char_normal.png';
-      dom.avatar.src = 'assets/img/char_normal.png';
+      if (dom.avatar) { dom.avatar.dataset.file = 'char_normal.png'; dom.avatar.src = 'assets/img/char_normal.png'; }
+      if (dom.boardCharacter) { dom.boardCharacter.dataset.file = 'char_normal.png'; dom.boardCharacter.src = 'assets/img/char_normal.png'; }
     }
 
     function pickAvatarMood() {
@@ -1045,9 +1250,7 @@
         dom.trendShiftFutureName.textContent = future?.name || '-';
         dom.trendShiftFutureName.style.color = future?.accent || '#d9caeb';
       }
-      dom.trendShiftSub.innerHTML = mode === 'warning'
-        ? `<span class="trend-shift-badge mini"><span>次の次</span><img src="${future?.img || 'assets/img/item_3.png'}" alt="future trend"><span style="color:${future?.accent || '#d9caeb'}">${future?.name || '-'}</span></span> <span style="color:#8ef8ff">あと${Math.max(1, Math.ceil(state.trendTimer || 0))}秒</span>`
-        : `<span class="trend-shift-badge mini"><span>次の次</span><img src="${future?.img || 'assets/img/item_3.png'}" alt="future trend"><span style="color:${future?.accent || '#d9caeb'}">${future?.name || '-'}</span></span>`;
+      dom.trendShiftSub.innerHTML = `<span class="trend-shift-badge mini"><span>次の次</span><img src="${future?.img || 'assets/img/item_3.png'}" alt="future trend"><span style="color:${future?.accent || '#d9caeb'}">${future?.name || '-'}</span></span>`;
       dom.trendShiftTo.style.color = to?.accent || '#ffffff';
       dom.trendShiftFrom.style.color = mode === 'warning' ? (from?.accent || '#d9caeb') : (from?.accent || '#d9caeb');
       clearTimeout(trendBannerTimer);
@@ -1116,9 +1319,9 @@
         node.classList.toggle('near', (previewMap.get(body.id) || 0) === 2);
         node.classList.toggle('ready', (previewMap.get(body.id) || 0) >= 3);
         node.classList.toggle('forecast', forecastReady);
-        const opacityValue = body.gameType === 'hazard' ? '1' : (trendBody ? '1' : (body.contentIndex === state.nextTrendIndex ? '0.88' : '0.74'));
+        const opacityValue = '1';
         if (node.style.opacity !== opacityValue) node.style.opacity = opacityValue;
-        const filterValue = body.gameType === 'hazard' ? 'none' : (trendBody ? 'saturate(1.12)' : 'saturate(.84)');
+        const filterValue = body.gameType === 'hazard' ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
         if (node.style.filter !== filterValue) node.style.filter = filterValue;
       });
       bodyVisuals.forEach((node, id) => {
@@ -1151,6 +1354,7 @@
       save.muted = muted;
       persistSave();
       [dom.bgmNormal, dom.bgmHyper, dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(a => a.muted = muted);
+      if (resultStingerAudio) resultStingerAudio.muted = muted;
       updateMuteButtons();
     }
 
@@ -1158,6 +1362,7 @@
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
       [dom.bgmNormal, dom.bgmHyper, dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(a => a.muted = muted);
+      if (resultStingerAudio) resultStingerAudio.muted = muted;
     }
 
     function playBgm() {
@@ -1169,12 +1374,28 @@
       dom.bgmHyper.currentTime = 0;
       dom.bgmNormal.play().catch(() => {});
       dom.bgmHyper.play().catch(() => {});
+      lastHyperBgmActive = false;
     }
 
     function setHyperMix(strength) {
       const s = clamp(strength, 0, 1);
-      dom.bgmNormal.volume = muted ? 0 : (0.34 * (1 - s * 0.78));
-      dom.bgmHyper.volume = muted ? 0 : (0.54 * s);
+      const hyperActive = !!(state.active && state.clipTime > 0);
+      if (hyperActive && !lastHyperBgmActive) {
+        try { dom.bgmHyper.currentTime = 0; } catch (_) {}
+        dom.bgmHyper.play().catch(() => {});
+      }
+      lastHyperBgmActive = hyperActive;
+      dom.bgmNormal.volume = muted ? 0 : (hyperActive ? 0 : 0.34);
+      dom.bgmHyper.volume = muted ? 0 : (hyperActive ? 0.42 : 0);
+      updateBackgroundState(s);
+    }
+
+
+    function updateBackgroundState(strength = 0) {
+      const hype = state.active && state.clipTime > 0;
+      dom.bgContainer?.classList.toggle('hype', hype);
+      if (dom.bgVideoHype) dom.bgVideoHype.style.opacity = hype ? '0.82' : '0';
+      if (dom.bgVideo) dom.bgVideo.style.opacity = hype ? '0.28' : '0.62';
     }
 
     function getVoiceAudio(path) {
@@ -1213,9 +1434,34 @@
       return true;
     }
 
+    function stopResultBgm() {
+      if (!resultStingerAudio) return;
+      try { resultStingerAudio.pause(); resultStingerAudio.currentTime = 0; } catch (_) {}
+      resultStingerAudio = null;
+    }
+
+    function maybeAmbientVoice(kind = 'calm', gapSeconds = 16) {
+      const now = performance.now();
+      if (now < nextAmbientVoiceAt) return false;
+      const played = triggerVoiceCue(kind);
+      if (played) nextAmbientVoiceAt = now + gapSeconds * 1000;
+      return played;
+    }
+
+    function showBigBuzzBanner(text = '大バズり!!') {
+      if (!dom.bigBuzzBanner) return;
+      const core = dom.bigBuzzBanner.querySelector('.core');
+      if (core) core.textContent = text;
+      dom.bigBuzzBanner.classList.remove('show');
+      void dom.bigBuzzBanner.offsetWidth;
+      dom.bigBuzzBanner.classList.add('show');
+      clearTimeout(bigBuzzBannerTimer);
+      bigBuzzBannerTimer = setTimeout(() => dom.bigBuzzBanner?.classList.remove('show'), 980);
+    }
+
     function triggerVoiceCue(kind, tier = 1) {
       const now = performance.now();
-      const cooldownMap = { clear:620, chain:980, hype:1200, warning:1400, fire:1500, default:900 };
+      const cooldownMap = { clear:620, chain:980, hype:1200, warning:1400, fire:1500, apology_ready:1200, apology_fire:1400, rush:1100, jack:1200, big:1200, focus:900, top:1100, win:1400, lose:1400, default:900 };
       if (now - lastVoiceAt < 380) return false;
       const slot = kind in voiceCooldowns ? kind : 'default';
       if (voiceCooldowns[slot] > now) return false;
@@ -1247,6 +1493,29 @@
         voiceCooldowns[slot] = now + (cooldownMap[slot] || 900);
       }
       return played;
+    }
+
+
+    function getSfxAudio(path) {
+      if (!path) return null;
+      if (!sfxCache.has(path)) {
+        const audio = new Audio(path);
+        audio.preload = 'auto';
+        audio.addEventListener('error', () => { audio.dataset.failed = '1'; }, { once:true });
+        sfxCache.set(path, audio);
+      }
+      return sfxCache.get(path);
+    }
+
+    function playAssetSfx(kind, volume = 0.72) {
+      let path = sfxFileMap[kind] || null;
+      if (!path && kind === 'chain') path = sfxFileMap.chain_2;
+      const audio = getSfxAudio(path);
+      if (!audio || muted || audio.dataset.failed === '1') return false;
+      try { audio.pause(); audio.currentTime = 0; } catch (_) {}
+      audio.volume = clamp(volume, 0, 1);
+      audio.play().catch(() => {});
+      return true;
     }
 
     function sfx(type, intensity = 1) {
@@ -1375,8 +1644,8 @@
       if (state.buzzMode > 0 || state.buzzReady) pickAmbientLine(PLAYER_LINES.buzz, 3.2);
       else if (state.fireMode > 0) pickAmbientLine(PLAYER_LINES.fire, 2.8);
       else if (state.topDangerTime > 0.8) pickAmbientLine(PLAYER_LINES.top, 2.6);
-      else if (state.tension > 70) pickAmbientLine(PLAYER_LINES.focus, 3.2);
-      else if (state.tension > 40) pickAmbientLine(PLAYER_LINES.calm, 3.0);
+      else if (state.tension > 70) { pickAmbientLine(PLAYER_LINES.focus, 3.2); maybeAmbientVoice('focus', 18); }
+      else if (state.tension > 40) { pickAmbientLine(PLAYER_LINES.calm, 3.0); maybeAmbientVoice('calm', 16); }
       else pickAmbientLine(PLAYER_LINES.low, 2.6);
     }
 
@@ -1449,8 +1718,8 @@
       }
       state.switchCleared = false;
       state.trendIndex = index;
-      state.trendTotalTime = trendDuration();
-      state.trendTimer = state.trendTotalTime;
+      state.trendTotalTime = 1;
+      state.trendTimer = 1;
       state.trendWarning = false;
       state.recentSwitchBonus = 4.8;
       state.rushWindow = 6.2;
@@ -1458,20 +1727,21 @@
       dom.trendThumb.src = trend.img;
       dom.trendName.textContent = trend.name;
       dom.trendName.style.color = trend.accent;
-      dom.trendCopy.textContent = '3つ以上で消える';
+      dom.trendCopy.textContent = 'あと3消し！';
       if (dom.trendProgressFill) dom.trendProgressFill.style.width = '100%';
       dom.nextTrendThumb.src = nextTrend().img;
       dom.nextTrendName.textContent = nextTrend().name;
       dom.nextTrendName.style.color = nextTrend().accent;
-      if (dom.nextSwitchCopy) dom.nextSwitchCopy.textContent = '次に変わる';
+      if (dom.nextSwitchCopy) dom.nextSwitchCopy.textContent = ''; 
       dom.futureTrendThumb.src = futureTrend().img;
       dom.futureTrendName.textContent = futureTrend().name;
       dom.futureTrendName.style.color = futureTrend().accent;
       dom.centerTop?.classList.remove('warning');
       dom.nextBlock?.classList.remove('warning');
-      setCaption(`いま視聴者が見たいのは『${trend.name}』。同じ話題を3つ以上つなげる。右の『次の波』を見ながら、切替前に2つまで仕込む。切替直後を取れると一気に伸びる。`, 2.8);
+      setCaption(`いまは『${trend.name}』を3つ以上で消す。消えたら次は『${nextTrend().name}』。さらにその次は『${futureTrend().name}』。`, 2.8);
       spawnComment(true, null, 'hot');
       say(withFlash ? 'switch' : 'focus', 2.4);
+      triggerVoiceCue(withFlash ? 'rush' : 'focus');
       rollPinnedComment(withFlash ? 'switch' : 'normal');
       if (withFlash) {
         spawnComment(false, `今は${trend.name}の先読みが刺さる`, 'super', '🚀');
@@ -1480,7 +1750,7 @@
       if (withFlash) {
         flashScreen(trend.accent);
         sfx('switch', 0.9);
-        showTrendShiftBanner('shift', previousIndex == null ? index : previousIndex, index, state.nextTrendIndex);
+        showTrendShiftBanner('shift', previousIndex == null ? index : previousIndex, index, state.futureTrendIndex);
       }
       state.setupCarryLen = 0;
       if (withFlash && engine) {
@@ -1536,15 +1806,9 @@
     function queueRoll() {
       const bigBuzz = state.clipTime > 0;
       const weights = CONTENTS.map((_, i) => contentSpawnWeight(i));
-      if (Number.isInteger(state.trendIndex)) {
-        weights[state.trendIndex] *= bigBuzz ? 6.2 : 2.35;
-      }
-      if (Number.isInteger(state.nextTrendIndex)) {
-        weights[state.nextTrendIndex] *= state.trendWarning ? (bigBuzz ? 2.2 : 1.7) : 1.14;
-      }
-      if (Number.isInteger(state.futureTrendIndex) && state.trendWarning) {
-        weights[state.futureTrendIndex] *= 1.06;
-      }
+      if (Number.isInteger(state.trendIndex)) weights[state.trendIndex] *= bigBuzz ? 6.2 : 2.35;
+      if (Number.isInteger(state.nextTrendIndex)) weights[state.nextTrendIndex] *= bigBuzz ? 2.2 : 1.7;
+      if (Number.isInteger(state.futureTrendIndex)) weights[state.futureTrendIndex] *= 1.08;
       return weightedContentPick(weights);
     }
 
@@ -1570,13 +1834,17 @@
       const radius = dropRadiusFor();
       const x = clamp(hoverX, radius + 6, rect.width - radius - 6);
       const size = visualDiameter(radius, false);
+      const metrics = getBoardMetrics();
+      const ringSize = Math.round(size + 12);
+      const itemSize = Math.max(48, Math.round(size * 0.82));
+      const previewTop = Math.max(8, metrics.fullLineY - ringSize - 4);
       dom.dropGuide.style.left = `${x}px`;
-      dom.previewItem.style.left = `${x}px`;
       dom.previewRing.style.left = `${x}px`;
-      dom.previewItem.style.width = `${Math.max(56, Math.round(size * 0.9))}px`;
-      dom.previewItem.style.height = `${Math.max(56, Math.round(size * 0.9))}px`;
-      dom.previewRing.style.width = `${Math.round(size + 10)}px`;
-      dom.previewRing.style.height = `${Math.round(size + 10)}px`;
+      dom.previewRing.style.top = `${previewTop}px`;
+      dom.previewItem.style.width = `${itemSize}px`;
+      dom.previewItem.style.height = `${itemSize}px`;
+      dom.previewRing.style.width = `${ringSize}px`;
+      dom.previewRing.style.height = `${ringSize}px`;
       refreshQueue();
     }
 
@@ -2070,12 +2338,8 @@
 
       const groups = buildGroups(state.trendIndex);
       state.previewGroups = groups.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
-      if (state.trendWarning) {
-        const nextGroups = buildGroups(state.nextTrendIndex);
-        state.nextPreviewGroups = nextGroups.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
-      } else {
-        state.nextPreviewGroups = [];
-      }
+      const nextGroups = buildGroups(state.nextTrendIndex);
+      state.nextPreviewGroups = nextGroups.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
       return groups.filter(g => g.length >= 3 && g.every(body => body.speed < 4.2));
     }
 
@@ -2142,7 +2406,7 @@
       const topGapBefore = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
       const crownRush = crownTargetScore(state.seed) > 0 && topGapBefore > 0 && topGapBefore <= 5200;
       const nextPreviewLen = biggestNextPreviewLen();
-      const forecastReady = state.trendWarning && nextPreviewLen >= 2;
+      const forecastReady = nextPreviewLen >= 2;
       let rushBonusValue = 0;
       let jackBonus = 0;
       let jackLevelUp = false;
@@ -2314,12 +2578,22 @@
         }
       }
 
+
+      if (mainIndex === state.trendIndex) {
+        const previousTrendIndex = state.trendIndex;
+        state.trendIndex = state.nextTrendIndex;
+        state.nextTrendIndex = state.futureTrendIndex;
+        state.futureTrendIndex = pickTrendExcluding(state.trendIndex, state.nextTrendIndex);
+        setTrend(state.trendIndex, true, previousTrendIndex);
+      }
+
       if (state.buzz >= 100 && !state.buzzReady && state.buzzMode <= 0) {
         state.buzzReady = true;
         dom.burstBtn.classList.add('ready');
         dom.burstBtn.innerHTML = '<div><div class="icon">🧯</div><div class="txt">火消しする</div></div>';
         setCaption('謝罪配信の準備完了。押すと今ある炎上をまとめて消せる。危ない時の立て直しに使いたい。', 2.4);
         spawnComment(false, '今なら火消しできる', 'super', '🧯');
+        triggerVoiceCue('apology_ready');
         sfx('ready', 1.1);
       }
 
@@ -2441,6 +2715,8 @@
       state.rescueTimer = 0;
       state.boardStatsCache = null;
       state.boardStatsCacheAt = 0;
+      state.paused = false;
+      state.resultVoicePlayed = false;
       updateSeedLabels();
     }
 
@@ -2454,20 +2730,61 @@
       spawnComment(false, 'いま切り抜きどころ', 'super', '🚀');
       say('big', 2.1);
       flashScreen('#ffe37a');
-      addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.35, '#fff4a3', 16, 200);
+      showBigBuzzBanner('大バズり!!');
+      setHyperMix(1);
+      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,216,76,.96)', 32, 9);
+      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,47,146,.9)', 20, 8);
+      addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#fff4a3', 24, 260);
+      addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#ff5ab1', 38, 320);
       rollPinnedComment('clip');
       sfx('ready', 1.0);
     }
 
+
+    function goToTitle() {
+      stopResultBgm();
+      state.active = false;
+      state.paused = false;
+      try { if (runner) Runner.stop(runner); } catch(_) {}
+      destroyEngine();
+      dom.pauseOverlay?.classList.add('hidden');
+      dom.gameScreen.classList.add('hidden');
+      dom.resultScreen.classList.add('hidden');
+      dom.howtoScreen?.classList.add('hidden');
+      dom.startScreen.classList.remove('hidden');
+      try { dom.bgmNormal.pause(); dom.bgmHyper.pause(); } catch(_) {}
+      lastHyperBgmActive = false;
+      setHyperMix(0);
+    }
+
+    function togglePause(force) {
+      if (!state.active || !engine) return;
+      const next = typeof force === 'boolean' ? force : !state.paused;
+      state.paused = next;
+      dom.pauseOverlay?.classList.toggle('hidden', !next);
+      if (next) {
+        try { if (runner) Runner.stop(runner); } catch(_) {}
+        state.lastTs = 0;
+      } else {
+        try { if (runner) Runner.run(runner, engine); } catch(_) {}
+        state.lastTs = 0;
+      }
+    }
+
     function startGame() {
+      stopResultBgm();
       persistPlayerName();
       ensureAudio();
       playBgm();
-      playVoice('start');
+      triggerVoiceCue('start');
       dom.startScreen.classList.add('hidden');
+      dom.howtoScreen?.classList.add('hidden');
       dom.resultScreen.classList.add('hidden');
       dom.gameScreen.classList.remove('hidden');
-      dom.avatar.src = 'assets/img/char_normal.png';
+      dom.pauseOverlay?.classList.add('hidden');
+      if (dom.avatar) dom.avatar.src = 'assets/img/char_normal.png';
+      if (dom.boardCharacter) dom.boardCharacter.src = 'assets/img/char_normal.png';
+      updateBackgroundState();
       dom.gameShell.classList.remove('shake');
       dom.dangerFog.classList.remove('show');
       dom.topDangerLine.classList.remove('show');
@@ -2489,11 +2806,13 @@
       state.buzzActivations += 1;
       dom.burstBtn.classList.remove('ready');
       dom.burstBtn.innerHTML = '<div><div class="icon">🧯</div><div class="txt">火消し中!</div></div>';
+      setAvatarVisual('apology');
       const clearedHazards = clearAllHazards(true);
       if (!clearedHazards) {
         flashScreen('#ffe37a');
         addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, '#ffe37a', 20, 240);
       }
+      triggerVoiceCue('apology_fire');
       say('buzz', 2.4);
     }
 
@@ -2507,7 +2826,6 @@
       dom.gameShell.classList.add('shake');
       setCaption(reason === 'top' ? '大炎上。上まで詰まってる。邪魔ブロックに注意。' : '大炎上。外しすぎてコメント欄が荒れている。今の需要を当てて空気を戻す。', 2.5);
       spawnComment(false, 'うわ燃えてる', 'low');
-      playVoice('fire');
       triggerVoiceCue('fire');
       flashScreen('#ff5b73');
       sfx('bad', 1);
@@ -2524,6 +2842,7 @@
       addParticles(x, 48, 'rgba(255,91,115,.9)', 10, 4);
       popText(x, 92, '炎上', '#ff5b73', 22);
       spawnComment(false, '邪魔ブロックきつい', 'low');
+      playAssetSfx('hazard', 0.8);
     }
 
     function clearAllHazards(fromBurst = false) {
@@ -2565,19 +2884,20 @@
       spawnComment(false, `炎上${hazards.length}個まとめて消えた！`, 'super', '💥');
       spawnComment(false, '謝罪配信で立て直した！', 'super', '🧯');
       setCaption('謝罪配信で火消し成功。いま出ていた炎上を全部消した。ここから立て直せる。', 2.2);
-      triggerVoiceCue('hype', Math.max(2, hazards.length));
+      triggerVoiceCue('apology_fire', Math.max(2, hazards.length));
       sfx('burst', 1.28);
       setTimeout(() => dom.gameShell.classList.remove('shake'), 320);
       return hazards.length;
     }
 
     function dropAt(clientX) {
-      if (!state.active || !engine) return;
+      if (!state.active || !engine || state.paused) return;
       const rect = dom.board.getBoundingClientRect();
       if (clientX < rect.left || clientX > rect.right) return;
       const idx = state.queue[0];
       const radius = dropRadiusFor(idx);
-      const spawnY = radius + getBoardMetrics().spawnInset;
+      const metrics = getBoardMetrics();
+      const spawnY = Math.max(radius + 6, metrics.fullLineY - radius - 6);
       const desiredX = clamp(clientX - rect.left, radius + 6, rect.width - radius - 6);
       const safeDrop = findSafeDropX(desiredX, radius, spawnY);
       hoverX = safeDrop.x;
@@ -2639,16 +2959,15 @@
       dom.cravingNum.textContent = fmt(state.craving);
       dom.heatNum.textContent = fmt(state.heat);
       dom.buzzNum.textContent = fmt(state.buzz);
-      dom.trendTimer.textContent = Math.ceil(state.trendTimer).toString();
-      if (dom.trendProgressFill) dom.trendProgressFill.style.width = `${Math.round(clamp(state.trendTimer / Math.max(1, state.trendTotalTime || 1), 0, 1) * 100)}%`;
-      if (dom.nextSwitchCopy) dom.nextSwitchCopy.textContent = state.trendWarning ? `あと${Math.max(1, Math.ceil(state.trendTimer))}秒` : '次に変わる';
+      dom.trendTimer.textContent = state.overfillTime > 0.18 ? '満杯注意' : 'あと3消し！';
+      if (dom.trendProgressFill) dom.trendProgressFill.style.width = '100%';
+      if (dom.nextSwitchCopy) dom.nextSwitchCopy.textContent = ''; 
       if (dom.trendCopy) {
         if (state.overfillTime > 0.18) dom.trendCopy.textContent = '満杯注意';
-        else if (state.trendWarning) dom.trendCopy.textContent = `あと${Math.max(1, Math.ceil(state.trendTimer))}秒`;
-        else dom.trendCopy.textContent = '3つ以上で消える';
+        else dom.trendCopy.textContent = 'あと3消し！';
       }
-      dom.centerTop?.classList.toggle('warning', state.trendWarning);
-      dom.nextBlock?.classList.toggle('warning', state.trendWarning);
+      dom.centerTop?.classList.toggle('warning', false);
+      dom.nextBlock?.classList.toggle('warning', false);
       if (dom.comboView) dom.comboView.textContent = `x${state.combo}`;
       if (dom.chainView) dom.chainView.textContent = `${state.chainCount || 0}連鎖`;
       setAvatarVisual(pickAvatarMood());
@@ -2662,6 +2981,7 @@
       const crownClutchActive = topGap > 0 && topGap <= 1800;
       const previewLen = biggestPreviewLen();
       const nextPreviewLen = biggestNextPreviewLen();
+      state.trendWarning = nextPreviewLen >= 2;
       let eventMiniText = '';
       if (isFeverActive()) eventMiniText = `大バズり中 ${Math.max(1, Math.ceil(state.clipTime))}s`;
       else if (state.rushWindow > 0) eventMiniText = previewLen >= 2 ? `先読みGO x${previewLen}` : `先読み ${Math.ceil(state.rushWindow)}s`;
@@ -2686,7 +3006,7 @@
         } else if (state.trendWarning) {
           if (nextPreviewLen >= 3) caption = `次は『${nextTrend().name}』。もう見えてる。`;
           else if (nextPreviewLen >= 2) caption = `次は『${nextTrend().name}』。あと1個で完成。`;
-          else caption = `次は『${nextTrend().name}』。`;
+          else caption = `次は『${nextTrend().name}』、その次は『${futureTrend().name}』。`;
         } else if (state.overfillTime > 0.18) {
           caption = `満杯注意。いまは『${currentTrend().name}』を優先。`;
         } else if (state.chainCount >= 2 && state.chainDecay > 0) {
@@ -2698,7 +3018,7 @@
         } else if (crownClutchActive) {
           caption = `あと${fmt(topGap)}で今日の1位。`;
         } else {
-          caption = `今は『${currentTrend().name}』を3つ以上。${topGap > 0 ? ` あと${fmt(topGap)}で1位。` : ' いま1位ペース。'}`;
+          caption = `今は『${currentTrend().name}』を3つ以上。次は『${nextTrend().name}』。`; 
         }
         dom.captionText.textContent = caption;
       }
@@ -2709,7 +3029,7 @@
 
     function requestLoop(ts) {
       rafId = requestAnimationFrame(requestLoop);
-      if (!state.active || !engine) return;
+      if (!state.active || !engine || state.paused) return;
       if (!state.lastTs) state.lastTs = ts;
       const dt = clamp((ts - state.lastTs) / 1000, 0.001, 0.05);
       state.lastTs = ts;
@@ -2724,9 +3044,13 @@
       state.pinTimer = Math.max(0, state.pinTimer - dt);
       state.rushWindow = Math.max(0, state.rushWindow - dt);
       state.hintCooldown = Math.max(0, state.hintCooldown - dt);
-      state.trendTimer -= dt;
       if (state.clipTime > 0) {
+        const wasClipActive = state.clipTime > 0;
         state.clipTime = Math.max(0, state.clipTime - dt);
+        if (wasClipActive && state.clipTime <= 0) {
+          setHyperMix(0);
+          setCaption('大バズり終了。通常BGMに戻った。次の見せ場まで盤面を整えよう。', 1.8);
+        }
       } else if (state.clipCooldown <= 0) {
         activateClipTime();
       }
@@ -2753,6 +3077,7 @@
         showTrendShiftBanner('warning', state.trendIndex, state.nextTrendIndex, state.futureTrendIndex);
         spawnComment(false, 'ラストスパート入った！', 'super', '⏱️');
         flashScreen('#ffe37a');
+        playAssetSfx('hurry', 0.82);
         sfx('ready', 1.0);
       }
       if (state.streamTime <= 0) {
@@ -2761,30 +3086,13 @@
         return;
       }
 
-      if (!state.trendWarning && state.trendTimer <= 5.2) {
-        state.trendWarning = true;
-        setCaption(`あと少しで『${nextTrend().name}』に切り替わる。今のうちに2個まで仕込んで、切替直後を取りたい。`, 2.6);
-        say('warning', 2.1);
-        spawnComment(false, `次は${nextTrend().name}来そう`, 'next');
-        showTrendShiftBanner('warning', state.trendIndex, state.nextTrendIndex, state.futureTrendIndex);
-        flashScreen(hexToRgba(nextTrend().accent, 0.9));
-        sfx('warn', 0.8);
-        triggerVoiceCue('warning');
-      }
-      if (state.trendTimer <= 0) {
-        const previousTrendIndex = state.trendIndex;
-        state.trendIndex = state.nextTrendIndex;
-        state.nextTrendIndex = state.futureTrendIndex;
-        state.futureTrendIndex = pickTrendExcluding(state.trendIndex, state.nextTrendIndex);
-        setTrend(state.trendIndex, true, previousTrendIndex);
-      }
-
       if (state.scanTimer >= 0.30) {
         state.scanTimer = 0;
         resolveGroups();
       }
       const previewLen = biggestPreviewLen();
       const nextPreviewLen = biggestNextPreviewLen();
+      state.trendWarning = nextPreviewLen >= 2;
       if (previewLen >= 2 && state.hintCooldown <= 0 && state.fireMode <= 0) {
         if (previewLen === 2) {
           spawnComment(false, `あと1個で${currentTrend().name}つながる`, 'hot', '👀');
@@ -2878,7 +3186,8 @@
       cancelAnimationFrame(rafId);
       rafId = 0;
 
-      const resultDelay = 420;
+      const resultDelay = 700;
+      if (dom.gameoverFxVideo) { try { dom.gameoverFxVideo.currentTime = 0; dom.gameoverFxVideo.classList.add('show'); dom.gameoverFxVideo.play().catch(() => {}); } catch(_) {} }
       const isTimeUp = state.gameOverReason === 'time';
       const fxColor = isTimeUp ? '#ffe37a' : '#ff5b73';
       flashScreen(fxColor);
@@ -2887,13 +3196,22 @@
       popText(dom.board.clientWidth / 2, dom.board.clientHeight * 0.47, isTimeUp ? '配信終了' : '配信事故', '#ffffff', 20);
       addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, fxColor, 40, 360);
       addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#ffffff', 64, 260);
+      setAvatarVisual(isTimeUp ? 'yami' : 'panic');
+      state.resultVoicePlayed = triggerVoiceCue((crownTargetScore(state.seed) > 0 && Math.floor(state.score) >= crownTargetScore(state.seed)) ? 'win' : 'lose');
       sfx(isTimeUp ? 'big' : 'bad', 1.28);
       sfx('burst', isTimeUp ? 0.92 : 1.05);
 
       setTimeout(() => {
         dom.gameShell.classList.remove('shake');
+        if (dom.gameoverFxVideo) { dom.gameoverFxVideo.classList.remove('show'); try { dom.gameoverFxVideo.pause(); } catch(_) {} }
         dom.gameScreen.classList.add('hidden');
         dom.resultScreen.classList.remove('hidden');
+        const winLike = crownTargetScore(state.seed) > 0 && Math.floor(state.score) >= crownTargetScore(state.seed);
+        stopResultBgm();
+        resultStingerAudio = new Audio(winLike ? 'assets/audio/bgm_result_win.wav' : 'assets/audio/bgm_result_lose.wav');
+        resultStingerAudio.volume = muted ? 0 : 0.62;
+        resultStingerAudio.muted = muted;
+        resultStingerAudio.play().catch(() => {});
         const wasBest = save.bestScore || 0;
         const isNewBest = Math.floor(state.score) > wasBest;
         const currentBest = Math.max(wasBest, Math.floor(state.score));
@@ -2924,24 +3242,20 @@
           dom.resultCopy.textContent = isNewBest
             ? `今日の1位を獲得。自己ベスト更新。${state.peakCrownHold > 0 ? ` 王冠防衛 x${state.peakCrownHold}。` : ''}${state.waveLinkHits > 0 ? ` 波読み x${state.waveLinkHits}。` : ''}`
             : `今日の1位。王冠キープ成功。${state.peakCrownHold > 0 ? ` 王冠防衛 x${state.peakCrownHold}。` : ''}${state.waveLinkHits > 0 ? ` 波読み x${state.waveLinkHits}。` : ''}`;
-          playVoice('win');
         } else if (isNewBest) {
           dom.resultCopy.textContent = `自己ベスト更新。${gap > 0 ? `あと${fmt(gap)}で今日の1位。` : '今日の王冠に届いた。'}${state.waveLinkHits > 0 ? ` 波読み x${state.waveLinkHits}。` : ''}${myRank > 0 ? ` DAILY #${myRank}` : ''}`;
-          playVoice('win');
         } else if (state.gameOverReason === 'full') {
           dom.resultCopy.textContent = `盤面が満杯になって配信終了。上の赤ラインを越える前に、いま消せる話題を優先したい。${myRank > 0 ? ` DAILY #${myRank}` : ''}`;
-          playVoice('lose');
         } else if (state.gameOverReason === 'top') {
           dom.resultCopy.textContent = `上まで詰まって配信事故。仕込みすぎで盤面が崩れた。${myRank > 0 ? ` DAILY #${myRank}` : ''}`;
-          playVoice('lose');
         } else if (state.gameOverReason === 'time') {
           dom.resultCopy.textContent = `配信時間終了。短期決戦のスコアアタックとして終了した。${myRank > 0 ? ` DAILY #${myRank}` : ''}`;
-          playVoice('win');
         } else {
           dom.resultCopy.textContent = `視聴者のテンションが尽きて、配信が沈んだ。次は先読みで流れを取りたい。${myRank > 0 ? ` DAILY #${myRank}` : ''}`;
-          playVoice('lose');
         }
-        setHyperMix(0);
+        try { dom.bgmNormal.pause(); dom.bgmHyper.pause(); } catch(_) {}
+        lastHyperBgmActive = false;
+      setHyperMix(0);
         destroyEngine();
       }, resultDelay);
     }
@@ -2970,10 +3284,22 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     }
 
     dom.startBtn.addEventListener('click', startGame);
-    dom.retryBtn.addEventListener('click', startGame);
+    dom.retryBtn.addEventListener('click', () => { if (typeof stopResultBgm === 'function') stopResultBgm(); startGame(); });
     if (new URLSearchParams(location.search).get('auto') === '1') {
       window.addEventListener('load', () => setTimeout(() => dom.startBtn?.click(), 80), { once:true });
     }
+
+    dom.howtoBtn?.addEventListener('click', () => { dom.startScreen.classList.add('hidden'); dom.howtoScreen?.classList.remove('hidden'); });
+    dom.howtoBackBtn?.addEventListener('click', () => { dom.howtoScreen?.classList.add('hidden'); dom.startScreen.classList.remove('hidden'); });
+    dom.howtoStartBtn?.addEventListener('click', startGame);
+    dom.pauseBtn?.addEventListener('click', () => togglePause());
+    dom.resumeBtn?.addEventListener('click', () => togglePause(false));
+    dom.retryPlayBtn?.addEventListener('click', startGame);
+    dom.pauseRetryBtn?.addEventListener('click', startGame);
+    dom.titleBtn?.addEventListener('click', goToTitle);
+    dom.pauseTitleBtn?.addEventListener('click', goToTitle);
+    dom.resultTitleBtn?.addEventListener('click', goToTitle);
+
     dom.muteBtn.addEventListener('click', toggleMute);
     dom.resultMuteBtn.addEventListener('click', toggleMute);
     if (dom.shareBtn) dom.shareBtn.addEventListener('click', copyResult);
@@ -2990,7 +3316,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
 
     window.addEventListener('resize', applyAppHeight);
     window.addEventListener('orientationchange', () => setTimeout(applyAppHeight, 120));
-    document.addEventListener('visibilitychange', () => { if (document.hidden) setHyperMix(0); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { setHyperMix(0); stopResultBgm(); } });
 
     if (dom.handleInput) {
       dom.handleInput.value = save.playerName || '名無し配信者';
