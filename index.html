@@ -1012,8 +1012,9 @@
       grid-template-columns:1fr !important;
       gap:18px !important;
       margin-top:0 !important;
+      align-content:start !important;
     }
-    #start-screen .title-actions .btn{width:100% !important}
+    #start-screen .title-actions .btn{width:100% !important; min-height:112px !important; padding:22px 28px !important; font-size:34px !important}
     #start-screen .daily-board-wrap{
       margin-top:0 !important;
       padding:18px 20px !important;
@@ -2049,13 +2050,13 @@
 
     const BOARD_BODY_ITEM_SCALE = 1.2;
     const LIGHT_MODE_SCAN_INTERVAL = 0.20;
-    const LIGHT_MODE_VISUAL_INTERVAL = 1 / 15;
-    const LIGHT_MODE_UI_INTERVAL = 0.20;
-    const LIGHT_MODE_CLEANUP_INTERVAL = 0.32;
-    const LIGHT_MODE_RESCUE_INTERVAL = 0.38;
-    const LIGHT_MODE_BOARD_STATS_CACHE_MS = 180;
-    const LIGHT_MODE_PARTICLE_BUDGET = 56;
-    const LIGHT_MODE_PARTICLE_SCALE = 0.52;
+    const LIGHT_MODE_VISUAL_INTERVAL = 1 / 12;
+    const LIGHT_MODE_UI_INTERVAL = 0.24;
+    const LIGHT_MODE_CLEANUP_INTERVAL = 0.42;
+    const LIGHT_MODE_RESCUE_INTERVAL = 0.52;
+    const LIGHT_MODE_BOARD_STATS_CACHE_MS = 260;
+    const LIGHT_MODE_PARTICLE_BUDGET = 32;
+    const LIGHT_MODE_PARTICLE_SCALE = 0.32;
     function contentBodyRadius(index, specialType = false) {
       if (specialType === true || specialType === 'hazard') return Math.round(31 * BOARD_BODY_ITEM_SCALE);
       if (specialType === 'fire') return Math.round(31 * BOARD_BODY_ITEM_SCALE);
@@ -3451,11 +3452,11 @@
       targetLane.appendChild(node);
       lastCommentSpawnAt = now;
       if (specialType) {
-        while (dom.chatLane.childNodes.length > 4) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > 3) dom.chatLane.firstChild.remove();
       } else if (dom.chatLaneBack) {
-        while (dom.chatLaneBack.childNodes.length > 8) dom.chatLaneBack.firstChild.remove();
+        while (dom.chatLaneBack.childNodes.length > 5) dom.chatLaneBack.firstChild.remove();
       } else {
-        while (dom.chatLane.childNodes.length > 8) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > 5) dom.chatLane.firstChild.remove();
       }
     }
 
@@ -4791,7 +4792,7 @@
       state.commentEventTimer = 0;
       state.commentEventType = '';
       state.commentEventText = '';
-      const chatInterval = state.clipTime > 0 ? 1.18 : 2.05;
+      const chatInterval = state.clipTime > 0 ? 1.36 : 2.35;
       if (state.commentTimer >= chatInterval) {
         state.commentTimer = 0;
         spawnComment(false);
@@ -4991,14 +4992,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     if (dom.shareBtn) dom.shareBtn.addEventListener('click', copyResult);
     dom.burstBtn.addEventListener('click', activateBurst);
     let holdDropX = 0;
-    let holdDropDelayTimer = 0;
-    let holdDropInterval = 0;
-    function stopHoldDrop() {
-      clearTimeout(holdDropDelayTimer);
-      clearInterval(holdDropInterval);
-      holdDropDelayTimer = 0;
-      holdDropInterval = 0;
-    }
+    function stopHoldDrop() {}
     dom.board.addEventListener('pointermove', event => {
       const info = boardLogicalRect();
       hoverX = clamp((event.clientX - info.left) * info.scaleX, 34, info.width - 34);
@@ -5008,14 +5002,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     dom.board.addEventListener('pointerdown', event => {
       event.preventDefault();
       holdDropX = event.clientX;
-      try { dom.board.setPointerCapture(event.pointerId); } catch (_) {}
       dropAt(holdDropX);
-      stopHoldDrop();
-      holdDropDelayTimer = setTimeout(() => {
-        holdDropInterval = setInterval(() => {
-          if (state.active && !state.paused) dropAt(holdDropX);
-        }, 200);
-      }, 200);
     }, { passive:false });
     dom.board.addEventListener('pointerup', stopHoldDrop, { passive:true });
     dom.board.addEventListener('pointercancel', stopHoldDrop, { passive:true });
