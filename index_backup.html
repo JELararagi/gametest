@@ -33,8 +33,8 @@
 
     #bg-container{position:fixed;inset:0;z-index:-3;background:#000 url('assets/img/bg_cyber_loop_frame.png') center center / cover no-repeat;overflow:hidden;--bg-base-opacity:.94;--bg-hype-opacity:0}
     #bg-video,#bg-video-hype{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none;transform:translateZ(0)}
-    #bg-video{opacity:var(--bg-base-opacity);transition:opacity .26s ease, filter .26s ease;filter:saturate(1.02) brightness(.86)}
-    #bg-video-hype{opacity:var(--bg-hype-opacity);transition:opacity .26s ease;filter:saturate(1.12) brightness(1.03)}
+    #bg-video{opacity:var(--bg-base-opacity);transition:opacity .26s ease, filter .26s ease;filter:saturate(1.04) brightness(.92)}
+    #bg-video-hype{opacity:var(--bg-hype-opacity);transition:opacity .26s ease;filter:saturate(1.1) brightness(1.02)}
     #bg-container.hype #bg-video{filter:saturate(1.08) brightness(.96)}
     #bg-vignette{position:fixed;inset:0;z-index:-2;background:
       radial-gradient(circle at top, rgba(255,47,146,.16), transparent 36%),
@@ -109,16 +109,16 @@
       --gameover-line-y:96px;
       --danger-line-y:130px;
       position:relative;width:min(100%, 560px);height:100%;border-radius:28px;overflow:hidden;border:3px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(12,5,22,.30), rgba(12,5,22,.46));touch-action:none;
-      box-shadow:inset 0 -28px 64px rgba(0,0,0,.24),inset 0 0 0 1px rgba(255,255,255,.05)
+      background:linear-gradient(180deg, rgba(12,5,22,.12), rgba(12,5,22,.22));touch-action:none;
+      box-shadow:inset 0 -28px 64px rgba(0,0,0,.18),inset 0 0 0 1px rgba(255,255,255,.05)
     }
-    #game-board::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:url('assets/img/bg_cyber_loop_frame.png') center center / cover no-repeat;opacity:.54;transform:translateZ(0)}
+    #game-board::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:url('assets/img/bg_cyber_loop_frame.png') center center / cover no-repeat;opacity:.72;transform:translateZ(0)}
     #board-grid{position:absolute;inset:0;pointer-events:none;opacity:.26;background-image:linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);background-size:calc(100% / 6) calc(100% / 11);mask-image:linear-gradient(180deg, transparent 0%, black 12%, black 100%)}
     .board-character-layer{position:absolute;left:50%;bottom:-1%;width:107.25%;max-width:none;height:107.25%;min-height:0;aspect-ratio:1 / 1;transform:translate3d(-50%,0,0);object-fit:contain;object-position:center bottom;pointer-events:none;z-index:4;opacity:0;filter:drop-shadow(0 0 18px rgba(255,47,146,.16)) saturate(1.02);will-change:opacity,transform;transition:opacity .12s linear;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:layout paint size}
     .board-character-layer.active{opacity:1}
     #gameover-fx-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:24;opacity:0;transition:opacity .22s ease} 
     #gameover-fx-video.show{opacity:.9}
-    #board-glass{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg, rgba(6,3,10,.24), rgba(6,3,10,.18));box-shadow:inset 0 0 34px rgba(0,236,255,.05), inset 0 -48px 68px rgba(255,47,146,.05)}
+    #board-glass{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 34px rgba(0,236,255,.05), inset 0 -48px 68px rgba(255,47,146,.05)}
     #merge-canvas{display:none}
     #item-layer{position:absolute;inset:0;pointer-events:none;z-index:9;overflow:hidden}
     .item-chip{position:absolute;left:0;top:0;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);border:2px solid rgba(255,255,255,.34);box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,255,255,.28);transition:box-shadow .14s,border-color .14s;will-change:transform,opacity;overflow:hidden;transform-origin:center center;contain:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
@@ -131,13 +131,10 @@
     .item-chip.shift-glow{border-color:rgba(255,244,163,.96);box-shadow:0 0 0 3px rgba(255,244,163,.28),0 0 34px rgba(255,216,76,.42),0 0 56px rgba(0,236,255,.24),inset 0 0 20px rgba(255,255,255,.14)}
     .item-chip.hazard{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%);border-color:rgba(255,91,115,.92)}
     .item-chip.hazard::after{content:'🚨'}
-    .item-chip.pending-clear{box-shadow:0 0 0 2px rgba(255,255,255,.26), 0 0 22px rgba(255,216,76,.34), 0 0 36px rgba(255,91,181,.18), inset 0 0 18px rgba(255,255,255,.14);filter:brightness(1.08);animation:pendingClearPulse .2s ease-in-out infinite alternate}
-    @keyframes pendingClearPulse{0%{opacity:.94;box-shadow:0 0 0 2px rgba(255,255,255,.24), 0 0 18px rgba(255,216,76,.24), 0 0 28px rgba(255,91,181,.12), inset 0 0 14px rgba(255,255,255,.12)}100%{opacity:1;box-shadow:0 0 0 2px rgba(255,255,255,.34), 0 0 28px rgba(255,216,76,.42), 0 0 42px rgba(255,91,181,.24), inset 0 0 20px rgba(255,255,255,.18)}}
     #danger-fog{position:absolute;inset:0;pointer-events:none;z-index:10;opacity:0;background:linear-gradient(180deg, rgba(255,59,91,.04), rgba(255,59,91,.18));transition:opacity .3s}
     #danger-fog.show{opacity:1}
     #particle-canvas,#fx-canvas{position:absolute;inset:0;pointer-events:none}
-    #chat-lane-back{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:8;overflow:hidden;opacity:1}
-    #chat-lane{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:18;overflow:hidden;opacity:1}
+    #chat-lane{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:8;overflow:hidden;opacity:.82}
     #fx-canvas{z-index:16}
     #particle-canvas{z-index:18}
     #gameover-line{
@@ -165,16 +162,8 @@
     #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;min-width:0;max-width:none;align-items:center;gap:12px;min-height:var(--bottom-info-h);display:grid;grid-template-columns:minmax(0,1fr) auto;z-index:22}
     #center-top{top:8px;left:8px;right:calc(var(--queue-w) + 16px);transform:none;padding:10px 12px;gap:0;width:auto;min-width:0;max-width:none;display:block;align-items:center;height:var(--top-hud-h);transition:box-shadow .18s,border-color .18s,transform .18s;overflow:visible;pointer-events:none}
     #center-top.warning{border-color:rgba(255,216,76,.48);box-shadow:0 0 28px rgba(255,216,76,.18),0 12px 28px rgba(0,0,0,.26)}
-    #top-right{top:calc(var(--top-hud-h) + 10px);right:8px;padding:8px 8px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:44%;z-index:22}
-    #drop-queue{display:none !important}
-    #drop-selector{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;margin-top:6px;direction:rtl}
-    .drop-pick-btn{width:60px;height:60px;border:none;border-radius:18px;padding:5px 4px 4px;cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.18);display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;align-items:center;position:relative;transition:transform .12s ease, box-shadow .12s ease, background .12s ease;flex:0 0 auto;gap:1px}
-    .drop-pick-btn img{width:68%;height:68%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 0 10px rgba(255,255,255,.24))}
-    .drop-pick-btn .lbl{font-size:.48rem;line-height:1;color:#f7eefc;font-weight:900;letter-spacing:.01em;pointer-events:none;white-space:nowrap;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.34)}
-    .drop-pick-btn:hover{transform:translateY(-1px)}
-    .drop-pick-btn.active{background:linear-gradient(180deg, rgba(255,216,76,.94), rgba(255,123,208,.82));box-shadow:0 0 0 1px rgba(255,249,214,.42), 0 0 18px rgba(255,180,96,.26), 0 10px 18px rgba(0,0,0,.2)}
-    .drop-pick-btn.active::before{content:'';position:absolute;inset:-2px;border-radius:14px;border:2px solid rgba(255,249,214,.76);pointer-events:none}
-    #mood-text{display:none !important}
+    #top-right{display:none}
+    #drop-queue{position:absolute;top:8px;right:8px;width:var(--queue-w);height:var(--top-hud-h);padding:8px 4px;display:grid;grid-template-rows:1fr 1fr auto;gap:6px;justify-items:center;align-content:stretch;z-index:21;background:rgba(10,6,16,.94);border:1px solid rgba(255,255,255,.09);border-radius:22px;box-shadow:0 12px 28px rgba(0,0,0,.26)}
     .queue-title{text-align:center;font-size:.6rem;line-height:1.05;align-self:end;color:#d9caeb}
     .queue-token{position:relative !important;width:46px;height:46px;display:grid;place-items:center;padding:0;justify-self:center}
     .queue-token img{width:70%;height:70%;object-fit:contain;object-position:center center;display:block}
@@ -257,7 +246,7 @@
     .action-btn.switch-flash{animation:burstReadyFlash .92s ease-out 1, pulse 1s .92s infinite}
     @keyframes burstReadyFlash{0%{box-shadow:0 0 0 rgba(255,216,76,0), inset 0 1px 0 rgba(255,255,255,.06);filter:brightness(1)}25%{box-shadow:0 0 0 8px rgba(255,216,76,.18),0 0 34px rgba(255,216,76,.45),0 0 68px rgba(0,236,255,.22);filter:brightness(1.15)}100%{box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 26px rgba(255,216,76,.34), inset 0 1px 0 rgba(255,255,255,.1);filter:brightness(1)}}
 
-    .rising-chat{position:absolute;left:0;bottom:-28px;max-width:min(82%, 270px);display:flex;align-items:center;gap:6px;background:rgba(9,6,16,.72);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:5px 7px;color:#ffffff;font-size:.68rem;line-height:1.25;opacity:0;animation:chatRise linear forwards;will-change:transform,opacity;contain:layout paint style;--rise-distance:520px;--chat-drift:0px}
+    .rising-chat{position:absolute;left:0;bottom:-28px;max-width:min(82%, 270px);display:flex;align-items:center;gap:6px;background:rgba(9,6,16,.42);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:5px 7px;color:rgba(255,255,255,.82);font-size:.68rem;line-height:1.25;opacity:0;animation:chatRise linear forwards;will-change:transform,opacity;contain:layout paint style;--rise-distance:520px;--chat-drift:0px}
     .rising-chat .live{display:none}
     .rising-chat .badge{width:20px;height:20px;flex:0 0 20px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07);font-size:.72rem}
     .rising-chat .body{min-width:0;display:grid;gap:2px}
@@ -266,18 +255,10 @@
     .rising-chat .name{color:var(--cyan);font-weight:900;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .rising-chat .stamp{display:none}
     .rising-chat .txt{word-break:break-word;text-shadow:0 1px 3px rgba(0,0,0,.28)}
-    .rising-chat.hot{border-color:rgba(255,216,76,.44);background:rgba(34,24,10,.76)}
-    .rising-chat.low{border-color:rgba(255,59,91,.42);background:rgba(32,10,18,.80)}
-    .rising-chat.next{border-color:rgba(0,236,255,.42);background:rgba(8,18,28,.76)}
-    .rising-chat.super{border-color:rgba(255,139,0,.48);background:rgba(34,18,10,.82)}
-    #chat-lane-back .rising-chat{background:rgba(9,6,16,.42);border-color:rgba(255,255,255,.10)}
-    #chat-lane-back .rising-chat .topic{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
-    #chat-lane .rising-chat.event-anti,#chat-lane .rising-chat.event-superchat{font-size:.8rem;line-height:1.32;padding:7px 10px;max-width:min(86%, 300px);border-width:2px;box-shadow:0 0 22px rgba(0,0,0,.24), 0 10px 28px rgba(0,0,0,.18)}
-    #chat-lane .rising-chat.event-anti{background:rgba(58,12,22,.96);border-color:rgba(255,94,126,.88);color:#ffe3ea}
-    #chat-lane .rising-chat.event-superchat{background:rgba(58,32,10,.96);border-color:rgba(255,190,78,.9);color:#fff3c6}
-    #chat-lane .rising-chat.event-anti .badge,#chat-lane .rising-chat.event-superchat .badge{width:24px;height:24px;flex:0 0 24px;font-size:.86rem}
-    #chat-lane .rising-chat.event-anti .badge{background:rgba(255,91,115,.24)}
-    #chat-lane .rising-chat.event-superchat .badge{background:rgba(255,190,78,.22)}
+    .rising-chat.hot{border-color:rgba(255,216,76,.28);background:rgba(34,24,10,.5)}
+    .rising-chat.low{border-color:rgba(255,59,91,.26);background:rgba(32,10,18,.5)}
+    .rising-chat.next{border-color:rgba(0,236,255,.26);background:rgba(8,18,28,.5)}
+    .rising-chat.super{border-color:rgba(255,139,0,.32);background:rgba(34,18,10,.52)}
     @keyframes chatRise{0%{transform:translate3d(var(--chat-drift,0px),0,0);opacity:0}8%{opacity:.9}84%{opacity:.78}100%{transform:translate3d(calc(var(--chat-drift,0px) * -0.18),calc(-1 * var(--rise-distance, 520px)),0);opacity:0}}
 
     #trend-shift-banner{position:absolute;left:50%;top:124px;transform:translate(-50%,-14px) scale(.92);min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px;border-radius:24px;background:linear-gradient(180deg, rgba(15,8,25,.98), rgba(8,4,14,.94));border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 44px rgba(0,0,0,.38);pointer-events:none;z-index:26;display:grid;justify-items:center;gap:3px;opacity:0;transition:opacity .22s,transform .22s}
@@ -319,10 +300,10 @@
     #next-switch-copy{display:none}
     #center-top .hero-label{font-size:.66rem}
     #center-top > .trend-copy{display:none}
-    #top-left #burst-btn{width:60px;min-width:60px;height:60px;min-height:60px;border-radius:18px;padding:0;margin-top:0}
-    #top-left #burst-btn .icon{font-size:1rem}
-    #top-left #burst-btn .txt{font-size:.56rem;line-height:1.02;letter-spacing:.02em}
-    #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;height:var(--bottom-info-h);min-height:var(--bottom-info-h);max-height:var(--bottom-info-h);min-width:0;max-width:none;align-items:center;gap:10px;justify-content:space-between;display:grid;grid-template-columns:minmax(0,1fr) 60px;z-index:22}
+    #top-left #burst-btn{min-width:96px;min-height:96px;border-radius:22px;padding:0;margin-top:-18px}
+    #top-left #burst-btn .icon{font-size:1.35rem}
+    #top-left #burst-btn .txt{font-size:.88rem;line-height:1.08}
+    #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;height:var(--bottom-info-h);min-height:var(--bottom-info-h);max-height:var(--bottom-info-h);min-width:0;max-width:none;align-items:center;gap:12px;justify-content:space-between;display:grid;grid-template-columns:minmax(0,1fr) 96px;z-index:22}
     #top-left .mini-label{font-size:1.04rem}
     #score-view.big-num{font-size:2.6rem}
     #stream-time-mini{font-family:'Orbitron',sans-serif}
@@ -338,7 +319,7 @@
       .trend-name{font-size:1.08rem}
       #next-trend-thumb{width:38px;height:38px}
       .future-stack img{width:34px;height:34px}
-      #top-left #burst-btn{width:60px;min-width:60px;height:60px;min-height:60px}
+      #top-left #burst-btn{min-width:86px;min-height:86px}
       #score-view.big-num{font-size:2.15rem}
     }
 
@@ -346,7 +327,6 @@
     .play-controls{display:none}
     .play-mini-btn{min-width:0;min-height:calc(var(--bottom-controls-h) - 16px);border:none;border-radius:16px;padding:0 10px;background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.05));color:#fff;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 18px rgba(0,0,0,.16)}
     .play-mini-btn.wide{min-width:88px}
-    @media (max-width: 520px){#drop-selector{gap:6px}.drop-pick-btn{width:48px;height:48px;border-radius:14px}#top-left #burst-btn{width:48px;min-width:48px;height:48px;min-height:48px;border-radius:14px}}
     #pause-overlay{position:absolute;inset:0;z-index:40;background:rgba(6,3,10,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px}
     #pause-overlay .pause-card{width:min(82%,320px);background:rgba(12,6,18,.94);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:18px;display:grid;gap:10px;box-shadow:0 18px 44px rgba(0,0,0,.36)}
     .howto-diagram{margin-top:18px;display:grid;gap:12px}
@@ -381,9 +361,9 @@
       .chip-row{grid-template-columns:1fr}
       #game-shell{--top-hud-h:102px;--queue-w:72px;--bottom-info-h:102px;--bottom-controls-h:58px;width:min(calc(100vw - 8px), 420px);height:min(calc(100dvh - 8px), var(--app-height));border-radius:24px}
       #board-wrap{padding:calc(var(--top-hud-h) + 48px) 8px calc(var(--bottom-stack) + 8px)}
-      #chat-lane-back,#chat-lane{top:46px;bottom:86px}
+      #chat-lane{top:46px;bottom:86px}
       #game-board{width:100%}
-      #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);min-width:0;padding:10px 12px;gap:10px;min-height:var(--bottom-info-h);grid-template-columns:minmax(0,1fr) 60px}
+      #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);min-width:0;padding:10px 12px;gap:10px;min-height:var(--bottom-info-h);grid-template-columns:minmax(0,1fr) 90px}
       #center-top{top:8px;left:8px;right:8px;transform:none;min-width:0;width:auto;padding:8px 10px;display:block;gap:0;height:var(--top-hud-h)}
       #trend-main{display:grid;grid-template-columns:70px minmax(0,1fr);gap:8px;justify-content:stretch;align-items:center;text-align:left;max-width:min(50vw, 190px);justify-self:center}
       #trend-thumb{width:66px;height:66px}
@@ -391,7 +371,7 @@
       .trend-copy{display:block;font-size:.62rem;line-height:1.2}
       #next-block{border-left:none;border-top:none;padding-left:0;padding-top:0;display:grid;gap:4px;justify-items:center;align-content:center;min-width:0;width:78px;position:absolute;left:100px;right:auto;top:50%;transform:translateY(-50%)}
       #next-trend-thumb{width:34px;height:34px}
-      #bottom-left,#pin-comment{display:none}
+      #top-right,#bottom-left,#pin-comment{display:none}
       #bottom-right{display:none}
       #avatar{width:120px;height:120px;flex-basis:120px}
       .big-num{font-size:1.18rem}
@@ -610,17 +590,6 @@
     #mood-text{display:none !important}
     #score-view{font-size:3.2rem !important;line-height:.94}
     #top-left .mini-label{font-size:1.08rem}
-    #top-left .score-stack > .mini-label,
-    #top-left .score-stack > #score-view{display:none}
-    #top-right .seed-pill{display:grid;gap:3px;min-width:102px;padding:6px 8px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
-    #top-right .daily-pill,#top-right .leader-pill{display:none !important}
-    #top-right .seed-pill:last-child{flex:1 1 auto;min-width:0}
-    #event-mini{max-width:100%;font-size:.68rem;color:#ffe9a1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    #top-right .seed-pill.score-pill{min-width:128px}
-    #top-right .seed-pill.time-pill{min-width:112px}
-    #top-right .mini-label{font-size:.68rem}
-    #score-view-top{font-family:'Orbitron',sans-serif;font-size:1.52rem;line-height:1;color:#fff;white-space:nowrap}
-    #stream-time-top{font-family:'Orbitron',sans-serif;font-size:.98rem;color:#8ef8ff;line-height:1.1;white-space:nowrap}
     #game-board{--gameover-line-y:96px !important;--danger-line-y:130px !important}
 
 
@@ -632,107 +601,12 @@
     #start-screen .btn,#result-screen .btn,#howto-screen .btn{font-size:34px;line-height:1.15}
     #start-screen .title-main,#result-screen .title-main,#howto-screen .title-main{font-size:84px !important;line-height:1.02}
 
-
-    /* --- v12 gameplay system/layout patch --- */
-    #game-shell{--top-hud-h:144px !important;--bottom-info-h:68px !important;--bottom-controls-h:44px !important}
-    #board-wrap{padding:calc(var(--top-hud-h) + 28px) 8px calc(var(--bottom-stack) - 34px) !important}
-    #top-right{position:absolute;left:8px;right:8px;top:8px;bottom:auto;display:grid !important;grid-template-columns:200px minmax(0,1fr);align-items:stretch;justify-content:stretch;gap:8px;height:44px;padding:6px 8px;z-index:24;flex-wrap:nowrap !important}
-    #top-right .time-pill{display:none !important}
-    #top-right .seed-pill{min-width:0 !important;padding:4px 8px !important;min-height:44px;height:44px;display:grid;align-content:center}
-    #top-right .seed-pill.score-pill{min-width:0 !important;width:auto !important}
-    #top-right .mini-label{font-size:.58rem !important}
-    #score-view-top{font-size:1.22rem !important;line-height:1 !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    #center-top{left:8px !important;right:8px !important;top:58px !important;height:82px !important;padding:8px 10px !important;display:grid !important;grid-template-columns:minmax(0,1fr) 112px !important;align-items:flex-start !important;justify-content:stretch !important;gap:10px !important;overflow:visible !important}
-    #future-block,#next-block,#trend-side,#trend-timer,#trend-progress,#trend-copy{display:none !important}
-    #trend-forecast{display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;flex:1 1 auto;min-width:0;overflow:visible;z-index:2;position:relative}
-    .forecast-slot{display:grid;justify-items:center;align-content:start;gap:3px;width:50px;flex:0 0 50px;min-width:50px}
-    .forecast-slot .forecast-label{font-size:.52rem;line-height:1;font-weight:900;color:#ffe9a1;opacity:0;min-height:.9em;white-space:nowrap}
-    .forecast-slot.next .forecast-label{opacity:1}
-    .forecast-slot img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.28));border-radius:999px;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);padding:5px;border:1px solid rgba(255,255,255,.14)}
-    .forecast-slot .forecast-name{width:100%;font-size:.52rem;line-height:1.04;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ece4f7}
-    #trend-main{position:relative !important;left:auto !important;right:auto !important;top:auto !important;transform:none !important;display:grid !important;grid-template-columns:1fr !important;justify-items:center !important;gap:4px !important;width:112px !important;max-width:112px !important;min-width:112px !important;margin-left:0 !important;z-index:1}
-    #trend-hero{width:100% !important;display:grid !important;justify-items:center !important;gap:4px !important}
-    #trend-thumb{width:50px !important;height:50px !important;transform:translateY(2px) !important}
-    #trend-name{font-size:.72rem !important;line-height:1.06 !important;text-align:center !important;white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
-    .hero-label{font-size:.58rem !important;line-height:1 !important;text-align:center !important}
-    #top-left{left:8px !important;right:8px !important;bottom:calc(var(--bottom-controls-h) + 8px) !important;height:var(--bottom-info-h) !important;min-height:var(--bottom-info-h) !important;padding:6px 8px !important;gap:8px !important;grid-template-columns:minmax(0,1fr) 60px !important;align-items:center !important}
-    #top-left .score-stack{display:grid !important;align-content:center !important;align-items:center !important;gap:0 !important;min-height:0 !important}
-    #top-left .score-stack > :not(#drop-selector){display:none !important}
-    #drop-selector{margin-top:0 !important;gap:8px !important;direction:ltr !important;justify-content:flex-start !important}
-    .drop-pick-btn,#top-left #burst-btn{width:60px !important;height:60px !important;min-width:60px !important;min-height:60px !important;border-radius:16px !important;padding:5px 4px 4px !important;margin-top:0 !important}
-    #play-controls{left:8px !important;right:8px !important;bottom:6px !important;height:var(--bottom-controls-h) !important;padding:0 !important;gap:6px !important}
-    .play-mini-btn{min-height:calc(var(--bottom-controls-h) - 2px) !important;border-radius:14px !important;font-size:.76rem !important;padding:0 8px !important}
-    .item-chip.hazard{background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%) !important;border-color:rgba(255,255,255,.34) !important}
-    .item-chip.hazard::after{display:none !important}
-    .item-chip.fire{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%) !important;border-color:rgba(255,91,115,.92) !important;box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,212,212,.16), 0 0 18px rgba(255,91,115,.22) !important}
-    .item-chip.fire::after{content:'🔥' !important;background:rgba(255,91,115,.22) !important}
-    .item-chip.buzz{background:radial-gradient(circle at 32% 24%, rgba(255,249,210,.98), rgba(255,232,112,.94) 24%, rgba(255,197,38,.88) 50%, rgba(116,74,0,.98) 82%) !important;border-color:rgba(255,223,110,.94) !important;box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 24px rgba(255,255,255,.18), 0 0 22px rgba(255,210,72,.34) !important}
-    .item-chip.buzz::after{content:'✨' !important;background:rgba(255,215,90,.24) !important}
-    #fire-banner,#superchat-banner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.88);pointer-events:none;z-index:34;opacity:0}
-    #fire-banner .core{min-width:320px;padding:22px 28px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,210,210,.26), rgba(255,70,70,.38) 44%, rgba(255,24,90,.22) 66%, rgba(8,4,14,0) 80%);font-family:'Orbitron',sans-serif;font-size:clamp(2.4rem,11vw,4.5rem);font-weight:900;letter-spacing:.02em;color:#fff0f0;text-shadow:0 0 18px rgba(255,255,255,.62),0 0 34px rgba(255,70,90,.9),0 0 72px rgba(255,44,44,.6);text-align:center;white-space:nowrap}
-    #fire-banner.show{animation:fireBurst 1.04s cubic-bezier(.19,.89,.24,1)}
-    #superchat-banner .card{min-width:240px;max-width:430px;padding:10px 14px;border-radius:22px;background:rgba(18,10,30,.42);border:3px solid rgba(142,248,255,.78);box-shadow:0 14px 34px rgba(0,0,0,.28);display:grid;gap:4px;justify-items:start;backdrop-filter:blur(3px)}
-    #superchat-banner .amount{font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;letter-spacing:.02em;color:#fff}
-    #superchat-banner .message{font-size:.96rem;font-weight:900;line-height:1.22;color:#fff}
-    #superchat-banner.show{animation:superchatBurst 3.6s cubic-bezier(.19,.89,.24,1)}
-    @keyframes fireBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.68)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
-    @keyframes superchatBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}9%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}84%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
-
-
-    /* --- v19 HUD / hype background / superchat timing patch --- */
-    #top-right{grid-template-columns:208px minmax(0,1fr) !important;height:56px !important;gap:8px !important;align-items:stretch !important}
-    #top-right .time-pill,#top-right .daily-pill,#top-right .leader-pill{display:none !important}
-    #top-right .score-pill{grid-column:1;justify-items:end;text-align:right}
-    #top-right .event-pill{grid-column:2;min-width:0 !important;display:grid !important;align-content:center !important;justify-items:start !important;text-align:left !important;padding:5px 10px !important}
-    #top-right .event-pill .mini-label{font-size:.64rem !important;line-height:1 !important}
-    #event-mini{max-width:100% !important;font-size:.74rem !important;line-height:1.12 !important;color:#ffe9a1 !important;white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
-    #top-right .seed-pill{overflow:hidden}
-    #top-right .score-pill .big{font-size:1.3rem !important;line-height:1 !important}
-    #game-screen.bigbuzz #game-board::before{opacity:.18 !important}
-    #game-screen.bigbuzz #board-glass{background:linear-gradient(180deg, rgba(6,3,10,.14), rgba(6,3,10,.10)) !important}
-    #superchat-banner.show{animation:superchatBurst 4.8s cubic-bezier(.19,.89,.24,1)}
-    @keyframes superchatBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}8%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}91%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
-
-
-    /* --- v22 user patch: no apology button / bigger item buttons / wider peak / board bigbuzz video --- */
-    #game-shell{--top-hud-h:154px !important; --bottom-info-h:86px !important; --bottom-controls-h:44px !important}
-    #board-wrap{padding:calc(var(--top-hud-h) + 4px) 8px calc(var(--bottom-stack) + 4px) !important}
-    #top-left{left:8px !important;right:8px !important;bottom:calc(var(--bottom-controls-h) + 8px) !important;height:calc(var(--bottom-info-h) + 9px) !important;min-height:calc(var(--bottom-info-h) + 9px) !important;padding:0 8px 10px !important;gap:0 !important;grid-template-columns:minmax(0,1fr) !important;align-items:center !important;overflow:hidden !important}
-    #top-left #burst-btn{display:none !important}
-    #top-left .score-stack{width:100% !important;display:grid !important;align-content:center !important;gap:0 !important;min-width:0 !important}
-    #top-left .score-stack > :not(#drop-selector){display:none !important}
-    #drop-selector{margin-top:0 !important;direction:ltr !important;justify-content:space-between !important;align-items:center !important;gap:6px !important;width:100% !important;flex-wrap:nowrap !important;min-width:0 !important;overflow:hidden !important;padding:0 2px !important}
-    .drop-pick-btn{flex:1 1 0 !important;max-width:80px !important;width:auto !important;height:80px !important;min-width:0 !important;min-height:80px !important;border-radius:18px !important;padding:7px 4px 6px !important;gap:3px !important;transform:translateY(3px) !important;align-self:center !important}
-    .drop-pick-btn img{width:68% !important;height:68% !important}
-    .drop-pick-btn .lbl{font-size:.56rem !important;line-height:1.04 !important}
-    #top-right{left:8px !important;right:8px !important;top:8px !important;max-width:none !important;width:auto !important;display:grid !important;grid-template-columns:188px minmax(0,1fr) !important;justify-content:stretch !important;align-items:stretch !important;gap:8px !important;height:56px !important}
-    #top-right .score-pill{grid-column:1 !important;justify-items:end !important;text-align:right !important}
-    #top-right .event-pill{grid-column:2 !important;min-width:0 !important;width:auto !important;display:grid !important;align-content:center !important;justify-items:start !important;text-align:left !important;padding:6px 12px !important}
-    #event-mini{max-width:none !important;width:100% !important;font-size:.82rem !important;line-height:1.14 !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important}
-    #center-top{top:58px !important;height:100px !important;grid-template-columns:minmax(0,1fr) 122px !important;align-items:flex-start !important}
-    #board-bg-video-hype{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none;z-index:0;opacity:0;transition:opacity .22s ease;filter:saturate(1.08) brightness(.98)}
-    #game-screen.bigbuzz #board-bg-video-hype{opacity:1 !important}
-    #game-screen.bigbuzz #game-board::before{opacity:0 !important}
-    #game-screen.bigbuzz #board-glass{background:linear-gradient(180deg, rgba(6,3,10,.10), rgba(6,3,10,.08)) !important}
-
-
-    /* --- v24 layout / falling fix patch --- */
-    #trend-forecast{justify-content:flex-end !important;padding-right:0 !important;gap:6px !important;margin-right:-8px !important;transform:translate(40px,15px) !important}
-    #trend-main{width:122px !important;max-width:122px !important;min-width:122px !important}
-    #trend-thumb{width:50px !important;height:50px !important;transform:translateY(2px) !important}
-    #trend-name{font-size:.68rem !important;line-height:1.02 !important;max-height:none !important}
-    .forecast-slot{width:50px !important;flex:0 0 50px !important;min-width:50px !important}
-    .forecast-slot img{width:38px !important;height:38px !important;transform:translateY(2px) !important}
-    .forecast-slot .forecast-name{font-size:.52rem !important}
-    .forecast-slot.next{width:64px !important;flex:0 0 64px !important;min-width:64px !important}
-    .forecast-slot .forecast-label{white-space:nowrap !important;font-size:.5rem !important;line-height:1 !important}
-
   </style>
 </head>
 <body>
   <div id="bg-container">
-    <video id="bg-video" src="assets/bg/bg_cyber.mp4" autoplay muted loop playsinline preload="auto"></video>
-    <video id="bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" autoplay muted loop playsinline preload="auto"></video>
+    <img id="bg-video" src="assets/img/bg_cyber_loop_frame.png" alt="">
+    <img id="bg-video-hype" src="assets/img/bg_cyber_loop_frame.png" alt="">
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
@@ -776,14 +650,12 @@
     <div id="game-shell">
       <div id="board-wrap">
         <div id="game-board">
-          <video id="board-bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" autoplay muted loop playsinline preload="auto"></video>
           <div id="board-grid"></div>
           <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
           <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
           <div id="danger-fog"></div>
           <div id="gameover-line"></div>
           <div id="top-danger-line"></div>
-          <div id="chat-lane-back"></div>
           <div id="chat-lane"></div>
           <div id="speech-bubble" aria-hidden="true"><div id="speech-text"></div></div>
           <canvas id="merge-canvas"></canvas>
@@ -796,8 +668,6 @@
           <div id="preview-ring" class="item-chip preview-token" data-emoji="💬"><img id="preview-item" src="assets/img/item_1.png" alt="next item"></div>
           <div id="board-glass"></div>
           <div id="big-buzz-banner" aria-hidden="true"><div class="core">大バズり!!</div></div>
-          <div id="fire-banner" aria-hidden="true"><div class="core">大炎上！！</div></div>
-          <div id="superchat-banner" aria-hidden="true"><div class="card"><div class="amount">+0</div><div class="message">スパチャありがとうございます！</div></div></div>
           <video id="gameover-fx-video" src="assets/bg/overlay_gameover_glitch.mp4" playsinline muted preload="auto"></video>
         </div>
       </div>
@@ -868,23 +738,15 @@
       </div>
 
       <div id="top-right" class="hud-chip">
-        <div class="seed-pill score-pill">
-          <div class="mini-label">SCORE</div>
-          <div id="score-view-top" class="big">0</div>
-        </div>
-        <div class="seed-pill time-pill">
-          <div class="mini-label">TIME</div>
-          <div id="stream-time-top" class="big">残り100s</div>
-        </div>
-        <div class="seed-pill daily-pill">
+        <div class="seed-pill">
           <div class="mini-label">DAILY</div>
           <div id="seed-view" class="big">#00000000</div>
         </div>
-        <div class="seed-pill leader-pill">
+        <div class="seed-pill">
           <div class="mini-label">1位まで</div>
           <div id="best-mini" class="big">0</div>
         </div>
-        <div class="seed-pill event-pill">
+        <div class="seed-pill">
           <div class="mini-label">山場</div>
           <div id="event-mini" class="big">NEXT</div>
         </div>
@@ -908,14 +770,6 @@
           <div id="top-gap-text" style="display:none">👑 まずは今日の1位を作ろう</div>
           <div id="crown-track" style="display:none"><span id="crown-fill"></span></div>
           <div id="crown-mini" style="display:none">1位レース開始前</div>
-          <div id="drop-selector" aria-label="落とすアイテムの選択">
-            <button class="drop-pick-btn" data-drop-index="5" data-label="暴露" title="暴露"><img src="assets/img/item_6.png" alt="暴露"><span class="lbl">暴露</span></button>
-            <button class="drop-pick-btn" data-drop-index="4" data-label="恋バナ" title="恋バナ"><img src="assets/img/item_5.png" alt="恋バナ"><span class="lbl">恋バナ</span></button>
-            <button class="drop-pick-btn" data-drop-index="3" data-label="ASMR" title="ASMR"><img src="assets/img/item_4.png" alt="ASMR"><span class="lbl">ASMR</span></button>
-            <button class="drop-pick-btn" data-drop-index="2" data-label="歌枠" title="歌枠"><img src="assets/img/item_3.png" alt="歌枠"><span class="lbl">歌枠</span></button>
-            <button class="drop-pick-btn" data-drop-index="1" data-label="ゲーム配信" title="ゲーム配信"><img src="assets/img/item_2.png" alt="ゲーム配信"><span class="lbl">ゲーム</span></button>
-            <button class="drop-pick-btn active" data-drop-index="0" data-label="雑談" title="雑談"><img src="assets/img/item_1.png" alt="雑談"><span class="lbl">雑談</span></button>
-          </div>
         </div>
         <button id="burst-btn" class="action-btn"><div><div class="icon">🧯</div><div class="txt">謝罪配信</div></div></button>
       </div>
@@ -966,8 +820,8 @@
           <div><b>5. 大バズりは時間でやってくる見せ場</b><br><span style="color:#d8ccea;line-height:1.7">しばらく遊ぶと大バズりタイムが始まります。大バズり中はBGMも切り替わり、3つ以上消した時の持ち時間ボーナスもふだんより大きくなるので、一気に稼ぐチャンスです。</span></div>
         </div>
         <div class="howto-row">
-          <div class="howto-icons"><img src="assets/img/hazard.png"><img src="assets/img/fire.png"></div>
-          <div><b>6. 爆弾と大炎上</b><br><span style="color:#d8ccea;line-height:1.7">爆弾が3つつながると大炎上になります。炎上中は邪魔ブロックが落ちます。炎上は通常消しに巻き込むと一緒に消せます。</span></div>
+          <div class="howto-icons"><img src="assets/img/hazard.png"><button class="play-mini-btn wide" style="pointer-events:none">謝罪配信</button></div>
+          <div><b>6. 大炎上と謝罪配信</b><br><span style="color:#d8ccea;line-height:1.7">上に積みすぎたり、空気を外しすぎたりすると大炎上になります。炎上中は邪魔ブロックが落ちます。ゲージがたまるとボタンが「火消をする」に変わり、押すと今ある炎上をまとめて消せます。</span></div>
         </div>
         <div class="howto-row">
           <div class="howto-icons"><span style="color:#ff9bb1;font-weight:900">限界ライン</span></div>
@@ -976,13 +830,13 @@
       </div>
       <div class="howto-note">
         <strong>点数の目安</strong><br>
-        ・基本点は <b>雑談 280</b> / <b>ゲーム 330</b> / <b>歌枠 390</b> / <b>ASMR 460</b> / <b>恋バナ 560</b> / <b>暴露 700</b>。むずかしい話題ほど高得点です。<br>
+        ・基本点は <b>雑談 280</b> / <b>ゲーム 330</b> / <b>歌枠 390</b> / <b>ASMR 460</b> / <b>恋バナ 560</b> / <b>暴露 700</b> / <b>限界チャレンジ 880</b>。むずかしい話題ほど高得点です。<br>
         ・コンボは <b>1回増えるごとに +400</b>。同じ1回の落下で続けて消える連鎖は、その回の得点に大きく上乗せされます。<br>
         ・3つ以上消すと持ち時間が増えます。ふだんは <b>+10秒</b>、大バズり中は <b>+20秒</b> です。<br>
         ・ピンコメのお題を達成すると <b>+920〜+2580</b> 前後。大バズり中のお題はさらに高くなります。<br>
         ・先読み成功は <b>+2100 以上</b>、仕込みまでつながる波読みは <b>+1180〜+1960 以上</b>。<br>
         ・危ない場面で消すとクラッチ点、1位に近い時は王冠ボーナスも入ります。<br>
-        ・爆弾が3つつながると大炎上になり、盤面に炎上アイテムが落ちてきます。下のセリフ欄には、その時に流れたボイスの台詞が文字でも出ます。<br><br>
+        ・炎上を謝罪配信で消すと、炎上1個につき <b>+480</b> もらえます。下のセリフ欄には、その時に流れたボイスの台詞が文字でも出ます。<br><br>
         <strong>子ども向けのコツ</strong><br>
         「今を消す」→「次を2個つなげて仕込む」→「切り替わったらすぐ消す」の順番で考えると強いです。迷ったら高く積まず、今すぐ消せる場所を作るのが安全です。
       </div>
@@ -1039,7 +893,6 @@
       boardCharacter: document.getElementById('board-character'),
       boardCharacterBack: document.getElementById('board-character-back'),
       gameoverFxVideo: document.getElementById('gameover-fx-video'),
-      chatLaneBack: document.getElementById('chat-lane-back'),
       chatLane: document.getElementById('chat-lane'),
       mergeCanvas: document.getElementById('merge-canvas'),
       itemLayer: document.getElementById('item-layer'),
@@ -1062,9 +915,7 @@
       futureTrendThumb: document.getElementById('future-trend-thumb'),
       futureTrendName: document.getElementById('future-trend-name'),
       streamTimeMini: document.getElementById('stream-time-mini'),
-      streamTimeTop: document.getElementById('stream-time-top'),
       scoreView: document.getElementById('score-view'),
-      scoreViewTop: document.getElementById('score-view-top'),
       moodText: document.getElementById('mood-text'),
       speechBubble: document.getElementById('speech-bubble'),
       speechText: document.getElementById('speech-text'),
@@ -1090,8 +941,6 @@
       captionText: document.getElementById('caption-text'),
       dropGuide: document.getElementById('drop-guide'),
       previewRing: document.getElementById('preview-ring'),
-      dropSelector: document.getElementById('drop-selector'),
-      dropSelectorButtons: Array.from(document.querySelectorAll('#drop-selector [data-drop-index]')),
       dangerFog: document.getElementById('danger-fog'),
       gameoverLine: document.getElementById('gameover-line'),
       topDangerLine: document.getElementById('top-danger-line'),
@@ -1129,42 +978,14 @@
       bgmHyper: document.getElementById('audio-bgm-hyper'),
       bgVideo: document.getElementById('bg-video'),
       bgVideoHype: document.getElementById('bg-video-hype'),
-      boardBgVideoHype: document.getElementById('board-bg-video-hype'),
       bgContainer: document.getElementById('bg-container'),
       audioMerge: document.getElementById('audio-merge'),
       voiceStart: document.getElementById('voice-start'),
       voiceFire: document.getElementById('voice-alert'),
       voiceWin: document.getElementById('voice-win'),
       voiceLose: document.getElementById('voice-lose'),
-      bigBuzzBanner: document.getElementById('big-buzz-banner'),
-      fireBanner: document.getElementById('fire-banner'),
-      superchatBanner: document.getElementById('superchat-banner')
+      bigBuzzBanner: document.getElementById('big-buzz-banner')
     };
-
-    if (dom.centerTop && !document.getElementById('trend-forecast')) {
-      const forecast = document.createElement('div');
-      forecast.id = 'trend-forecast';
-      dom.centerTop.insertBefore(forecast, dom.trendMain);
-      dom.trendForecast = forecast;
-      dom.trendForecastSlots = [];
-      for (let i = 0; i < 7; i += 1) {
-        const slot = document.createElement('div');
-        slot.className = 'forecast-slot';
-        slot.innerHTML = `<div class="forecast-label">${i === 6 ? '次のトレンド' : '&nbsp;'}</div><img alt="forecast trend"><div class="forecast-name"></div>`;
-        forecast.appendChild(slot);
-        dom.trendForecastSlots.push(slot);
-      }
-    } else {
-      dom.trendForecast = document.getElementById('trend-forecast');
-      dom.trendForecastSlots = Array.from(document.querySelectorAll('#trend-forecast .forecast-slot'));
-    }
-    dom.trendForecastSlots?.forEach(slot => {
-      slot._img = slot.querySelector('img');
-      slot._label = slot.querySelector('.forecast-label');
-      slot._name = slot.querySelector('.forecast-name');
-      slot.dataset.uiKey = '';
-    });
-    dom.dropSelectorButtonMap = new Map((dom.dropSelectorButtons || []).map(btn => [Number(btn.dataset.dropIndex || '-1'), btn]));
 
     const CONTENTS = [
       { id:'talk', name:'雑談', img:'assets/img/item_1.png', accent:'#ffffff', lines:['雑談して','近況トークちょうだい','ゆるい空気がほしい','作業しながら聞きたい'], physics:{ bboxW:512, bboxH:463, body:22, chat:'💬' } },
@@ -1172,9 +993,10 @@
       { id:'music', name:'歌枠', img:'assets/img/item_3.png', accent:'#ffd95c', lines:['歌ってほしい','声を浴びたい','サビだけでもお願い','リクエスト投げたい'], physics:{ bboxW:512, bboxH:429, body:24, chat:'🎤' } },
       { id:'asmr', name:'ASMR', img:'assets/img/item_4.png', accent:'#43eaff', lines:['ASMRほしい','耳が助かる','囁き待ってる','寝る前に聞きたい'], physics:{ bboxW:511, bboxH:512, body:25, chat:'🎧' } },
       { id:'love', name:'恋バナ', img:'assets/img/item_5.png', accent:'#ff68c1', lines:['恋バナまだ？','今日は甘めで','沼らせて','惚気でも失恋でも聞きたい'], physics:{ bboxW:306, bboxH:512, body:27, chat:'💗' } },
-      { id:'secret', name:'暴露', img:'assets/img/item_6.png', accent:'#ff9b42', lines:['ちょっと危ない話して','裏話まだ？','秘密トークほしい','ギリギリの話待ってる'], physics:{ bboxW:380, bboxH:512, body:29, chat:'💎' } }
+      { id:'secret', name:'暴露', img:'assets/img/item_6.png', accent:'#ff9b42', lines:['ちょっと危ない話して','裏話まだ？','秘密トークほしい','ギリギリの話待ってる'], physics:{ bboxW:380, bboxH:512, body:29, chat:'💎' } },
+      { id:'challenge', name:'限界チャレンジ', img:'assets/img/item_7.png', accent:'#90ff65', lines:['無茶企画みたい','耐久まだ？','その挑戦見届けたい','ギリギリ攻めてほしい'], physics:{ bboxW:454, bboxH:512, body:31, chat:'⚔️' } }
     ];
-    const SPECIAL = { hazard:'assets/img/hazard.png', fire:'assets/img/fire.png', buzz:'assets/img/buzz.png', physics:{ bboxW:454, bboxH:512, body:32, chat:'💣' }, firePhysics:{ bboxW:454, bboxH:512, body:32, chat:'🔥' }, buzzPhysics:{ bboxW:454, bboxH:512, body:32, chat:'✨' } };
+    const SPECIAL = { hazard:'assets/img/hazard.png', physics:{ bboxW:454, bboxH:512, body:32, chat:'💣' } };
     const PLAYER_LINES = {
       calm:[
         'よし、まだ空気はこっちにある。','今日はちゃんと伸ばせる気がする。','焦らない、流れだけ見れば勝てる。','いまは土台を作る時間。','まだ余裕ある、丁寧に拾う。','この感じなら配信としておいしい。','コメントの温度、悪くない。','まずは一回しっかり当てる。'
@@ -1223,33 +1045,6 @@
       rush:['今の先読みほしい','切替直後を当てて','今の需要そのまま乗って','先読み取れたらでかい','切り替わった瞬間を取って'],
       jack:['先読みうまい','その取り方かなり強い','切替直後を毎回取ってる','今の先読み気持ちいい','先読み連勝えぐい','その先読みで1位見える','切替直後を毎回取ってるの強い']
     };
-    const SPECIAL_COMMENT_BANK = {
-      anti:[
-        'その話もう飽きた',
-        '今の流れ読めてなくない？',
-        'コメント見えてる？',
-        '配信の空気ちょっと寒い',
-        'なんか今日ズレてる気がする',
-        'その置き方だと事故りそう',
-        '今それじゃない感ある',
-        '話題の拾い方が雑かも',
-        'リスナー置いてってない？',
-        '流れ外してるのに強行するの怖い'
-      ],
-      superchat:[
-        '赤スパ：今の流れめっちゃ好き！',
-        '赤スパ：そのまま見せ場つくって！',
-        '赤スパ：今日いちばん刺さってる！',
-        '赤スパ：今の判断うますぎる！',
-        '赤スパ：切り抜き確定の流れきた！',
-        '赤スパ：ここから一気に伸ばして！',
-        '赤スパ：その配信力、信じてる！',
-        '赤スパ：神回の匂いしかしない！',
-        '赤スパ：今の盤面かなり熱い！',
-        '赤スパ：お願い、この波つかんで！'
-      ]
-    };
-
     const USERNAMES = ['ねこもち','kome','夜行性','ぷるる','mira','noa','ゆら','okome','melt','しろみ','nagi','さめ','momo','mii','nanase','るる','haru','mina','chip','切り抜き担当','ROM勢','初見です','社不ねむ','スパチャ待機','天才視聴者','深夜の民','古参オタク','限界オタク','寝落ち勢','同接監視員','アーカイブ勢','おすすめ欄から来た','高評価した','初スパ投げたい'];
 
     const storageKey = 'trendbuzz_v58';
@@ -1272,70 +1067,6 @@
     save.dailyRankings = save.dailyRankings || {};
     save.playerName = (save.playerName || '名無し配信者').slice(0, 14);
     const bodyVisuals = new Map();
-    const SPATIAL_HASH_CELL = 112;
-    let lastTrendForecastSignature = '';
-    let lastQueueSignature = '';
-    let lastDropSelectorIndex = -1;
-    let lastPreviewRenderKey = '';
-
-    function buildSpatialHash(bodies, cellSize = SPATIAL_HASH_CELL) {
-      const buckets = new Map();
-      for (const body of bodies) {
-        const cx = Math.floor(body.position.x / cellSize);
-        const cy = Math.floor(body.position.y / cellSize);
-        const key = `${cx},${cy}`;
-        let bucket = buckets.get(key);
-        if (!bucket) {
-          bucket = [];
-          buckets.set(key, bucket);
-        }
-        bucket.push(body);
-      }
-      return { buckets, cellSize };
-    }
-
-    function visitNearbyFromHash(hash, body, radiusCells = 1, fn) {
-      const { buckets, cellSize } = hash;
-      const baseX = Math.floor(body.position.x / cellSize);
-      const baseY = Math.floor(body.position.y / cellSize);
-      for (let cy = baseY - radiusCells; cy <= baseY + radiusCells; cy += 1) {
-        for (let cx = baseX - radiusCells; cx <= baseX + radiusCells; cx += 1) {
-          const bucket = buckets.get(`${cx},${cy}`);
-          if (!bucket) continue;
-          for (let i = 0; i < bucket.length; i += 1) {
-            if (fn(bucket[i]) === true) return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function buildTouchGroupsFromBodies(targetBodies, pad = 0.5) {
-      if (!targetBodies.length) return [];
-      const hash = buildSpatialHash(targetBodies);
-      const groups = [];
-      const visited = new Set();
-      for (let i = 0; i < targetBodies.length; i += 1) {
-        const body = targetBodies[i];
-        if (visited.has(body.id)) continue;
-        const stack = [body];
-        const group = [];
-        visited.add(body.id);
-        while (stack.length) {
-          const current = stack.pop();
-          group.push(current);
-          visitNearbyFromHash(hash, current, 1, other => {
-            if (visited.has(other.id) || other.id === current.id) return false;
-            if (!touchingWithPad(current, other, pad)) return false;
-            visited.add(other.id);
-            stack.push(other);
-            return false;
-          });
-        }
-        groups.push(group);
-      }
-      return groups;
-    }
     const missingAvatarFiles = new Set();
     let trendBannerTimer = 0;
     let lastCommentSpawnAt = 0;
@@ -1566,7 +1297,6 @@
       trendIndex:0,
       nextTrendIndex:1,
       futureTrendIndex:2,
-      upcomingTrendQueue:[],
       trendTimer:15,
       trendTotalTime:15,
       trendWarning:false,
@@ -1577,14 +1307,8 @@
       fireMode:0,
       fireClearCount:0,
       hazardTimer:0,
-      buzzItemTimer:0,
       showCaptionTimer:0,
-      queue:[0,0,0],
-      selectedDropIndex:0,
-      pendingTrendClear:null,
-      commentEventType:'',
-      commentEventTimer:0,
-      commentEventText:'',
+      queue:[0,1,2],
       particles:[],
       rings:[],
       previewGroups:[],
@@ -1727,20 +1451,16 @@
     const CONTENT_BASE_WEIGHTS = [14, 14, 14, 14, 14, 14, 14];
     const CONTENT_SCORE_VALUES = [280, 330, 390, 460, 560, 700, 880];
 
-    function contentBodyRadius(index, specialType = false) {
-      if (specialType === true || specialType === 'hazard') return 31;
-      if (specialType === 'fire') return 31;
-      if (specialType === 'buzz') return 31;
+    function contentBodyRadius(index, isHazard = false) {
+      if (isHazard) return 31;
       const map = [28, 30, 32, 34, 36, 38, 40];
       return map[index] || 36;
     }
     function contentSpawnWeight(index) {
       return CONTENT_BASE_WEIGHTS[index] || 6;
     }
-    function contentScoreValue(index, specialType = false) {
-      if (specialType === true || specialType === 'hazard') return 240;
-      if (specialType === 'fire') return 180;
-      if (specialType === 'buzz') return 260;
+    function contentScoreValue(index, isHazard = false) {
+      if (isHazard) return 240;
       return CONTENT_SCORE_VALUES[index] || 320;
     }
     function weightedContentPick(weights) {
@@ -1756,28 +1476,11 @@
     function spriteScaleFor(index, radius, isHazard = false) {
       return 0.001;
     }
-    function visualDiameter(radius, specialType = false) {
-      return Math.round(radius * ((specialType === true || specialType === 'hazard' || specialType === 'fire' || specialType === 'buzz') ? 2.06 : 2.02));
+    function visualDiameter(radius, isHazard = false) {
+      return Math.round(radius * (isHazard ? 2.06 : 2.02));
     }
-    function contentChatIcon(index, specialType = false) {
-      if (specialType === true || specialType === 'hazard') return SPECIAL.physics.chat;
-      if (specialType === 'fire') return SPECIAL.firePhysics.chat;
-      if (specialType === 'buzz') return SPECIAL.buzzPhysics.chat;
-      return CONTENTS[index]?.physics?.chat || '💬';
-    }
-
-    function bodyImageSrc(body) {
-      if (body.gameType === 'hazard') return SPECIAL.hazard;
-      if (body.gameType === 'fire') return SPECIAL.fire;
-      if (body.gameType === 'buzz') return SPECIAL.buzz;
-      return CONTENTS[body.contentIndex]?.img || 'assets/img/item_1.png';
-    }
-
-    function bodyImageAlt(body) {
-      if (body.gameType === 'hazard') return 'bomb';
-      if (body.gameType === 'fire') return 'big fire';
-      if (body.gameType === 'buzz') return 'big buzz';
-      return CONTENTS[body.contentIndex]?.name || 'content';
+    function contentChatIcon(index, isHazard = false) {
+      return isHazard ? SPECIAL.physics.chat : (CONTENTS[index]?.physics?.chat || '💬');
     }
 
     function clearVisuals() {
@@ -1817,7 +1520,7 @@
       const spots = removedBodies.map(body => ({
         x: body.position.x,
         y: body.position.y,
-        r: body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType)
+        r: body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType === 'hazard')
       }));
       for (const body of survivors) {
         for (const spot of spots) {
@@ -1978,11 +1681,11 @@
       let node = bodyVisuals.get(body.id);
       if (node) return node;
       node = document.createElement('div');
-      node.className = `item-chip ${body.gameType === 'hazard' ? 'hazard' : ''} ${body.gameType === 'fire' ? 'fire' : ''} ${body.gameType === 'buzz' ? 'buzz' : ''}`.trim();
-      node.dataset.emoji = contentChatIcon(body.contentIndex, body.gameType);
+      node.className = `item-chip ${body.gameType === 'hazard' ? 'hazard' : ''}`.trim();
+      node.dataset.emoji = contentChatIcon(body.contentIndex, body.gameType === 'hazard');
       const img = document.createElement('img');
-      img.alt = bodyImageAlt(body);
-      img.src = bodyImageSrc(body);
+      img.alt = body.gameType === 'hazard' ? 'hazard' : CONTENTS[body.contentIndex].name;
+      img.src = body.gameType === 'hazard' ? SPECIAL.hazard : CONTENTS[body.contentIndex].img;
       img.loading = 'eager';
       img.decoding = 'sync';
       img.addEventListener('error', () => {
@@ -1993,7 +1696,6 @@
         node.textContent = node.dataset.emoji || '💬';
       }, { once:true });
       node.appendChild(img);
-      node._img = img;
       node.style.display = 'grid';
       node.style.visibility = 'visible';
       dom.itemLayer.appendChild(node);
@@ -2007,10 +1709,6 @@
       const activeIds = new Set();
       const previewMap = new Map();
       const nextPreviewMap = new Map();
-      const boardW = dom.board?.clientWidth || 1;
-      const boardH = dom.board?.clientHeight || 1;
-      const now = performance.now();
-      const glowSet = state.shiftGlowTimer > 0 && state.shiftGlowIds.length ? new Set(state.shiftGlowIds) : null;
       state.previewGroups.forEach(group => group.ids.forEach(id => previewMap.set(id, Math.max(previewMap.get(id) || 0, group.len))));
       state.nextPreviewGroups.forEach(group => group.ids.forEach(id => nextPreviewMap.set(id, Math.max(nextPreviewMap.get(id) || 0, group.len))));
       bodies.forEach(body => {
@@ -2018,19 +1716,18 @@
         const node = ensureBodyVisual(body);
         if (!node) return;
         if (!node.isConnected && dom.itemLayer) dom.itemLayer.appendChild(node);
-        let img = node._img;
+        let img = node.querySelector('img');
         if (!img) {
           img = document.createElement('img');
-          img.alt = bodyImageAlt(body);
-          img.src = bodyImageSrc(body);
+          img.alt = body.gameType === 'hazard' ? 'hazard' : CONTENTS[body.contentIndex].name;
+          img.src = body.gameType === 'hazard' ? SPECIAL.hazard : CONTENTS[body.contentIndex].img;
           img.loading = 'eager';
           img.decoding = 'sync';
           node.textContent = '';
           node.appendChild(img);
-          node._img = img;
         }
-        const radius = body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType);
-        const diameter = visualDiameter(radius, body.gameType);
+        const radius = body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType === 'hazard');
+        const diameter = visualDiameter(radius, body.gameType === 'hazard');
         if (node.dataset.diameter !== String(diameter)) {
           node.dataset.diameter = String(diameter);
           node.style.width = `${diameter}px`;
@@ -2038,13 +1735,15 @@
         }
         const trendBody = body.gameType === 'content' && body.contentIndex === state.trendIndex;
         const forecastReady = body.gameType === 'content' && body.contentIndex === state.nextTrendIndex && (nextPreviewMap.get(body.id) || 0) >= 2;
+        const boardW = dom.board?.clientWidth || 1;
+        const boardH = dom.board?.clientHeight || 1;
         const safeRadius = Math.max(8, radius);
         if (!Number.isFinite(body.position.x) || !Number.isFinite(body.position.y) || !Number.isFinite(body.angle)) {
           Body.setPosition(body, { x: clamp(body.position.x || boardW / 2, safeRadius + 6, boardW - safeRadius - 6), y: clamp(body.position.y || boardH * 0.5, safeRadius + 6, boardH - safeRadius - 6) });
           Body.setVelocity(body, { x:0, y:0 });
           Body.setAngularVelocity(body, 0);
         }
-        const bodyAge = now - (body.spawnAt || 0);
+        const bodyAge = performance.now() - (body.spawnAt || 0);
         const outsideSoftBounds = bodyAge > 120 && (body.position.x < safeRadius + 2 || body.position.x > boardW - safeRadius - 2 || body.position.y < safeRadius + 2 || body.position.y > boardH - safeRadius - 2);
         if (outsideSoftBounds) repairBodyPosition(body, boardW, boardH, 'sync-soft-bounds');
         const drawX = clamp(body.position.x, safeRadius, boardW - safeRadius);
@@ -2059,17 +1758,16 @@
         node.classList.toggle('near', (previewMap.get(body.id) || 0) === 2);
         node.classList.toggle('ready', (previewMap.get(body.id) || 0) >= 3);
         node.classList.toggle('forecast', forecastReady);
-        node.classList.toggle('fire', body.gameType === 'fire');
-        node.classList.toggle('hazard', body.gameType === 'hazard');
-        node.classList.toggle('buzz', body.gameType === 'buzz');
-        if (node.style.opacity !== '1') node.style.opacity = '1';
+        const opacityValue = '1';
+        if (node.style.opacity !== opacityValue) node.style.opacity = opacityValue;
         if (node.style.display !== 'grid') node.style.display = 'grid';
         if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
         node.hidden = false;
         const zValue = String(100 + Math.round(body.position.y * 10) + (body.id % 10));
         if (node.style.zIndex !== zValue) node.style.zIndex = zValue;
-        node.classList.toggle('shift-glow', !!glowSet && glowSet.has(body.id));
-        const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
+        const glowActive = state.shiftGlowTimer > 0 && state.shiftGlowIds.includes(body.id);
+        node.classList.toggle('shift-glow', glowActive);
+        const filterValue = body.gameType === 'hazard' ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
         if (node.style.filter !== filterValue) node.style.filter = filterValue;
       });
       bodyVisuals.forEach((node, id) => {
@@ -2102,8 +1800,12 @@
     }
 
     function alignTrendMainToGameCenter() {
-      if (!dom.trendMain) return;
-      dom.trendMain.style.left = 'auto';
+      if (!dom.gameShell || !dom.centerTop || !dom.trendMain) return;
+      const shellRect = dom.gameShell.getBoundingClientRect();
+      const hudRect = dom.centerTop.getBoundingClientRect();
+      if (!shellRect.width || !hudRect.width) return;
+      const centerXInHud = shellRect.left + (shellRect.width / 2) - hudRect.left;
+      dom.trendMain.style.left = `${Math.round(centerXInHud * 10) / 10}px`;
       dom.trendMain.style.right = 'auto';
     }
 
@@ -2223,70 +1925,14 @@
 
 
     function updateBackgroundState(strength = 0) {
-      const hype = !!(state.active && state.clipTime > 0);
+      const hype = state.active && state.clipTime > 0;
       dom.bgContainer?.classList.toggle('hype', hype);
-      dom.gameScreen?.classList.toggle('bigbuzz', hype);
-      dom.gameShell?.classList.toggle('bigbuzz', hype);
       if (dom.bgContainer) {
-        dom.bgContainer.style.setProperty('--bg-base-opacity', hype ? '0' : '0.96');
-        dom.bgContainer.style.setProperty('--bg-hype-opacity', hype ? '1' : '0');
+        dom.bgContainer.style.setProperty('--bg-base-opacity', hype ? '0.92' : '0.96');
+        dom.bgContainer.style.setProperty('--bg-hype-opacity', hype ? '0.10' : '0');
       }
-      if (dom.bgVideoHype) {
-        dom.bgVideoHype.style.opacity = hype ? '1' : '0';
-        try {
-          if (hype) {
-            dom.bgVideoHype.currentTime = Math.max(0, dom.bgVideoHype.currentTime || 0);
-            dom.bgVideoHype.play?.();
-          } else {
-            dom.bgVideoHype.pause?.();
-            dom.bgVideoHype.currentTime = 0;
-          }
-        } catch (_) {}
-      }
-      if (dom.boardBgVideoHype) {
-        dom.boardBgVideoHype.style.opacity = hype ? '1' : '0';
-        try {
-          if (hype) {
-            dom.boardBgVideoHype.currentTime = Math.max(0, dom.boardBgVideoHype.currentTime || 0);
-            dom.boardBgVideoHype.play?.();
-          } else {
-            dom.boardBgVideoHype.pause?.();
-            dom.boardBgVideoHype.currentTime = 0;
-          }
-        } catch (_) {}
-      }
-      if (dom.bgVideo) {
-        dom.bgVideo.style.opacity = hype ? '0' : '0.96';
-        try {
-          if (hype) {
-            dom.bgVideo.pause?.();
-          } else {
-            dom.bgVideo.play?.();
-          }
-        } catch (_) {}
-      }
-    }
-
-    function avatarMoodForVoiceKind(kind = 'calm') {
-      const map = {
-        start:'focus',
-        calm:'normal',
-        focus:'focus',
-        warning:'warning',
-        clear:'normal',
-        chain:'hype',
-        hype:'hype',
-        fire:'panic',
-        apology_ready:'apology',
-        apology_fire:'apology',
-        rush:'focus',
-        jack:'hype',
-        big:'hype',
-        top:'panic',
-        win:'win',
-        lose:'yami'
-      };
-      return map[kind] || 'normal';
+      if (dom.bgVideoHype) dom.bgVideoHype.style.opacity = hype ? '0.10' : '0';
+      if (dom.bgVideo) dom.bgVideo.style.opacity = hype ? '0.92' : '0.96';
     }
 
     function getVoiceAudio(path) {
@@ -2318,7 +1964,7 @@
       return chosen;
     }
 
-    function tryPlayVoicePath(path, kind = 'calm', volume = 0.72) {
+    function tryPlayVoicePath(path, volume = 0.72) {
       const audio = getVoiceAudio(path);
       applyVoiceSubtitle(path);
       if (!audio || muted || audio.dataset.failed === '1') return !!voiceTextForPath(path);
@@ -2329,14 +1975,13 @@
       } catch (_) {}
       audio.volume = volume;
       audio.play().catch(() => {});
-      setAvatarVisual(avatarMoodForVoiceKind(kind));
       return true;
     }
 
     function playVoice(kind) {
       const pool = voicePools[kind] || [];
       const chosen = pickRandomVoicePath(kind, pool);
-      if (chosen) return tryPlayVoicePath(chosen, kind, kind === 'lose' ? 0.84 : 0.72);
+      if (chosen) return tryPlayVoicePath(chosen, kind === 'lose' ? 0.84 : 0.72);
       const map = { start:dom.voiceStart, fire:dom.voiceFire, win:dom.voiceWin, lose:dom.voiceLose };
       const audio = map[kind];
       applyVoiceSubtitle(audio?.currentSrc || audio?.src || '');
@@ -2392,7 +2037,7 @@
       const chosen = pickRandomVoicePath(kind, variants);
       let played = false;
       if (chosen) {
-        played = tryPlayVoicePath(chosen, kind, kind === 'chain' ? 0.84 : (kind === 'lose' ? 0.84 : 0.72));
+        played = tryPlayVoicePath(chosen, kind === 'chain' ? 0.84 : (kind === 'lose' ? 0.84 : 0.72));
       }
       if (!played) {
         if (kind === 'warning') played = playVoice('fire');
@@ -2402,7 +2047,6 @@
         else played = playVoice(kind);
       }
       if (played) {
-        setAvatarVisual(avatarMoodForVoiceKind(kind));
         lastVoiceAt = now;
         voiceCooldowns[slot] = now + (cooldownMap[slot] || 900);
         if (kind === 'start') startupVoiceLockUntil = now + 3200;
@@ -2511,54 +2155,9 @@
     }
 
     function currentTrend() { return CONTENTS[state.trendIndex]; }
-    function nextTrend() { ensureUpcomingTrendQueue(7); return CONTENTS[state.nextTrendIndex]; }
-    function futureTrend() { ensureUpcomingTrendQueue(7); return CONTENTS[state.futureTrendIndex]; }
-    function trendDuration() { return Number.POSITIVE_INFINITY; }
-    function ensureUpcomingTrendQueue(min = 7) {
-      state.upcomingTrendQueue = Array.isArray(state.upcomingTrendQueue) ? state.upcomingTrendQueue.slice(0, 14) : [];
-      while (state.upcomingTrendQueue.length < min) {
-        const tail = state.upcomingTrendQueue.slice(-2);
-        const nextIdx = pickTrendExcluding(state.trendIndex, ...tail);
-        state.upcomingTrendQueue.push(nextIdx);
-      }
-      state.nextTrendIndex = state.upcomingTrendQueue[0] ?? pickTrendExcluding(state.trendIndex);
-      state.futureTrendIndex = state.upcomingTrendQueue[1] ?? pickTrendExcluding(state.trendIndex, state.nextTrendIndex);
-    }
-
-    function shiftTrendQueue() {
-      ensureUpcomingTrendQueue(7);
-      const previousTrendIndex = state.trendIndex;
-      state.trendIndex = state.upcomingTrendQueue.shift() ?? pickTrendExcluding(state.trendIndex);
-      ensureUpcomingTrendQueue(7);
-      setTrend(state.trendIndex, true, previousTrendIndex);
-    }
-
-    function refreshTrendForecastUi() {
-      ensureUpcomingTrendQueue(7);
-      if (!Array.isArray(dom.trendForecastSlots)) return;
-      const ordered = state.upcomingTrendQueue.slice(0, 7).reverse();
-      const signature = ordered.join(',');
-      if (signature === lastTrendForecastSignature) return;
-      lastTrendForecastSignature = signature;
-      dom.trendForecastSlots.forEach((slot, slotIndex) => {
-        const trendIndex = ordered[slotIndex];
-        const info = CONTENTS[trendIndex] || CONTENTS[0];
-        const img = slot._img;
-        const label = slot._label;
-        const name = slot._name;
-        const isNext = slotIndex === ordered.length - 1;
-        const uiKey = `${trendIndex}|${isNext ? 1 : 0}`;
-        if (slot.dataset.uiKey === uiKey) return;
-        slot.dataset.uiKey = uiKey;
-        slot.classList.toggle('next', isNext);
-        if (img && img.getAttribute('src') !== info.img) img.src = info.img;
-        if (img && img.alt !== info.name) img.alt = info.name;
-        if (name && name.textContent !== info.name) name.textContent = info.name;
-        if (name && name.style.color !== (info.accent || '#ece4f7')) name.style.color = info.accent || '#ece4f7';
-        const labelText = isNext ? '次のトレンド' : '';
-        if (label && label.textContent !== labelText) label.textContent = labelText;
-      });
-    }
+    function nextTrend() { return CONTENTS[state.nextTrendIndex]; }
+    function futureTrend() { return CONTENTS[state.futureTrendIndex]; }
+    function trendDuration() { return clamp(17.8 - Math.floor(state.runTime / 105) * 0.40, 11.8, 17.8); }
     function pickTrendExcluding(...exclude) {
       const deny = new Set(exclude);
       const choices = CONTENTS.map((_, i) => i).filter(i => !deny.has(i));
@@ -2705,9 +2304,8 @@
       dom.trendThumb.src = trend.img;
       dom.trendName.textContent = trend.name;
       dom.trendName.style.color = trend.accent;
-      dom.trendCopy.textContent = '';
+      dom.trendCopy.textContent = 'あと3消し！';
       if (dom.trendProgressFill) dom.trendProgressFill.style.width = '100%';
-      refreshTrendForecastUi();
       dom.nextTrendThumb.src = nextTrend().img;
       dom.nextTrendName.textContent = nextTrend().name;
       dom.nextTrendName.style.color = nextTrend().accent;
@@ -2717,7 +2315,7 @@
       dom.futureTrendName.style.color = futureTrend().accent;
       dom.centerTop?.classList.remove('warning');
       dom.nextBlock?.classList.remove('warning');
-      setCaption(`いまは『${trend.name}』を3つ以上で消す。次のトレンドは上の並びで確認できる。`, 2.8);
+      setCaption(`いまは『${trend.name}』を3つ以上で消す。消えたら次は『${nextTrend().name}』。さらにその次は『${futureTrend().name}』。`, 2.8);
       spawnComment(true, null, 'hot');
       if (!suppressSpeech) say(withFlash ? 'switch' : 'focus', 2.4);
       if (!suppressVoice) triggerVoiceCue(withFlash ? 'rush' : 'focus');
@@ -2735,7 +2333,7 @@
       state.shiftGlowIds = [];
       state.shiftGlowTimer = 0;
       if (withFlash && engine) {
-        const groups = scanAllClearableGroups();
+        const groups = scanGroups();
         const preloadGroup = groups.sort((a, b) => b.length - a.length)[0] || null;
         const preloadLen = preloadGroup ? preloadGroup.length : 0;
         if (preloadLen >= 2) {
@@ -2752,7 +2350,7 @@
       }
     }
 
-    function dropRadiusFor(index = state.selectedDropIndex ?? state.queue?.[0] ?? 0) {
+    function dropRadiusFor(index = state.queue?.[0] ?? 0) {
       return contentBodyRadius(index, false);
     }
 
@@ -2799,45 +2397,20 @@
     }
 
     function ensureQueueLength(min = 3) {
-      const idx = clamp(Math.floor(state.selectedDropIndex || 0), 0, CONTENTS.length - 1);
-      state.queue = Array.from({ length:Math.max(3, min) }, () => idx);
-    }
-
-    function updateDropSelectorUi() {
-      const selected = clamp(Math.floor(state.selectedDropIndex || 0), 0, CONTENTS.length - 1);
-      if (selected === lastDropSelectorIndex) return;
-      const prevBtn = dom.dropSelectorButtonMap?.get(lastDropSelectorIndex);
-      const nextBtn = dom.dropSelectorButtonMap?.get(selected);
-      if (prevBtn) prevBtn.classList.remove('active');
-      if (nextBtn) nextBtn.classList.add('active');
-      lastDropSelectorIndex = selected;
-    }
-
-    function setSelectedDropIndex(index, opts = {}) {
-      const idx = clamp(Math.floor(index || 0), 0, CONTENTS.length - 1);
-      state.selectedDropIndex = idx;
-      ensureQueueLength(3);
-      refreshQueue();
-      renderPreview();
-      updateDropSelectorUi();
-      if (!opts.silent) setCaption(`落とすアイテムを『${CONTENTS[idx].name}』に固定しました。`, 0.8);
+      while (state.queue.length < min) state.queue.push(queueRoll());
     }
 
     function refreshQueue() {
       ensureQueueLength(3);
-      const selected = state.selectedDropIndex ?? 0;
-      const q0 = CONTENTS[selected] || CONTENTS[0];
-      const signature = String(selected);
-      if (signature !== lastQueueSignature) {
-        if (dom.previewItem && dom.previewItem.getAttribute('src') !== q0.img) dom.previewItem.src = q0.img;
-        if (dom.previewItem && dom.previewItem.alt !== q0.name) dom.previewItem.alt = q0.name;
-        if (dom.nextMini1 && dom.nextMini1.getAttribute('src') !== q0.img) dom.nextMini1.src = q0.img;
-        if (dom.nextMini1 && dom.nextMini1.alt !== q0.name) dom.nextMini1.alt = q0.name;
-        if (dom.nextMini2 && dom.nextMini2.getAttribute('src') !== q0.img) dom.nextMini2.src = q0.img;
-        if (dom.nextMini2 && dom.nextMini2.alt !== q0.name) dom.nextMini2.alt = q0.name;
-        lastQueueSignature = signature;
-      }
-      updateDropSelectorUi();
+      const q0 = CONTENTS[state.queue[0] ?? 0] || CONTENTS[0];
+      const q1 = CONTENTS[state.queue[1] ?? state.queue[0] ?? 0] || CONTENTS[0];
+      const q2 = CONTENTS[state.queue[2] ?? state.queue[1] ?? state.queue[0] ?? 0] || CONTENTS[0];
+      dom.previewItem.src = q0.img;
+      dom.previewItem.alt = q0.name;
+      dom.nextMini1.src = q1.img;
+      dom.nextMini1.alt = `next ${q1.name}`;
+      dom.nextMini2.src = q2.img;
+      dom.nextMini2.alt = `after next ${q2.name}`;
     }
 
     function renderPreview() {
@@ -2849,9 +2422,6 @@
       const ringSize = Math.round(size + 12);
       const itemSize = Math.max(48, Math.round(size * 0.82));
       const previewTop = Math.max(20, metrics.fullLineY - ringSize - 4);
-      const previewKey = `${Math.round(x * 10)}|${previewTop}|${ringSize}|${itemSize}`;
-      if (previewKey === lastPreviewRenderKey) return;
-      lastPreviewRenderKey = previewKey;
       dom.dropGuide.style.left = `${x}px`;
       dom.previewRing.style.left = `${x}px`;
       dom.previewRing.style.top = `${previewTop}px`;
@@ -2859,6 +2429,7 @@
       dom.previewItem.style.height = `${itemSize}px`;
       dom.previewRing.style.width = `${ringSize}px`;
       dom.previewRing.style.height = `${ringSize}px`;
+      refreshQueue();
     }
 
     function triggerPreviewLaunchFx(color = '#ffffff') {
@@ -2876,30 +2447,6 @@
       }, 460);
     }
 
-    function activateCommentEvent(type = '') {
-      if (!type) {
-        state.commentEventType = '';
-        state.commentEventTimer = 0;
-        state.commentEventText = '';
-        return;
-      }
-      const bank = SPECIAL_COMMENT_BANK[type] || [];
-      if (!bank.length) return;
-      state.commentEventType = type;
-      state.commentEventTimer = type === 'anti' ? (5.6 + gameRand() * 1.4) : (5.0 + gameRand() * 1.2);
-      state.commentEventText = choice(bank);
-      lastCommentSpawnAt = 0;
-      spawnComment(false, state.commentEventText, type === 'anti' ? 'low' : 'super', type === 'anti' ? '💢' : '💰');
-    }
-
-    function maybeActivateCommentEvent() {
-      return false;
-    }
-
-    function currentCommentEventMeta() {
-      return null;
-    }
-
     function createChatNode(text, cls = '', icon = '💬', username = null, topicInfo = null) {
       const node = document.createElement('div');
       node.className = `rising-chat ${cls}`.trim();
@@ -2912,9 +2459,9 @@
         node.style.left = 'auto';
       }
       node.style.setProperty('--chat-drift', `${fromLeft ? (12 + rand() * 18) : (-12 - rand() * 18)}px`);
-      node.style.animationDuration = `${4.6 + rand() * 0.7}s`;
-      node.style.setProperty('--rise-distance', `${Math.max(320, (dom.board?.clientHeight || dom.chatLane?.clientHeight || 420) + 96)}px`);
-      node.style.zIndex = '18';
+      node.style.animationDuration = `${6.4 + rand() * 1.7}s`;
+      node.style.setProperty('--rise-distance', `${Math.max(320, (dom.chatLane?.clientHeight || dom.board?.clientHeight || 420) + 140)}px`);
+      node.style.zIndex = '0';
       node.style.transform = 'translateZ(0)';
 
       const badge = document.createElement('div');
@@ -2956,9 +2503,6 @@
       let cls = forcedClass || '';
       let icon = forcedIcon || contentChatIcon(state.trendIndex);
       let topicInfo = null;
-      let specialType = '';
-      if (forcedText && forcedClass === 'low' && forcedIcon === '💢') specialType = 'anti';
-      else if (forcedText && forcedClass === 'super' && forcedIcon === '💰') specialType = 'superchat';
       const trend = currentTrend();
       const next = nextTrend();
       const stats = state.active && engine ? boardStats() : { pressure:0, clutter:0 };
@@ -2966,15 +2510,7 @@
       const topGap = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score || 0));
       if (!text) {
         const noise = rand();
-        const activeEvent = currentCommentEventMeta();
-        if (activeEvent && noise < 0.82) {
-          text = choice(SPECIAL_COMMENT_BANK[state.commentEventType] || [state.commentEventText || '']);
-          cls = activeEvent.cls;
-          icon = activeEvent.icon;
-          topicInfo = null;
-          specialType = state.commentEventType;
-          state.commentEventText = text;
-        } else if (state.clipTime > 0 && noise < 0.34) {
+        if (state.clipTime > 0 && noise < 0.34) {
           text = choice([
             '大バズりきた！','今まとめて伸ばして','この秒数で稼いで','バズるなら今','見どころ作れそう','ここで1位までを詰めたい', ...COMMENT_BANK.super
           ]);
@@ -3093,19 +2629,9 @@
       }
 
       const node = createChatNode(text, cls, icon, null, topicInfo);
-      if (specialType === 'anti') node.classList.add('event-anti');
-      else if (specialType === 'superchat') node.classList.add('event-superchat');
-      const targetLane = specialType ? dom.chatLane : (dom.chatLaneBack || dom.chatLane);
-      node.style.zIndex = specialType ? '18' : '8';
-      targetLane.appendChild(node);
+      dom.chatLane.appendChild(node);
       lastCommentSpawnAt = now;
-      if (specialType) {
-        while (dom.chatLane.childNodes.length > 4) dom.chatLane.firstChild.remove();
-      } else if (dom.chatLaneBack) {
-        while (dom.chatLaneBack.childNodes.length > 8) dom.chatLaneBack.firstChild.remove();
-      } else {
-        while (dom.chatLane.childNodes.length > 8) dom.chatLane.firstChild.remove();
-      }
+      while (dom.chatLane.childNodes.length > 12) dom.chatLane.firstChild.remove();
     }
 
     function flashScreen(color = '#ffffff') {
@@ -3116,8 +2642,8 @@
     }
 
     function addParticles(x, y, color, count = 18, spread = 9) {
-      const budget = Math.max(0, 90 - state.particles.length);
-      const safeCount = Math.max(0, Math.min(Math.round(count * 0.68), budget));
+      const budget = Math.max(0, 180 - state.particles.length);
+      const safeCount = Math.max(0, Math.min(count, budget));
       for (let i = 0; i < safeCount; i++) {
         state.particles.push({
           x, y,
@@ -3152,7 +2678,7 @@
         p.life -= dt * 1.6;
         particleCtx.globalAlpha = Math.max(0, p.life);
         particleCtx.fillStyle = p.color;
-        particleCtx.shadowBlur = 4;
+        particleCtx.shadowBlur = 6;
         particleCtx.shadowColor = p.color;
         particleCtx.beginPath();
         particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -3189,88 +2715,32 @@
       setTimeout(() => el.remove(), 1100);
     }
 
-    const SUPERCHAT_CHAIN_THEME = {
-      1:{ border:'#2b7cff', fill:'rgba(43,124,255,.92)' },
-      2:{ border:'#63e6ff', fill:'rgba(99,230,255,.92)' },
-      3:{ border:'#b8ff52', fill:'rgba(184,255,82,.92)' },
-      4:{ border:'#ffe35a', fill:'rgba(255,227,90,.92)' },
-      5:{ border:'#ffab47', fill:'rgba(255,171,71,.92)' },
-      6:{ border:'#ff5ce6', fill:'rgba(255,92,230,.92)' },
-      7:{ border:'#ff5b73', fill:'rgba(255,91,115,.92)' }
-    };
-    const SUPERCHAT_CHAIN_MESSAGES = [
-      'スパチャありがとうございます！','最高の連鎖、助かる！','その見せ場、ちゃんと届いてる！','切り抜き確定の山場きた！','今の一手、めっちゃ好き！','流れ完全に持っていってる！','うますぎ！ もっと見せて！','この波、最後まで乗り切って！'
-    ];
-
-    function showFireBanner() {
-      if (!dom.fireBanner) return;
-      dom.fireBanner.classList.remove('show');
-      void dom.fireBanner.offsetWidth;
-      dom.fireBanner.classList.add('show');
-      clearTimeout(state.fireBannerTimer);
-      state.fireBannerTimer = setTimeout(() => dom.fireBanner?.classList.remove('show'), 1020);
-    }
-
-    function showSuperchatBanner(chainTier, gain, comboCount = 1) {
-      if (!dom.superchatBanner) return;
-      const tier = clamp(Math.max(1, Math.floor(chainTier || 1)), 1, 7);
-      const comboTier = clamp(Math.max(1, Math.floor(comboCount || 1)), 1, 10);
-      const theme = SUPERCHAT_CHAIN_THEME[tier] || SUPERCHAT_CHAIN_THEME[1];
-      const card = dom.superchatBanner.querySelector('.card');
-      const amount = dom.superchatBanner.querySelector('.amount');
-      const message = dom.superchatBanner.querySelector('.message');
-      const scale = 0.72 + Math.min(1.02, (tier - 1) * 0.13) + Math.min(0.26, (comboTier - 1) * 0.024);
-      if (card) {
-        card.style.borderColor = theme.border;
-        card.style.boxShadow = `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${26 + comboTier * 5}px ${theme.fill}`;
-        card.style.transform = `scale(${scale})`;
-      }
-      if (amount) {
-        amount.textContent = `+${fmt(Math.max(0, Math.round(gain || 0)))}`;
-        amount.style.color = theme.border;
-        amount.style.fontSize = `${0.76 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)}rem`;
-      }
-      if (message) {
-        message.textContent = choice(SUPERCHAT_CHAIN_MESSAGES);
-        message.style.fontSize = `${0.82 + Math.min(1.34, (tier - 1) * 0.18) + Math.min(0.28, (comboTier - 1) * 0.024)}rem`;
-      }
-      dom.superchatBanner.classList.remove('show');
-      void dom.superchatBanner.offsetWidth;
-      dom.superchatBanner.classList.add('show');
-      clearTimeout(state.superchatBannerTimer);
-      state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), 4000 + tier * 520 + comboTier * 150);
-      sfx('ready', Math.min(2.2, 0.56 + tier * 0.2 + comboTier * 0.05));
-    }
-
-    function makeBody(x, y, index, specialType = false) {
-      const isBomb = specialType === true || specialType === 'hazard';
-      const isFire = specialType === 'fire';
-      const isBuzz = specialType === 'buzz';
-      const radius = contentBodyRadius(index, specialType);
-      const texture = isBomb ? SPECIAL.hazard : (isFire ? SPECIAL.fire : (isBuzz ? SPECIAL.buzz : CONTENTS[index].img));
+    function makeBody(x, y, index, isHazard = false) {
+      const radius = contentBodyRadius(index, isHazard);
+      const texture = isHazard ? SPECIAL.hazard : CONTENTS[index].img;
       const opacity = 0;
-      const scale = spriteScaleFor(index, radius, specialType);
+      const scale = spriteScaleFor(index, radius, isHazard);
       const body = Bodies.circle(x, y, radius, {
         restitution:0.02,
         friction:0.008,
         frictionStatic:0.01,
         frictionAir:0.006,
-        density:isBomb ? 0.00245 : (isFire ? 0.00255 : (isBuzz ? 0.0022 : 0.002)),
+        density:isHazard ? 0.00245 : 0.002,
         slop:0.05,
-        label:isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content')),
+        label:isHazard ? 'hazard' : 'content',
         render:{
           opacity,
           sprite:{ texture, xScale:scale, yScale:scale }
         }
       });
-      body.gameType = isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content'));
+      body.gameType = isHazard ? 'hazard' : 'content';
       body.contentIndex = index;
       body.spawnAt = performance.now();
       body.displayScale = scale;
       Composite.add(engine.world, body);
       const node = ensureBodyVisual(body);
       if (node) {
-        const diameter = visualDiameter(radius, specialType);
+        const diameter = visualDiameter(radius, isHazard);
         node.dataset.diameter = String(diameter);
         node.style.width = `${diameter}px`;
         node.style.height = `${diameter}px`;
@@ -3281,7 +2751,7 @@
     }
 
     function worldBodies() {
-      return Composite.allBodies(engine.world).filter(b => !b.isStatic && !b.plugin?.pendingRemoval && (b.gameType === 'content' || b.gameType === 'hazard' || b.gameType === 'fire' || b.gameType === 'buzz'));
+      return Composite.allBodies(engine.world).filter(b => !b.isStatic && !b.plugin?.pendingRemoval && (b.gameType === 'content' || b.gameType === 'hazard'));
     }
 
     function computeBoardStats() {
@@ -3291,7 +2761,7 @@
       const now = performance.now();
       const settledBodies = [];
       for (const body of bodies) {
-        if (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') hazards.push(body);
+        if (body.gameType === 'hazard') hazards.push(body);
         else content.push(body);
         if (now - (body.spawnAt || 0) > 1100) settledBodies.push(body);
       }
@@ -3352,7 +2822,7 @@
 
     function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
       if (!body) return;
-      const radius = body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType);
+      const radius = body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType === 'hazard');
       const safeX = clamp(Number.isFinite(body.position.x) ? body.position.x : boardW / 2, radius + 2, boardW - radius - 2);
       const safeY = clamp(Number.isFinite(body.position.y) ? body.position.y : radius + 10, radius + 10, boardH - radius - 2);
       Sleeping.set(body, false);
@@ -3387,9 +2857,7 @@
       const bodies = worldBodies();
       if (!bodies.length || !dom.board) return;
       const boardHeight = dom.board.clientHeight || 0;
-      const boardWidth = dom.board.clientWidth || 0;
       const now = performance.now();
-      const hash = buildSpatialHash(bodies);
       for (const body of bodies) {
         const age = now - (body.spawnAt || 0);
         if (age < 420) continue;
@@ -3400,18 +2868,17 @@
           continue;
         }
         let hasSupportBelow = false;
-        visitNearbyFromHash(hash, body, 1, other => {
-          if (other.id === body.id) return false;
+        for (const other of bodies) {
+          if (other.id === body.id) continue;
           const dx = Math.abs(other.position.x - body.position.x);
           const dy = other.position.y - body.position.y;
           const supportDx = body.circleRadius + other.circleRadius - 6;
-          if (dx > supportDx || dy < 0) return false;
+          if (dx > supportDx || dy < 0) continue;
           if (dy <= body.circleRadius + other.circleRadius + 16) {
             hasSupportBelow = true;
-            return true;
+            break;
           }
-          return false;
-        });
+        }
         if (hasSupportBelow) {
           body.floatStartAt = 0;
           continue;
@@ -3419,7 +2886,7 @@
         if (!body.floatStartAt) body.floatStartAt = now;
         if (now - body.floatStartAt < 90) continue;
         Sleeping.set(body, false);
-        Body.setPosition(body, { x: clamp(body.position.x, body.circleRadius + 6, boardWidth - body.circleRadius - 6), y: Math.min(boardHeight - body.circleRadius - 10, body.position.y + 12) });
+        Body.setPosition(body, { x: clamp(body.position.x, body.circleRadius + 6, dom.board.clientWidth - body.circleRadius - 6), y: Math.min(boardHeight - body.circleRadius - 10, body.position.y + 12) });
         Body.setVelocity(body, { x: body.velocity.x * 0.2, y: Math.max(1.45, body.velocity.y + 0.7) });
         Body.setAngularVelocity(body, body.angularVelocity * 0.28);
         body.floatStartAt = now;
@@ -3475,47 +2942,37 @@
       return dx * dx + dy * dy <= rr * rr;
     }
 
-    function touchingWithPad(a, b, pad = 0.5) {
-      const dx = b.position.x - a.position.x;
-      const dy = b.position.y - a.position.y;
-      const rr = a.circleRadius + b.circleRadius + pad;
-      return dx * dx + dy * dy <= rr * rr;
-    }
-
-    function buildTouchGroupsForIndex(targetIndex) {
-      const now = performance.now();
-      const targetBodies = worldBodies().filter(body => body.gameType === 'content' && body.contentIndex === targetIndex && now - body.spawnAt > 220);
-      return buildTouchGroupsFromBodies(targetBodies, 0.5);
-    }
-
     function scanGroups() {
-      const groups = buildTouchGroupsForIndex(state.trendIndex);
+      function buildGroups(targetIndex) {
+        const targetBodies = worldBodies().filter(body => body.gameType === 'content' && body.contentIndex === targetIndex && performance.now() - body.spawnAt > 260);
+        const groups = [];
+        const visited = new Set();
+        for (const body of targetBodies) {
+          if (visited.has(body.id)) continue;
+          const stack = [body];
+          visited.add(body.id);
+          const group = [];
+          while (stack.length) {
+            const current = stack.pop();
+            group.push(current);
+            for (const other of targetBodies) {
+              if (visited.has(other.id) || other.id === current.id) continue;
+              if (touching(current, other)) {
+                visited.add(other.id);
+                stack.push(other);
+              }
+            }
+          }
+          groups.push(group);
+        }
+        return groups;
+      }
+
+      const groups = buildGroups(state.trendIndex);
       state.previewGroups = groups.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
-      const nextGroups = buildTouchGroupsForIndex(state.nextTrendIndex);
+      const nextGroups = buildGroups(state.nextTrendIndex);
       state.nextPreviewGroups = nextGroups.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
       return groups.filter(g => g.length >= 3 && g.every(body => body.speed < 4.2));
-    }
-
-    function buildTouchGroupsForType(gameType, contentIndex = null) {
-      const now = performance.now();
-      const targetBodies = worldBodies().filter(body => {
-        if (body.gameType !== gameType) return false;
-        if (gameType === 'content' && body.contentIndex !== contentIndex) return false;
-        return now - body.spawnAt > 220;
-      });
-      const loosePad = gameType === 'hazard' ? 8 : (gameType === 'buzz' ? 6 : 0.5);
-      return buildTouchGroupsFromBodies(targetBodies, loosePad);
-    }
-
-    function scanAllClearableGroups() {
-      const groups = [];
-      groups.push(...buildTouchGroupsForIndex(state.trendIndex));
-      groups.push(...buildTouchGroupsForType('hazard'));
-      groups.push(...buildTouchGroupsForType('buzz'));
-      return groups.filter(g => {
-        const special = g[0]?.gameType === 'hazard' || g[0]?.gameType === 'buzz';
-        return g.length >= 3 && g.every(body => body.speed < (special ? 6.4 : 4.8));
-      });
     }
 
     function biggestPreviewLen() {
@@ -3526,209 +2983,17 @@
       return state.nextPreviewGroups.reduce((m, group) => Math.max(m, group.len || 0), 0);
     }
 
-    function expandPendingGroup(pending) {
-      if (!pending || !Number.isInteger(pending.contentIndex)) return [];
-      const bodies = worldBodies().filter(body => body.gameType === 'content' && body.contentIndex === pending.contentIndex && performance.now() - body.spawnAt > 140);
-      if (!bodies.length) return [];
-      const idMap = new Map(bodies.map(body => [body.id, body]));
-      const seed = [];
-      for (const id of pending.ids || []) {
-        const body = idMap.get(id);
-        if (body) seed.push(body);
-      }
-      if (!seed.length) return [];
-      const visited = new Set(seed.map(body => body.id));
-      const stack = seed.slice();
-      while (stack.length) {
-        const current = stack.pop();
-        for (const other of bodies) {
-          if (visited.has(other.id) || other.id === current.id) continue;
-          if (touching(current, other)) {
-            visited.add(other.id);
-            stack.push(other);
-          }
-        }
-      }
-      return bodies.filter(body => visited.has(body.id));
-    }
-
-    function updatePendingClearVisual(ids = []) {
-      const active = new Set(ids);
-      bodyVisuals.forEach((node, id) => node.classList.toggle('pending-clear', active.has(id)));
-    }
-
-    function queueGroupClear(group) {
-      if (!group?.length) return false;
-      const now = performance.now();
-      const contentIndex = group[0].contentIndex;
-      const pending = state.pendingTrendClear;
-      if (!pending || pending.contentIndex !== contentIndex) {
-        state.pendingTrendClear = { contentIndex, ids:group.map(body => body.id), dueAt:now + 200 };
-      } else {
-        const merged = new Set([...(pending.ids || []), ...group.map(body => body.id)]);
-        pending.ids = Array.from(merged);
-        pending.dueAt = Math.max(pending.dueAt || 0, now + 200);
-      }
-      const accent = CONTENTS[contentIndex]?.accent || '#ffffff';
-      const center = group.reduce((acc, body) => { acc.x += body.position.x; acc.y += body.position.y; return acc; }, { x:0, y:0 });
-      center.x /= group.length;
-      center.y /= group.length;
-      addRing(center.x, center.y, accent, 16 + group.length * 2, 150);
-      updatePendingClearVisual(state.pendingTrendClear.ids);
-      return true;
-    }
-
     function resolveGroups() {
-      const groups = scanAllClearableGroups();
-      state.pendingTrendClear = null;
-      updatePendingClearVisual([]);
+      const groups = scanGroups();
       if (!groups.length) return false;
-      const groupPriority = group => {
-        const type = group[0]?.gameType;
-        if (type === 'hazard') return 3;
-        if (type === 'buzz') return 2;
-        return 1;
-      };
-      groups.sort((a, b) => groupPriority(b) - groupPriority(a) || b.length - a.length || a.reduce((m, x) => m + x.position.y, 0) - b.reduce((m, x) => m + x.position.y, 0));
+      groups.sort((a, b) => b.length - a.length || a.reduce((m, x) => m + x.position.y, 0) - b.reduce((m, x) => m + x.position.y, 0));
       clearGroup(groups[0]);
       return true;
     }
 
-    function collectAdjacentFireBodies(seedBodies = []) {
-      if (!seedBodies.length) return [];
-      const fireBodies = worldBodies().filter(body => body.gameType === 'fire');
-      if (!fireBodies.length) return [];
-      return fireBodies.filter(fire => seedBodies.some(body => touching(fire, body)));
-    }
-
-    function comboScoreValue(comboCount = 1) {
-      const combo = Math.max(1, Math.floor(comboCount || 1));
-      return 280 + combo * 240 + combo * combo * 140;
-    }
-
-    function applyComboGain({ center, accent = '#ffffff', chainTier = 1, comboCount = 1, noteText = '', baseOnly = false } = {}) {
-      const baseGain = comboScoreValue(comboCount);
-      const multiplier = state.clipTime > 0 ? 2 : 1;
-      const gain = Math.round(baseGain * multiplier);
-      state.score += gain;
-      if (center) {
-        popText(center.x, center.y, `+${fmt(gain)}`, accent, comboCount >= 4 ? 30 : 24);
-        if (state.clipTime > 0) popText(center.x, center.y + 42, '大バズり中 2倍', '#fff0a3', 18);
-        if (noteText) popText(center.x, center.y - 42, noteText, '#ffffff', 18);
-      }
-      showSuperchatBanner(chainTier, gain, comboCount);
-      return gain;
-    }
-
-
-
-    function clearBombGroup(group) {
-      if (!group.length) return;
-      const center = group.reduce((acc, body) => {
-        acc.x += body.position.x;
-        acc.y += body.position.y;
-        return acc;
-      }, { x:0, y:0 });
-      center.x /= group.length;
-      center.y /= group.length;
-      const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
-      hardRemoveBodies(removed);
-      state.boardStatsCache = null;
-      state.clearCount += 1;
-      state.heat = clamp(state.heat + 20, 0, 100);
-      state.craving = clamp(state.craving + 10, 0, 100);
-      state.tension = clamp(state.tension + 8, 0, 100);
-      state.buzz = clamp(state.buzz + 10, 0, 100);
-
-      for (const body of group) {
-        addParticles(body.position.x, body.position.y, 'rgba(255,224,120,.96)', 18, 7.0);
-        addParticles(body.position.x, body.position.y, 'rgba(255,120,40,.94)', 16, 7.6);
-        addParticles(body.position.x, body.position.y, 'rgba(255,90,110,.9)', 14, 6.4);
-        addRing(body.position.x, body.position.y, '#ffd84c', 22, 240);
-        addRing(body.position.x, body.position.y, '#ff6f3d', 32, 300);
-      }
-      for (const body of adjacentFire) {
-        addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
-        addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
-      }
-      addRing(center.x, center.y, '#ff5b73', 56, 420);
-      addRing(center.x, center.y, '#ffd84c', 82, 360);
-      flashScreen('#ff7b5b');
-      popText(center.x, center.y - 18, 'BOMB!!', '#fff4a3', 32);
-      playAssetSfx('hazard', 0.96);
-      sfx('burst', 1.5);
-      const gain = Math.round((state.clipTime > 0 ? 2400 : 1200));
-      state.score += gain;
-      popText(center.x, center.y + 24, `+${fmt(gain)}`, '#ffd84c', 24);
-      if (adjacentFire.length) popText(center.x, center.y + 64, `炎上巻き込み x${adjacentFire.length}`, '#ffb7c5', 18);
-      spawnComment(false, `${group.length}連爆で大炎上！！`, 'low', '💣');
-      triggerFire('bomb_chain');
-      const fireCount = 5 + Math.floor(rand() * 6);
-      const dropped = spawnHazardBurst(fireCount, center.x);
-      popText(dom.board.clientWidth / 2, dom.board.clientHeight * 0.34, '大炎上!!', '#fff0f0', 42);
-      showFireBanner();
-      spawnComment(false, `大炎上 x${dropped}`, 'low', '🔥');
-      if (adjacentFire.length) state.fireMode = Math.max(state.fireMode, 999);
-      return gain;
-    }
-
-    function clearBuzzGroup(group) {
-      if (!group.length) return;
-      const center = group.reduce((acc, body) => {
-        acc.x += body.position.x;
-        acc.y += body.position.y;
-        return acc;
-      }, { x:0, y:0 });
-      center.x /= group.length;
-      center.y /= group.length;
-      const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
-      hardRemoveBodies(removed);
-      state.boardStatsCache = null;
-      state.clearCount += 1;
-      state.tension = clamp(state.tension + 14, 0, 100);
-      state.craving = clamp(state.craving - 8, 0, 100);
-      state.heat = clamp(state.heat - 8, 0, 100);
-      state.buzz = clamp(state.buzz + 20, 0, 100);
-      for (const body of group) {
-        addParticles(body.position.x, body.position.y, 'rgba(255,239,128,.98)', 18, 7.2);
-        addParticles(body.position.x, body.position.y, 'rgba(255,93,190,.88)', 16, 6.8);
-        addRing(body.position.x, body.position.y, '#ffe37a', 24, 260);
-        addRing(body.position.x, body.position.y, '#ff63d6', 34, 300);
-      }
-      for (const body of adjacentFire) {
-        addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
-        addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
-      }
-      flashScreen('#ffe37a');
-      addRing(center.x, center.y, '#ffe37a', 56, 340);
-      addRing(center.x, center.y, '#ff5ab1', 88, 420);
-      playAssetSfx('ready', 0.96);
-      sfx('big', 1.46);
-      const gain = Math.round((state.clipTime > 0 ? 3200 : 1600));
-      state.score += gain;
-      popText(center.x, center.y + 18, `+${fmt(gain)}`, '#ffe37a', 24);
-      popText(center.x, center.y + 56, '大バズり突入!!', '#fff4a3', 26);
-      spawnComment(false, 'バズり3連結！ 大バズり発動！', 'super', '✨');
-      triggerVoiceCue('hype', 2, { force:true });
-      activateClipTime('buzz_item');
-      if (adjacentFire.length) popText(center.x, center.y + 96, `炎上巻き込み x${adjacentFire.length}`, '#ffb7c5', 18);
-      return gain;
-    }
-
     function clearGroup(group) {
       if (!group.length) return;
-      if (group[0]?.gameType === 'hazard') {
-        clearBombGroup(group);
-        return;
-      }
-      if (group[0]?.gameType === 'buzz') {
-        clearBuzzGroup(group);
-        return;
-      }
-      const mainIndex = group[0]?.contentIndex ?? state.trendIndex;
-      const accent = CONTENTS[mainIndex]?.accent || currentTrend().accent;
+      const accent = currentTrend().accent;
       const center = group.reduce((acc, body) => {
         acc.x += body.position.x;
         acc.y += body.position.y;
@@ -3737,84 +3002,249 @@
       center.x /= group.length;
       center.y /= group.length;
 
-      const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
+      const toRemove = new Set(group);
+      let collateral = 0;
+      let collateralScore = 0;
+      if (state.buzzMode > 0) {
+        worldBodies().forEach(body => {
+          const dx = body.position.x - center.x;
+          const dy = body.position.y - center.y;
+          if (dx * dx + dy * dy <= 190 * 190) {
+            if (!toRemove.has(body)) { collateral += 1; collateralScore += body.gameType === 'hazard' ? contentScoreValue(-1, true) : Math.round(contentScoreValue(body.contentIndex) * 0.42); }
+            toRemove.add(body);
+          }
+        });
+      }
+
+      const removed = Array.from(toRemove);
       hardRemoveBodies(removed);
-      state.boardStatsCache = null;
       const sameDropCascade = state.currentChainDropSerial === state.dropSerial && state.chainDecay > 0;
       state.chainCount = sameDropCascade ? state.chainCount + 1 : 1;
       state.currentChainDropSerial = state.dropSerial;
       state.chainDecay = 1.28;
       state.peakChain = Math.max(state.peakChain, state.chainCount);
       const chainTier = state.chainCount;
+      const statsNow = boardStats(true);
+      const rushBonus = state.rushWindow > 0 && state.setupCarryLen >= 2;
+      const switchBonus = rushBonus && state.recentSwitchBonus > 0 ? 1800 : 0;
+      const mainIndex = group[0]?.contentIndex ?? state.trendIndex;
+      const base = group.length * contentScoreValue(mainIndex);
+      const comboBonus = state.combo * 400;
+      const collateralBonus = collateralScore;
+      const clipBonus = 0;
+      const pinTargetHit = state.pinTimer > 0 && group[0] && group[0].labelContent === state.pinTargetIndex;
+      const pinBonus = pinTargetHit && group.length >= state.pinMinLen ? state.pinBonusValue : 0;
+      const clutchBonus = (state.fireMode > 0 || statsNow.pressure > 0.58 || state.topDangerTime > 0.9) ? (680 + group.length * 112 + collateral * 96) : 0;
       const topGapBefore = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
+      const crownRush = crownTargetScore(state.seed) > 0 && topGapBefore > 0 && topGapBefore <= 5200;
+      const nextPreviewLen = biggestNextPreviewLen();
+      const forecastReady = nextPreviewLen >= 2;
+      let rushBonusValue = 0;
+      let jackBonus = 0;
+      let jackLevelUp = false;
+      let crownKeepBonus = 0;
+      let forecastBonus = 0;
+      let crownClutchBonus = 0;
+      let waveLinkBonus = 0;
+      let chainBonus = 0;
+      if (rushBonus) {
+        state.rushHits += 1;
+        state.rushWindow = 0;
+        state.switchCleared = true;
+        state.jackChain += 1;
+        state.peakJackChain = Math.max(state.peakJackChain, state.jackChain);
+        rushBonusValue = 2100 + state.combo * 260;
+        jackBonus = 820 * state.jackChain;
+        if (state.jackChain >= 3) jackLevelUp = true;
+      }
+      if (forecastReady) {
+        forecastBonus = (nextPreviewLen >= 3 ? 1520 : 880) + state.combo * 180;
+      }
+      if (rushBonus && state.setupCarryLen >= 2) {
+        waveLinkBonus = (state.setupCarryLen >= 3 ? 1960 : 1180) + state.combo * 220;
+      }
+      if (topGapBefore > 0 && topGapBefore <= 1800) {
+        crownClutchBonus = 520 + state.combo * 140 + (forecastReady ? 220 : 0);
+      }
+      if (chainTier >= 2) {
+        chainBonus = Math.round((base + comboBonus + forecastBonus + waveLinkBonus) * Math.min(0.88, 0.16 * chainTier)) + chainTier * 320;
+      }
+      const crownRushBonus = crownRush ? Math.round((base + comboBonus + switchBonus) * (topGapBefore <= 2500 ? 0.40 : 0.32)) : 0;
+      const alreadyLeading = crownTargetScore(state.seed) > 0 && topGapBefore <= 0;
+      if (alreadyLeading) {
+        state.crownHoldStreak += 1;
+        state.peakCrownHold = Math.max(state.peakCrownHold, state.crownHoldStreak);
+        crownKeepBonus = 320 + Math.min(6, state.crownHoldStreak) * 120;
+      } else {
+        state.crownHoldStreak = 0;
+      }
+      const gain = base + comboBonus + collateralBonus + switchBonus + clipBonus + pinBonus + rushBonusValue + jackBonus + clutchBonus + crownRushBonus + crownKeepBonus + forecastBonus + crownClutchBonus + waveLinkBonus + chainBonus;
+      state.score += gain;
+      const timeBonus = group.length >= 3 ? (state.clipTime > 0 ? 20 : 10) : 0;
+      if (timeBonus > 0) state.streamTime = Math.min(state.streamTotal + 45, state.streamTime + timeBonus);
+      const topGapAfter = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
+      const tookCrown = topGapBefore > 0 && topGapAfter <= 0 && crownTargetScore(state.seed) > 0;
       state.clearCount += 1;
+      if (pinBonus) state.pinHits += 1;
+      if (forecastBonus) state.forecastHits += 1;
+      if (waveLinkBonus) state.waveLinkHits += 1;
+      if (crownClutchBonus) state.crownClutchHits += 1;
+      state.tension = clamp(state.tension + 12 + group.length * 3.2 + collateral * 0.7 + (state.clipTime > 0 ? 6 : 0) + (pinBonus ? 4 : 0) + (rushBonus ? 6 : 0) + (clutchBonus ? 8 : 0) + (forecastBonus ? 5 : 0) + (crownClutchBonus ? 4 : 0) + (waveLinkBonus ? 5 : 0) + (chainBonus ? 6 : 0), 0, 100);
+      state.craving = clamp(state.craving - 14 - group.length * 2.5 - (clutchBonus ? 8 : 0) - (forecastBonus ? 5 : 0) - (waveLinkBonus ? 5 : 0), 0, 100);
+      state.heat = clamp(state.heat - 18 - group.length * 8 - collateral * 2 - (clutchBonus ? 16 : 0) - (forecastBonus ? 10 : 0) - (waveLinkBonus ? 10 : 0), 0, 100);
+      state.buzz = clamp(state.buzz + 22 + group.length * 9 + collateral * 2 + (rushBonus ? 12 + state.jackChain * 3 : 0) + (clutchBonus ? 12 : 0) + (crownRush ? 8 : 0) + (forecastBonus ? 10 : 0) + (crownClutchBonus ? 8 : 0) + (waveLinkBonus ? 12 : 0) + (chainBonus ? 14 + chainTier * 2 : 0), 0, 100);
       state.combo += 1;
-      state.comboTimer = 3.0;
+      state.comboTimer = 8.8;
       state.peakCombo = Math.max(state.peakCombo, state.combo);
       state.idle = 0;
       state.fireClearCount += state.fireMode > 0 ? 1 : 0;
-      state.tension = clamp(state.tension + 11 + (state.clipTime > 0 ? 6 : 0), 0, 100);
-      state.craving = clamp(state.craving - 12, 0, 100);
-      state.heat = clamp(state.heat - 16 - adjacentFire.length * 3, 0, 100);
-      state.buzz = clamp(state.buzz + 18 + chainTier * 3, 0, 100);
+      if (state.fireMode > 0) state.fireMode = Math.max(0, state.fireMode - 2.6);
 
-      addParticles(center.x, center.y, accent, 18, 7.4);
-      addRing(center.x, center.y, accent, 18, state.clipTime > 0 ? 280 : 200);
+      addParticles(center.x, center.y, accent, 30 + collateral * 3, 10);
+      addRing(center.x, center.y, accent, 18, state.buzzMode > 0 ? 290 : 200);
       flashScreen(accent);
-      if (adjacentFire.length) {
-        adjacentFire.forEach(body => {
-          addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
-          addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
-        });
-        popText(center.x, center.y + 66, `炎上巻き込み x${adjacentFire.length}`, '#ffb7c5', 18);
-      }
-      const gain = applyComboGain({ center, accent, chainTier, comboCount:state.combo, noteText:state.combo >= 2 ? `COMBO x${state.combo}` : '' });
-      if (chainTier >= 2) popText(center.x, center.y - 78, `${chainTier}連鎖`, '#ffb7ff', 22);
-      if (state.clipTime > 0) spawnComment(false, '大バズり中！ ポイント2倍！', 'super', '✨');
-      const topGapAfter = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
-      const tookCrown = topGapBefore > 0 && topGapAfter <= 0 && crownTargetScore(state.seed) > 0;
+      popText(center.x, center.y, `${group.length}ヒット +${fmt(gain)}`, accent, state.buzzMode > 0 ? 30 : 24);
+      if (switchBonus) popText(center.x, center.y + 40, '先読みHIT', '#8ef8ff', 18);
+      if (state.clipTime > 0) popText(center.x, center.y + 72, '大バズり中', '#fff0a3', 18);
+      if (rushBonus) popText(center.x, center.y + 102, `先読み +${fmt(rushBonusValue)}`, '#8ef8ff', 19);
+      if (jackBonus) popText(center.x, center.y + 126, `先読み連勝 x${state.jackChain} +${fmt(jackBonus)}`, '#fff0a3', 20);
+      if (forecastBonus) popText(center.x, center.y - 156, `仕込み +${fmt(forecastBonus)}`, '#86f1ff', 18);
+      if (waveLinkBonus) popText(center.x, center.y - 204, `波読み +${fmt(waveLinkBonus)}`, '#7ffcff', 20);
+      if (chainBonus) popText(center.x, center.y - 228, `${chainTier}連鎖 +${fmt(chainBonus)}`, '#ffb7ff', 22);
+      if (crownKeepBonus) popText(center.x, center.y - 132, `王冠防衛 +${fmt(crownKeepBonus)}`, '#fff4a3', 18);
+      if (crownClutchBonus) popText(center.x, center.y - 180, `王冠クラッチ +${fmt(crownClutchBonus)}`, '#ffd84c', 18);
+      if (pinBonus) popText(center.x, center.y + 152, state.pinClass === 'next' ? '次の波ピンコメ!' : 'ピンコメ達成!', '#8ef8ff', 18);
+      if (clutchBonus) popText(center.x, center.y - 108, `逆転 +${fmt(clutchBonus)}`, '#ffb7d6', 20);
+      if (state.combo >= 2) popText(center.x, center.y - 42, `COMBO x${state.combo}`, '#ffe37a', 22);
+      if (timeBonus > 0) popText(center.x, center.y - 84, `TIME +${timeBonus}s`, '#8ef8ff', 20);
 
+      if (jackLevelUp) {
+        state.clipTime = Math.max(state.clipTime, 10);
+        state.clipCooldown = Math.max(state.clipCooldown, 16);
+        state.buzz = clamp(state.buzz + 26, 0, 100);
+        popText(center.x, center.y - 76, '先読み3連!', '#fff4a3', 30);
+        spawnComment(false, '先読み3連！ ここから一気に伸びる', 'super', '🚀');
+        if (crownRush) popText(center.x, center.y - 136, `王冠チャンス +${fmt(crownRushBonus)}`, '#ffe37a', 20);
+        spawnComment(false, choice(COMMENT_BANK.jack), 'super', '⚡');
+        say('jack', 2.0);
+        triggerVoiceCue('jack', state.jackChain);
+        flashScreen('#fff0a3');
+        sfx('ready', 1.2);
+      } else if (rushBonus) {
+        spawnComment(false, choice(COMMENT_BANK.jack), 'super', '🚀');
+        say('jack', 1.7);
+        triggerVoiceCue(state.jackChain >= 2 ? 'jack' : 'rush', state.jackChain || 1);
+      }
+      if (alreadyLeading && crownKeepBonus) {
+        if (state.crownHoldStreak === 1) {
+          spawnComment(false, '王冠キープ開始。このまま逃げ切りたい', 'super', '👑');
+        } else if (state.crownHoldStreak % 2 === 0) {
+          spawnComment(false, `王冠防衛 x${state.crownHoldStreak}`, 'super', '🏆');
+        }
+      }
+
+      if (state.clipTime > 0) {
+        spawnComment(false, 'うわ今のめっちゃ切り抜ける', 'super', '📸');
+      }
+      if (crownRush) {
+        spawnComment(false, '1位チャンス。この山で抜ける', 'super', '👑');
+        popText(center.x, center.y - 160, 'DAILY!', '#ffe37a', 18);
+      }
+      if (forecastBonus) {
+        spawnComment(false, nextPreviewLen >= 3 ? '次の波まで見えてる。うますぎる' : '次の波の仕込みが効いてる', 'super', '🌊');
+      }
+      if (waveLinkBonus) {
+        spawnComment(false, state.setupCarryLen >= 3 ? '先に仕込んだ波をそのまま取り切った。かなり強い' : '次の波を読んで取れた。うまい', 'super', '🌊');
+      }
+      if (crownClutchBonus) {
+        spawnComment(false, 'ここで王冠いける。クラッチ決めたい', 'super', '👑');
+      }
+      if (chainBonus) {
+        spawnComment(false, chainTier >= 4 ? `やばい ${chainTier}連鎖！` : `${chainTier}連鎖きた`, 'super', chainTier >= 4 ? '💥' : '⚡');
+      }
+      state.crownLead = crownTargetScore(state.seed) > 0 && topGapAfter <= 0;
       if (tookCrown) {
         state.crownTakeovers += 1;
         state.crownLead = true;
         state.crownHoldStreak = 0;
-        popText(center.x, center.y - 162, '1位到達!', '#fff4a3', 34);
-        showBigBuzzBanner('1位到達!!');
+        popText(center.x, center.y - 188, '王冠奪取!', '#fff4a3', 28);
+        spawnComment(false, '1位きた！ いま王冠持ってる', 'super', '👑');
+        spawnComment(false, 'その山で抜いた、デカい', 'super', '🏆');
+        say('big', 2.2);
         flashScreen('#fff4a3');
-        addRing(center.x, center.y - 34, '#fff4a3', 34, 320);
-        addRing(center.x, center.y - 34, '#ff5ab1', 64, 380);
-        spawnComment(false, '1位きた！ 王冠獲得！', 'super', '👑');
-        triggerVoiceCue('win', 1, { force:true });
-        sfx('big', 1.7);
+        sfx('big', 1.28);
+      }
+      if (pinBonus) {
+        triggerVoiceCue('big', Math.max(group.length, state.pinMinLen));
+        spawnComment(false, `${state.pinText} それ！`, 'super', state.pinIcon || '📌');
+        if (Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score)) <= 2500 && crownTargetScore(state.seed) > 0) {
+          spawnComment(false, 'あと少しで1位いける', 'super', '👑');
+        }
+        say('big', 1.8);
+        rollPinnedComment(state.clipTime > 0 ? 'clip' : 'normal');
+      }
+      if (clutchBonus) {
+        triggerVoiceCue('big', Math.max(group.length, 4));
+        spawnComment(false, 'うわその返しで流れ戻した', 'super', '🩷');
+        spawnComment(false, 'いまの逆転アツい', 'super', '🔥');
+        say('big', 1.7);
+      }
+      if (chainTier >= 4) {
+        popText(center.x, center.y + 76, `${chainTier} CHAIN!`, '#fff0ff', 24);
+        say('big', 2.4);
+        spawnComment(false, 'うわ連鎖エグい', 'super', '💥');
+        spawnComment(false, '配信の山きた', 'super', '📸');
+        sfx('chain', Math.min(1.75, 1.05 + chainTier * 0.15));
+        triggerVoiceCue('chain', chainTier);
+      } else if (group.length >= 5 || collateral >= 4) {
+        popText(center.x, center.y + 76, 'CLIP! CLIP! CLIP!', '#fff4a3', 20);
+        say('big', 2.2);
+        spawnComment(false, 'うわ今の気持ちいい', 'super', '✨');
+        spawnComment(false, '切り抜き確定', 'super', '📸');
+        spawnComment(false, choice(COMMENT_BANK.super), 'super', '🚀');
+        sfx('big', Math.min(1.4, 1 + group.length * 0.08));
+        if (group.length >= 6 || collateral >= 5) triggerVoiceCue('hype', Math.max(chainTier, 2));
+        else triggerVoiceCue('big', Math.max(group.length, collateral));
+      } else {
+        say('clear', 1.9);
+        spawnComment(false, '今の当たり！', 'hot', '✅');
+        if (state.combo >= 2) spawnComment(false, `COMBO x${state.combo} うまい`, 'hot', '⚡');
+        if (chainTier >= 2) {
+          sfx('chain', Math.min(1.45, 0.92 + chainTier * 0.14));
+          triggerVoiceCue('chain', chainTier);
+        } else {
+          sfx('clear', Math.min(1.2, 0.84 + group.length * 0.08));
+          triggerVoiceCue('clear', group.length);
+        }
       }
 
-      if (chainTier >= 4) {
-        popText(center.x, center.y + 88, `${chainTier} CHAIN!`, '#fff0ff', 24);
-        spawnComment(false, '連鎖きた！', 'super', '💥');
-        triggerVoiceCue('chain', chainTier);
-        sfx('chain', Math.min(1.85, 1.0 + chainTier * 0.18));
-      } else if (state.combo >= 4) {
-        triggerVoiceCue('big', state.combo);
-        sfx('big', Math.min(1.6, 1.0 + state.combo * 0.1));
-      } else {
-        triggerVoiceCue('clear', group.length);
-        sfx('clear', Math.min(1.2, 0.9 + state.combo * 0.08));
-      }
 
       if (mainIndex === state.trendIndex) {
-        shiftTrendQueue();
+        const previousTrendIndex = state.trendIndex;
+        state.trendIndex = state.nextTrendIndex;
+        state.nextTrendIndex = state.futureTrendIndex;
+        state.futureTrendIndex = pickTrendExcluding(state.trendIndex, state.nextTrendIndex);
+        setTrend(state.trendIndex, true, previousTrendIndex);
       }
 
-      if (state.fireMode > 0 && !worldBodies().some(body => body.gameType === 'fire')) {
-        state.fireMode = 0;
+      if (state.buzz >= 100 && !state.buzzReady && state.buzzMode <= 0) {
+        state.buzzReady = true;
+        dom.burstBtn.classList.add('ready');
+        setBurstButtonLabel('ready'); flashBurstButton();
+        setCaption('謝罪配信の準備完了。押すと今ある炎上をまとめて消せる。危ない時の立て直しに使いたい。', 2.4);
+        spawnComment(false, '今なら火消しできる', 'super', '🧯');
+        triggerVoiceCue('apology_ready');
+        sfx('ready', 1.1);
+      }
+
+
+      if (state.fireMode <= 0 && dom.dangerFog.classList.contains('show')) {
         dom.dangerFog.classList.remove('show');
-        setCaption('大炎上は収まった。まだ立て直せる。', 1.7);
+        setCaption('炎上を押し返した。まだ伸ばせる。', 1.8);
       }
     }
 
     function destroyEngine() {
-
       if (rafId) cancelAnimationFrame(rafId);
       if (render) {
         Render.stop(render);
@@ -3867,10 +3297,8 @@
       state.seed = todaySeed();
       state.rng = mulberry32(state.seed);
       state.trendIndex = Math.floor(gameRand() * CONTENTS.length);
-      state.upcomingTrendQueue = [];
       state.nextTrendIndex = pickTrendExcluding(state.trendIndex);
       state.futureTrendIndex = pickTrendExcluding(state.trendIndex, state.nextTrendIndex);
-      ensureUpcomingTrendQueue(7);
       state.trendTimer = trendDuration();
       state.trendWarning = false;
       state.idle = 0;
@@ -3879,15 +3307,9 @@
       state.fireCooldown = 0;
       state.fireMode = 0;
       state.fireClearCount = 0;
-      state.hazardTimer = 4.2;
-      state.buzzItemTimer = 8.8;
+      state.hazardTimer = 0;
       state.showCaptionTimer = 0;
-      state.selectedDropIndex = 0;
-      state.queue = [0,0,0];
-      state.pendingTrendClear = null;
-      state.commentEventType = '';
-      state.commentEventTimer = 0;
-      state.commentEventText = '';
+      state.queue = [queueRoll(), queueRoll(), queueRoll()];
       state.previewGroups = [];
       state.nextPreviewGroups = [];
       state.lastTs = 0;
@@ -3924,8 +3346,8 @@
       state.forecastHits = 0;
       state.waveLinkHits = 0;
       state.crownClutchHits = 0;
-      state.streamTotal = 0;
-      state.streamTime = 0;
+      state.streamTotal = 100;
+      state.streamTime = 100;
       state.finalSpurt = false;
       state.visualTimer = 0;
       state.uiTimer = 0;
@@ -3933,10 +3355,6 @@
       state.rescueTimer = 0;
       state.boardStatsCache = null;
       state.boardStatsCacheAt = 0;
-      lastTrendForecastSignature = '';
-      lastQueueSignature = '';
-      lastDropSelectorIndex = -1;
-      lastPreviewRenderKey = '';
       state.lastVoiceText = '';
       state.voiceSubtitleTimer = 0;
       state.speechBubbleText = '';
@@ -3958,22 +3376,24 @@
       updateSeedLabels();
     }
 
-    function activateClipTime(reason = 'buzz_item') {
-      const fresh = state.clipTime <= 0.05;
-      state.clipTime = Math.max(state.clipTime, fresh ? 15 : state.clipTime + 3.5);
-      state.clipCooldown = 999;
-      if (fresh) state.clipActivations += 1;
-      setCaption(reason === 'buzz_item' ? 'バズりが3つつながって大バズり発動！ しばらくポイント2倍。' : '大バズり中！ いまが最大の見せ場。ポイント2倍。', 2.6);
-      spawnComment(false, reason === 'buzz_item' ? 'バズり連結で大バズり！' : '大バズり継続！', 'super', '✨');
-      triggerVoiceCue('hype', 2, { force:fresh });
+    function activateClipTime() {
+      state.clipTime = 15;
+      state.clipCooldown = 15.5 + gameRand() * 3.8;
+      state.clipActivations += 1;
+      setCaption('大バズり中！ いまが最大の見せ場。いまのトレンドをまとめて取って一気に伸ばそう。', 2.6);
+      spawnComment(false, '大バズりきた！', 'super', '🎬');
+      triggerVoiceCue('hype', 2);
+      spawnComment(false, 'いま切り抜きどころ', 'super', '🚀');
+      say('big', 2.1);
       flashScreen('#ffe37a');
       showBigBuzzBanner('大バズり!!');
       setHyperMix(1);
-      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,216,76,.96)', 18, 7.6);
-      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,47,146,.9)', 12, 6.8);
+      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,216,76,.96)', 32, 9);
+      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,47,146,.9)', 20, 8);
       addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#fff4a3', 24, 260);
       addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#ff5ab1', 38, 320);
-      sfx('ready', 1.12);
+      rollPinnedComment('clip');
+      sfx('ready', 1.0);
     }
 
 
@@ -4048,7 +3468,6 @@
       resizeCanvas();
       initEngine();
       setTrend(state.trendIndex, false, null, { suppressSpeech:true, suppressVoice:true });
-      setSelectedDropIndex(0, { silent:true });
       triggerVoiceCue('start', 1, { force:true });
       refreshQueue();
       updateUi();
@@ -4056,129 +3475,102 @@
     }
 
     function activateBurst() {
-      return 0;
+      if (!state.buzzReady || !state.active) return;
+      state.buzzReady = false;
+      state.buzz = 0;
+      state.buzzMode = 0;
+      state.buzzActivations += 1;
+      dom.burstBtn.classList.remove('ready');
+      setBurstButtonLabel('default');
+      setAvatarVisual('apology');
+      const clearedHazards = clearAllHazards(true);
+      if (!clearedHazards) {
+        flashScreen('#ffe37a');
+        addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, '#ffe37a', 20, 240);
+      }
+      triggerVoiceCue('apology_fire');
+      say('buzz', 2.4);
     }
 
-    function triggerFire(reason = 'bomb') {
-      if (!state.active) return;
-      state.fireMode = Math.max(state.fireMode, 999);
-      state.fireCooldown = Math.max(state.fireCooldown, 1.2);
+    function triggerFire(reason = 'pressure') {
+      if (state.fireCooldown > 0 || state.fireMode > 0 || !state.active) return;
+      state.fireMode = 9;
+      state.fireCooldown = 16;
       state.fireClearCount = 0;
-      state.hazardTimer = Math.max(state.hazardTimer, 3.6);
+      state.hazardTimer = 0.9;
       dom.dangerFog.classList.add('show');
       dom.gameShell.classList.add('shake');
-      setCaption(reason === 'bomb_chain' ? '爆弾が3つつながって大炎上。炎上アイテムが盤面に降ってくる。' : '大炎上中。炎上アイテムを巻き込みながら盤面を立て直そう。', 2.2);
-      spawnComment(false, 'うわっ、大炎上！！', 'low', '🔥');
+      setCaption(reason === 'top' ? '大炎上。上まで詰まってる。邪魔ブロックに注意。' : '大炎上。外しすぎてコメント欄が荒れている。今の需要を当てて空気を戻す。', 2.5);
+      spawnComment(false, 'うわ燃えてる', 'low');
       triggerVoiceCue('fire');
       flashScreen('#ff5b73');
       sfx('bad', 1);
-      say('fire', 2.2);
-      showFireBanner();
+      say('fire', 2.6);
       setTimeout(() => dom.gameShell.classList.remove('shake'), 260);
     }
-
 
     function spawnHazard() {
       const boardW = dom.board.clientWidth || boardLogicalRect().width;
       const x = 40 + gameRand() * (boardW - 80);
-      const body = makeBody(x, 44, -1, 'hazard');
+      const body = makeBody(x, 44, -1, true);
       state.boardStatsCache = null;
       Body.setAngularVelocity(body, (gameRand() - 0.5) * 0.14);
-      addParticles(x, 48, 'rgba(255,255,255,.88)', 8, 3.8);
-      popText(x, 92, '爆弾', '#ffffff', 22);
-      spawnComment(false, '爆弾きた、3つつながると大炎上！', 'low', '💣');
-      playAssetSfx('hazard', 0.74);
-    }
-
-    function spawnBuzzItem() {
-      const boardW = dom.board.clientWidth || boardLogicalRect().width;
-      const x = 40 + gameRand() * (boardW - 80);
-      const body = makeBody(x, 44, -1, 'buzz');
-      state.boardStatsCache = null;
-      Body.setAngularVelocity(body, (gameRand() - 0.5) * 0.12);
-      addParticles(x, 48, 'rgba(255,223,110,.94)', 8, 3.8);
-      popText(x, 92, 'バズり', '#fff0a3', 22);
-      spawnComment(false, 'バズりきた、3つつなげると大バズり！', 'super', '✨');
-      playAssetSfx('ready', 0.76);
-      sfx('ready', 0.92);
-    }
-
-
-    function spawnHazardBurst(count = 6, originX = null) {
-      if (!state.active || !engine) return 0;
-      const boardW = dom.board.clientWidth || boardLogicalRect().width;
-      const spawnCount = clamp(Math.round(count || 0), 0, 18);
-      if (spawnCount <= 0) return 0;
-      const centerX = Number.isFinite(originX) ? originX : boardW / 2;
-      const spread = Math.min(boardW * 0.32, 110 + spawnCount * 12);
-      let dropped = 0;
-      for (let i = 0; i < spawnCount; i += 1) {
-        const laneOffset = (rand() - 0.5) * spread;
-        const x = clamp(centerX + laneOffset, 36, boardW - 36);
-        const y = 30 - i * 10;
-        const body = makeBody(x, y, -1, 'fire');
-        Body.setVelocity(body, { x:(rand() - 0.5) * 1.3, y:0.55 + rand() * 0.55 });
-        Body.setAngularVelocity(body, (rand() - 0.5) * 0.18);
-        addParticles(x, Math.max(34, y + 20), 'rgba(255,110,120,.94)', 6, 3.8);
-        addParticles(x, Math.max(34, y + 20), 'rgba(255,196,120,.92)', 4, 3.4);
-        dropped += 1;
-      }
-      state.boardStatsCache = null;
-      state.fireMode = Math.max(state.fireMode, 999);
-      playAssetSfx('hazard', 0.86);
-      sfx('bad', 0.94);
-      return dropped;
+      addParticles(x, 48, 'rgba(255,91,115,.9)', 10, 4);
+      popText(x, 92, '炎上', '#ff5b73', 22);
+      spawnComment(false, '邪魔ブロックきつい', 'low');
+      playAssetSfx('hazard', 0.8);
     }
 
     function clearAllHazards(fromBurst = false) {
       if (!engine) return 0;
-      const hazards = worldBodies().filter(body => body.gameType === 'fire');
+      const hazards = worldBodies().filter(body => body.gameType === 'hazard');
       if (!hazards.length) {
         if (fromBurst) {
-          setCaption('いま消せる大炎上は出ていない。', 1.4);
+          setCaption('いま消す炎上は出ていない。危なくなるまで温存でもいい。', 1.4);
           sfx('warn', 0.72);
         }
         return 0;
       }
-      const desired = Math.min(hazards.length, 3 + Math.floor(rand() * 3));
-      const shuffled = hazards.slice().sort(() => rand() - 0.5).slice(0, desired);
       let centerX = 0;
       let centerY = 0;
-      for (const body of shuffled) {
+      for (const body of hazards) {
         centerX += body.position.x;
         centerY += body.position.y;
-        addParticles(body.position.x, body.position.y, 'rgba(255,180,120,.95)', 10, 5.6);
-        addParticles(body.position.x, body.position.y, 'rgba(255,91,115,.92)', 8, 4.8);
+        addParticles(body.position.x, body.position.y, 'rgba(255,180,120,.95)', 16, 7);
+        addParticles(body.position.x, body.position.y, 'rgba(255,91,115,.92)', 12, 6);
         addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
+        popText(body.position.x, body.position.y - 10, '火消し!', '#fff0a3', 18);
       }
-      centerX /= shuffled.length;
-      centerY /= shuffled.length;
-      hardRemoveBodies(shuffled);
-      if (!worldBodies().some(body => body.gameType === 'fire')) state.fireMode = 0;
-      state.fireCooldown = Math.max(state.fireCooldown || 0, 2.2);
-      state.heat = clamp(state.heat - (12 + shuffled.length * 4), 0, 100);
-      state.craving = clamp(state.craving - (6 + shuffled.length * 1.5), 0, 100);
-      state.tension = clamp(state.tension + 6 + shuffled.length * 2, 0, 100);
-      if (!worldBodies().some(body => body.gameType === 'fire')) dom.dangerFog.classList.remove('show');
+      centerX /= hazards.length;
+      centerY /= hazards.length;
+      hardRemoveBodies(hazards);
+      state.fireMode = 0;
+      state.hazardTimer = 0;
+      state.fireCooldown = Math.max(state.fireCooldown || 0, 4.5);
+      state.heat = clamp(state.heat - (18 + hazards.length * 5), 0, 100);
+      state.craving = clamp(state.craving - (8 + hazards.length * 2), 0, 100);
+      state.tension = clamp(state.tension + 8 + hazards.length * 2.5, 0, 100);
+      state.score += hazards.length * 480;
+      dom.dangerFog.classList.remove('show');
       dom.gameShell.classList.add('shake');
       flashScreen('#ffcf5b');
       addRing(centerX, centerY, '#ffe37a', 34, 320);
       addRing(centerX, centerY, '#ff5b73', 62, 260);
-      popText(centerX, centerY, `火消し x${shuffled.length}`, '#fff0a3', 28);
-      spawnComment(false, `謝罪配信で大炎上を${shuffled.length}個だけ消した！`, 'super', '🧯');
-      setCaption('謝罪配信で大炎上を3〜5個だけ消した。爆弾はそのまま残る。', 2.2);
-      triggerVoiceCue('apology_fire', Math.max(2, shuffled.length));
-      sfx('burst', 1.18);
+      popText(centerX, centerY, `炎上全消し x${hazards.length}`, '#fff0a3', 28);
+      spawnComment(false, `炎上${hazards.length}個まとめて消えた！`, 'super', '💥');
+      spawnComment(false, '謝罪配信で立て直した！', 'super', '🧯');
+      setCaption('謝罪配信で火消し成功。いま出ていた炎上を全部消した。ここから立て直せる。', 2.2);
+      triggerVoiceCue('apology_fire', Math.max(2, hazards.length));
+      sfx('burst', 1.28);
       setTimeout(() => dom.gameShell.classList.remove('shake'), 320);
-      return shuffled.length;
+      return hazards.length;
     }
 
     function dropAt(clientX) {
-
       if (!state.active || !engine || state.paused) return;
       const info = boardLogicalRect();
       if (clientX < info.left || clientX > info.right) return;
-      const idx = state.selectedDropIndex ?? 0;
+      const idx = state.queue[0];
       const radius = dropRadiusFor(idx);
       const metrics = getBoardMetrics();
       const spawnY = Math.max(radius + 6, metrics.fullLineY - radius - 6);
@@ -4199,12 +3591,13 @@
       }
 
       ensureQueueLength(3);
-      const idx2 = state.selectedDropIndex ?? 0;
+      const idx2 = state.queue.shift();
       triggerPreviewLaunchFx(CONTENTS[idx2]?.accent || '#ffffff');
       state.dropSerial += 1;
       const body = makeBody(x, spawnY, idx2, false);
       state.boardStatsCache = null;
       body.spawnSerial = state.dropSerial;
+      state.queue.push(queueRoll());
       ensureQueueLength(3);
       state.idle = 0;
       state.tension = clamp(state.tension - 0.18, 0, 100);
@@ -4212,19 +3605,20 @@
       if (idx2 !== state.trendIndex) {
         state.craving = clamp(state.craving + 1.2, 0, 100);
         state.combo = Math.max(0, state.combo - 1);
+        state.comboTimer = Math.min(state.comboTimer, 2.2);
         if (rand() < 0.08) spawnComment(false, `${CONTENTS[idx2].name}は今の本命ではないかも`, 'low', contentChatIcon(idx2));
       } else {
+        state.comboTimer = Math.max(state.comboTimer, 5.2);
         if (rand() < 0.08) spawnComment(false, `${CONTENTS[idx2].name}、いま欲しいやつ`, 'hot', contentChatIcon(idx2));
       }
       renderPreview();
-      addParticles(x, Math.max(40, radius + 16), CONTENTS[idx2].accent, 9, 3.4);
+      addParticles(x, Math.max(40, radius + 16), CONTENTS[idx2].accent, 10, 3.8);
       addRing(x, Math.max(44, radius + 22), CONTENTS[idx2].accent, 14, 180);
       sfx('drop', 0.5);
     }
 
     function updateUi() {
       dom.scoreView.textContent = fmt(state.score);
-      if (dom.scoreViewTop) dom.scoreViewTop.textContent = fmt(state.score);
       if (dom.comboView) dom.comboView.textContent = `x${state.combo}`;
       if (dom.chainView) dom.chainView.textContent = `${state.chainCount || 0}連鎖`;
       const topGap = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
@@ -4243,21 +3637,24 @@
       dom.cravingNum.textContent = fmt(state.craving);
       dom.heatNum.textContent = fmt(state.heat);
       dom.buzzNum.textContent = fmt(state.buzz);
-      dom.trendTimer.textContent = '';
-      refreshTrendForecastUi();
+      dom.trendTimer.textContent = state.overfillTime > 0.18 ? '満杯注意' : 'あと3消し！';
       if (dom.trendProgressFill) dom.trendProgressFill.style.width = '100%';
       if (dom.nextSwitchCopy) dom.nextSwitchCopy.textContent = ''; 
-      if (dom.trendCopy) dom.trendCopy.textContent = '';
+      if (dom.trendCopy) {
+        if (state.overfillTime > 0.18) dom.trendCopy.textContent = '満杯注意';
+        else dom.trendCopy.textContent = 'あと3消し！';
+      }
       dom.centerTop?.classList.toggle('warning', false);
       dom.nextBlock?.classList.toggle('warning', false);
       if (dom.comboView) dom.comboView.textContent = `x${state.combo}`;
       if (dom.chainView) dom.chainView.textContent = `${state.chainCount || 0}連鎖`;
       setAvatarVisual(pickAvatarMood());
-      dom.burstBtn.classList.remove('ready');
-      setBurstButtonLabel('default');
+      if (!state.buzzReady && state.buzzMode <= 0) {
+        dom.burstBtn.classList.remove('ready');
+        setBurstButtonLabel('default');
+      }
       dom.topDangerLine.classList.toggle('show', state.topDangerTime > 0.45 || state.overfillTime > 0.35);
-      if (dom.streamTimeMini) dom.streamTimeMini.textContent = '';
-      if (dom.streamTimeTop) dom.streamTimeTop.textContent = '';
+      if (dom.streamTimeMini) dom.streamTimeMini.textContent = `残り${Math.max(0, Math.ceil(state.streamTime || 0))}s`; 
       const crownRushActive = topGap > 0 && topGap <= 5200;
       const crownClutchActive = topGap > 0 && topGap <= 1800;
       const previewLen = biggestPreviewLen();
@@ -4265,16 +3662,21 @@
       state.trendWarning = nextPreviewLen >= 2;
       let eventMiniText = '';
       if (isFeverActive()) eventMiniText = `大バズり中 ${Math.max(1, Math.ceil(state.clipTime))}s`;
-      else if (state.fireMode > 0) eventMiniText = '大炎上中';
-      else if (state.chainCount >= 2 && state.chainDecay > 0) eventMiniText = `${state.chainCount}連鎖`; 
+      else if (state.rushWindow > 0) eventMiniText = previewLen >= 2 ? `先読みGO x${previewLen}` : `先読み ${Math.ceil(state.rushWindow)}s`;
       else if (state.overfillTime > 0.2) eventMiniText = '満杯危険';
-      else eventMiniText = state.crownHoldStreak > 0 ? `王冠防衛 x${state.crownHoldStreak}` : '山場待ち';
-      const crownMini = topGap > 0 ? `1位まで ${fmt(topGap)}` : 'いま1位';
-      dom.eventMini.textContent = `${eventMiniText}｜DAILY #${state.seed}｜${crownMini}`;
+      else if (state.chainCount >= 2 && state.chainDecay > 0) eventMiniText = `${state.chainCount}連鎖`;
+      else if (state.jackChain > 0) eventMiniText = `先読み連勝 x${state.jackChain}`;
+      else if (state.trendWarning && nextPreviewLen >= 3) eventMiniText = `次波READY x${nextPreviewLen}`;
+      else if (state.trendWarning && nextPreviewLen >= 2) eventMiniText = '次波あと1';
+      else if (state.crownHoldStreak > 0) eventMiniText = `王冠防衛 x${state.crownHoldStreak}`;
+      else if (crownClutchActive) eventMiniText = '王冠クラッチ';
+      else if (crownRushActive) eventMiniText = '王冠圏';
+      else eventMiniText = topGap > 0 ? `1位まで ${fmt(topGap)}` : '1位ペース';
+      dom.eventMini.textContent = eventMiniText;
       if (state.showCaptionTimer <= 0 && state.active) {
         let caption = '';
         if (state.clipTime > 0) {
-          caption = `大バズり中。『${currentTrend().name}』を取ってポイント2倍。`;
+          caption = `大バズり中。『${currentTrend().name}』をまとめて取る時間。`;
         } else if (state.rushWindow > 0) {
           caption = previewLen >= 2
             ? `先読みGO。『${currentTrend().name}』あと1つ。`
@@ -4363,6 +3765,8 @@
           setHyperMix(0);
           setCaption('大バズり終了。通常BGMに戻った。次の見せ場まで盤面を整えよう。', 1.8);
         }
+      } else if (state.clipCooldown <= 0) {
+        activateClipTime();
       }
       if (state.comboTimer > 0) {
         state.comboTimer -= dt;
@@ -4380,19 +3784,23 @@
       state.topDangerTime = stats.nearTop ? state.topDangerTime + dt : Math.max(0, state.topDangerTime - dt * 1.8);
       state.overfillTime = stats.restedOverfillCount >= 2 ? state.overfillTime + dt : Math.max(0, state.overfillTime - dt * 2.6);
 
-
-      state.hazardTimer = Math.max(0, state.hazardTimer - dt);
-      if (state.hazardTimer <= 0 && state.runTime >= 4.2) {
-        spawnHazard();
-        state.hazardTimer = 7.4 + rand() * 4.6;
+      state.streamTime = Math.max(0, state.streamTime - dt);
+      if (!state.finalSpurt && state.streamTime <= 25) {
+        state.finalSpurt = true;
+        setCaption('ラスト25秒。ここからは危険度アップ。最後に一気に稼ぐ。', 2.4);
+        showTrendShiftBanner('warning', state.trendIndex, state.nextTrendIndex, state.futureTrendIndex);
+        spawnComment(false, 'ラストスパート入った！', 'super', '⏱️');
+        flashScreen('#ffe37a');
+        playAssetSfx('hurry', 0.82);
+        sfx('ready', 1.0);
       }
-      state.buzzItemTimer = Math.max(0, state.buzzItemTimer - dt);
-      if (state.buzzItemTimer <= 0 && state.runTime >= 7.2) {
-        spawnBuzzItem();
-        state.buzzItemTimer = 10.2 + rand() * 6.4;
+      if (state.streamTime <= 0) {
+        state.gameOverReason = 'time';
+        finishGame();
+        return;
       }
 
-      if (state.scanTimer >= 0.14) {
+      if (state.scanTimer >= 0.30) {
         state.scanTimer = 0;
         resolveGroups();
       }
@@ -4422,32 +3830,33 @@
         rollPinnedComment(state.clipTime > 0 ? 'clip' : 'normal');
       }
       updateDynamicVoiceCues(ts);
-      state.commentEventTimer = 0;
-      state.commentEventType = '';
-      state.commentEventText = '';
-      const chatInterval = state.clipTime > 0 ? 1.18 : 2.05;
+      const chatInterval = state.clipTime > 0 ? 1.15 : 1.75;
       if (state.commentTimer >= chatInterval) {
         state.commentTimer = 0;
         spawnComment(false);
       }
 
       if (state.fireMode > 0) {
-        const hasFireItems = worldBodies().some(body => body.gameType === 'fire');
-        if (hasFireItems) {
-          dom.dangerFog.classList.add('show');
-        } else {
-          state.fireMode = Math.max(0, state.fireMode - dt * 3.2);
-          if (state.fireMode <= 0) {
-            dom.dangerFog.classList.remove('show');
-            setCaption('大炎上は収まった。まだ立て直せる。', 1.7);
-          }
+        state.fireMode -= dt;
+        state.hazardTimer -= dt;
+        if (state.hazardTimer <= 0) {
+          spawnHazard();
+          state.hazardTimer = 2.0 + gameRand() * 0.6;
+        }
+        if (state.fireMode <= 0) {
+          dom.dangerFog.classList.remove('show');
+          setCaption('炎上は収まった。まだ立て直せる。', 1.7);
         }
       }
       if (state.buzzMode > 0) {
         state.buzzMode -= dt;
         if (state.buzzMode <= 0 && !state.buzzReady) {
-          setCaption('大バズり終了。次の見せ場まで盤面を整えよう。', 1.6);
+          setCaption('火消しの構えは終了。次の謝罪配信ゲージを溜めよう。', 1.6);
         }
+      }
+
+      if ((state.heat >= 100 || stats.pressure > 0.88 || state.topDangerTime > 1.6 || state.overfillTime > 0.95) && state.fireMode <= 0 && state.fireCooldown <= 0) {
+        triggerFire(state.topDangerTime > 2.1 || state.overfillTime > 1.15 ? 'top' : 'pressure');
       }
 
       const mixStrength = clamp((state.fireMode > 0 ? 0.78 : 0) + (state.buzzMode > 0 ? 0.92 : 0) + (state.clipTime > 0 ? 0.36 : 0) + (state.tension < 35 ? 0.32 : 0) + (state.topDangerTime > 0.5 ? 0.22 : 0), 0, 1);
@@ -4480,12 +3889,14 @@
       if ((state.overfillTime > 1.65 && fullLineCluster) || stats.restedOverfillCount >= 5) {
         state.gameOverReason = 'full';
         finishGame();
+      } else if (state.tension <= 0) {
+        state.gameOverReason = 'tension';
+        finishGame();
       }
     }
 
     function finishGame() {
       if (!state.active || state.finishing) return;
-      if (state.gameOverReason === 'time') state.gameOverReason = 'full';
       state.finishing = true;
       state.active = false;
       cancelAnimationFrame(rafId);
@@ -4493,7 +3904,7 @@
 
       const resultDelay = 700;
       if (dom.gameoverFxVideo) { try { dom.gameoverFxVideo.currentTime = 0; dom.gameoverFxVideo.classList.add('show'); dom.gameoverFxVideo.play().catch(() => {}); } catch(_) {} }
-      const isTimeUp = false;
+      const isTimeUp = state.gameOverReason === 'time';
       const fxColor = isTimeUp ? '#ffe37a' : '#ff5b73';
       flashScreen(fxColor);
       dom.gameShell.classList.add('shake');
@@ -4612,48 +4023,19 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     dom.pauseTitleBtn?.addEventListener('click', goToTitle);
     dom.resultTitleBtn?.addEventListener('click', goToTitle);
 
-    dom.dropSelectorButtons?.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = Number(btn.dataset.dropIndex || '0');
-        setSelectedDropIndex(idx);
-      });
-    });
-
     dom.muteBtn.addEventListener('click', toggleMute);
     dom.resultMuteBtn.addEventListener('click', toggleMute);
     if (dom.shareBtn) dom.shareBtn.addEventListener('click', copyResult);
     dom.burstBtn.addEventListener('click', activateBurst);
-    let holdDropX = 0;
-    let holdDropDelayTimer = 0;
-    let holdDropInterval = 0;
-    function stopHoldDrop() {
-      clearTimeout(holdDropDelayTimer);
-      clearInterval(holdDropInterval);
-      holdDropDelayTimer = 0;
-      holdDropInterval = 0;
-    }
     dom.board.addEventListener('pointermove', event => {
       const info = boardLogicalRect();
       hoverX = clamp((event.clientX - info.left) * info.scaleX, 34, info.width - 34);
-      holdDropX = event.clientX;
       renderPreview();
     });
     dom.board.addEventListener('pointerdown', event => {
       event.preventDefault();
-      holdDropX = event.clientX;
-      try { dom.board.setPointerCapture(event.pointerId); } catch (_) {}
-      dropAt(holdDropX);
-      stopHoldDrop();
-      holdDropDelayTimer = setTimeout(() => {
-        holdDropInterval = setInterval(() => {
-          if (state.active && !state.paused) dropAt(holdDropX);
-        }, 200);
-      }, 200);
+      dropAt(event.clientX);
     });
-    dom.board.addEventListener('pointerup', stopHoldDrop);
-    dom.board.addEventListener('pointercancel', stopHoldDrop);
-    dom.board.addEventListener('pointerleave', stopHoldDrop);
-    window.addEventListener('pointerup', stopHoldDrop);
 
     window.addEventListener('resize', applyAppHeight);
     window.visualViewport?.addEventListener('resize', applyAppHeight);
@@ -4695,9 +4077,6 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     updateSeedLabels();
     renderDailyBoard(dom.dailyBoard);
     renderDailyBoard(dom.resultDailyBoard);
-    setSelectedDropIndex(0, { silent:true });
-    ensureUpcomingTrendQueue(7);
-    refreshTrendForecastUi();
     refreshQueue();
     renderPreview();
     dom.bestScore.textContent = fmt(save.bestScore || 0);

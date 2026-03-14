@@ -1,1022 +1,4 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>限界メルトダウン（Limit Meltdown）</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#09010d">
-  <meta property="og:title" content="限界メルトダウン（Limit Meltdown）">
-  <meta property="og:description" content="今バズる話題をつなぎ、次の波を先読みして王冠ラインを超える。配信向けの物理演算トレンドパズル。">
-  <meta property="og:image" content="assets/img/ogp_image.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=M+PLUS+Rounded+1c:wght@700;900&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --pink:#ff2f92;
-      --pink2:#ff5ab1;
-      --cyan:#00ecff;
-      --gold:#ffd84c;
-      --green:#58ff9e;
-      --danger:#ff3b5b;
-      --bg:#09010d;
-      --glass:rgba(8,4,14,.76);
-      --glass-2:rgba(20,10,32,.58);
-      --text:#fff;
-    }
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-    html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'M PLUS Rounded 1c',sans-serif}
-    body{position:fixed;inset:0}
-    button,input{font:inherit}
-    img{display:block}
 
-    #bg-container{position:fixed;inset:0;z-index:-3;background:#000 url('assets/img/bg_cyber_loop_frame.png') center center / cover no-repeat;overflow:hidden;--bg-base-opacity:.94;--bg-hype-opacity:0}
-    #bg-video,#bg-video-hype{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none;transform:translateZ(0)}
-    #bg-video{opacity:var(--bg-base-opacity);transition:opacity .26s ease, filter .26s ease;filter:saturate(1.02) brightness(.86)}
-    #bg-video-hype{opacity:var(--bg-hype-opacity);transition:opacity .26s ease;filter:saturate(1.12) brightness(1.03)}
-    #bg-container.hype #bg-video{filter:saturate(1.08) brightness(.96)}
-    #bg-vignette{position:fixed;inset:0;z-index:-2;background:
-      radial-gradient(circle at top, rgba(255,47,146,.16), transparent 36%),
-      radial-gradient(circle at bottom, rgba(0,236,255,.12), transparent 40%),
-      linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.34));}
-    #global-flash{position:fixed;inset:0;pointer-events:none;z-index:60;opacity:0;background:radial-gradient(circle, rgba(255,255,255,.36), rgba(255,255,255,0));transition:opacity .18s}
-    #global-flash.show{opacity:1}
-
-    .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:18px}
-    .hidden{display:none!important}
-    .panel{
-      width:min(92vw,640px);background:rgba(5,2,10,.82);border:2px solid rgba(0,236,255,.26);border-radius:30px;
-      box-shadow:0 28px 80px rgba(0,0,0,.46),0 0 40px rgba(255,47,146,.15);backdrop-filter:blur(16px);padding:24px;
-    }
-    .title-main{font-family:'Orbitron',sans-serif;font-size:clamp(2.2rem,7vw,4.5rem);line-height:1;color:var(--pink);text-shadow:0 0 18px rgba(255,47,146,.8)}
-    #title-art-wrap{display:grid;justify-items:center;gap:8px}
-    #title-art{width:min(100%, 360px);height:auto;object-fit:contain;filter:drop-shadow(0 10px 32px rgba(255,47,146,.28))}
-    .title-sub{margin-top:8px;color:var(--cyan);letter-spacing:.16em;font-weight:900}
-    .intro-copy{margin-top:16px;color:#f2e8ff;line-height:1.75;font-size:clamp(.96rem,2.6vw,1.05rem)}
-    #top-gap-text{margin-top:6px;font-size:.74rem;color:#ffe9a1;line-height:1.35;font-weight:900}
-    #crown-track{margin-top:8px;height:8px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.06)}
-    #crown-fill{display:block;height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#ffd84c,#fff4a3,#ff7dd4);box-shadow:0 0 16px rgba(255,216,76,.48);transition:width .22s ease}
-    #crown-mini{margin-top:4px;font-size:.68rem;color:#f5d9ff;line-height:1.3;font-weight:900}
-    .chip-row{margin-top:18px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-    .intro-chip{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:12px 10px;min-height:82px;display:grid;place-items:center;text-align:center;gap:6px}
-    .intro-chip .ic{font-size:1.35rem}
-    .intro-chip strong{font-size:.95rem}
-    .intro-chip span{font-size:.76rem;color:#cbbddd;line-height:1.5}
-    .btn-row{display:grid;gap:12px;margin-top:22px}
-    .btn{border:none;border-radius:20px;min-height:60px;padding:14px 18px;color:#fff;font-weight:900;cursor:pointer;transition:transform .12s,filter .12s}
-    .btn:active{transform:scale(.97)}
-    .btn-main{background:linear-gradient(135deg,var(--pink),#932dff);box-shadow:0 0 28px rgba(255,47,146,.42)}
-    .btn-sub{background:linear-gradient(135deg,rgba(0,236,255,.16),rgba(255,255,255,.08));border:1px solid rgba(0,236,255,.24)}
-    .small-note{margin-top:12px;font-size:.78rem;color:#bfaed1;line-height:1.7}
-    .start-tools{display:grid;gap:12px;margin-top:16px}
-    .name-box{display:grid;gap:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:12px}
-    .name-box span{font-size:.76rem;color:#d9caeb;font-weight:900;letter-spacing:.08em}
-    .name-box input{width:100%;min-height:48px;border-radius:14px;border:1px solid rgba(0,236,255,.24);background:rgba(7,4,13,.86);color:#fff;padding:0 14px;font-weight:900;outline:none}
-    .name-box input::placeholder{color:#8f82a6}
-    .daily-board-wrap{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:12px}
-    .daily-title{font-size:.76rem;color:#ffe9a1;font-weight:900;letter-spacing:.1em;margin-bottom:8px}
-    .daily-board{display:grid;gap:8px}
-    .rank-row{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.04)}
-    .rank-row .rk{font-family:'Orbitron',sans-serif;color:#ffe37a;font-size:.9rem}
-    .rank-row .nm{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .rank-row .sc{font-family:'Orbitron',sans-serif;color:#fff}
-    .rank-empty{font-size:.82rem;color:#bfaed1;padding:6px 2px}
-
-
-    #game-screen{padding:max(4px,env(safe-area-inset-top)) max(4px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
-    #game-shell{
-      --safe-gap:10px;
-      --top-hud-h:122px;
-      --queue-w:74px;
-      --bottom-controls-h:58px;
-      --bottom-info-h:104px;
-      --bottom-stack:calc(var(--bottom-controls-h) + var(--bottom-info-h) + 18px);
-      position:relative;
-      width:min(calc((100dvh - 8px) * (1179 / 2556)), calc(100vw - 8px), 430px);
-      aspect-ratio:1179 / 2556;
-      height:auto;
-      max-height:min(calc(100dvh - 8px), var(--app-height));
-      margin:auto;border-radius:32px;overflow:hidden;
-      border:2px solid rgba(255,47,146,.35);box-shadow:0 24px 80px rgba(0,0,0,.54),0 0 62px rgba(255,47,146,.18);
-      background:rgba(3,0,6,.66);touch-action:none
-    }
-    #game-shell.shake{animation:shake .24s linear 1}
-    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
-
-    #board-wrap{position:absolute;inset:0;padding:calc(var(--top-hud-h) + 10px) 8px calc(var(--bottom-stack) + 6px);display:flex;justify-content:center;align-items:stretch}
-    #game-board{
-      --gameover-line-y:96px;
-      --danger-line-y:130px;
-      position:relative;width:min(100%, 560px);height:100%;border-radius:28px;overflow:hidden;border:3px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(12,5,22,.30), rgba(12,5,22,.46));touch-action:none;
-      box-shadow:inset 0 -28px 64px rgba(0,0,0,.24),inset 0 0 0 1px rgba(255,255,255,.05)
-    }
-    #game-board::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:url('assets/img/bg_cyber_loop_frame.png') center center / cover no-repeat;opacity:.54;transform:translateZ(0)}
-    #board-grid{position:absolute;inset:0;pointer-events:none;opacity:.26;background-image:linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);background-size:calc(100% / 6) calc(100% / 11);mask-image:linear-gradient(180deg, transparent 0%, black 12%, black 100%)}
-    .board-character-layer{position:absolute;left:50%;bottom:-1%;width:107.25%;max-width:none;height:107.25%;min-height:0;aspect-ratio:1 / 1;transform:translate3d(-50%,0,0);object-fit:contain;object-position:center bottom;pointer-events:none;z-index:4;opacity:0;filter:drop-shadow(0 0 18px rgba(255,47,146,.16)) saturate(1.02);will-change:opacity,transform;transition:opacity .12s linear;backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:layout paint size}
-    .board-character-layer.active{opacity:1}
-    #gameover-fx-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:24;opacity:0;transition:opacity .22s ease} 
-    #gameover-fx-video.show{opacity:.9}
-    #board-glass{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg, rgba(6,3,10,.24), rgba(6,3,10,.18));box-shadow:inset 0 0 34px rgba(0,236,255,.05), inset 0 -48px 68px rgba(255,47,146,.05)}
-    #merge-canvas{display:none}
-    #item-layer{position:absolute;inset:0;pointer-events:none;z-index:9;overflow:hidden}
-    .item-chip{position:absolute;left:0;top:0;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);border:2px solid rgba(255,255,255,.34);box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,255,255,.28);transition:box-shadow .14s,border-color .14s;will-change:transform,opacity;overflow:hidden;transform-origin:center center;contain:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-    .item-chip::after{display:none !important;content:''}
-    .item-chip img{display:block;width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.38));opacity:1;transform:translateZ(0);pointer-events:none;user-select:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-    .item-chip.trend{border-color:rgba(255,216,76,.92);box-shadow:0 0 0 2px rgba(255,216,76,.18), 0 0 22px rgba(255,216,76,.28), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.near{box-shadow:0 0 0 2px rgba(0,236,255,.18), 0 0 20px rgba(0,236,255,.18), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.ready{box-shadow:0 0 0 2px rgba(255,244,163,.22), 0 0 24px rgba(255,216,76,.36), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.forecast{border-color:rgba(134,241,255,.78);box-shadow:0 0 0 3px rgba(134,241,255,.24), 0 0 28px rgba(134,241,255,.28), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.shift-glow{border-color:rgba(255,244,163,.96);box-shadow:0 0 0 3px rgba(255,244,163,.28),0 0 34px rgba(255,216,76,.42),0 0 56px rgba(0,236,255,.24),inset 0 0 20px rgba(255,255,255,.14)}
-    .item-chip.hazard{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%);border-color:rgba(255,91,115,.92)}
-    .item-chip.hazard::after{content:'🚨'}
-    .item-chip.pending-clear{box-shadow:0 0 0 2px rgba(255,255,255,.26), 0 0 22px rgba(255,216,76,.34), 0 0 36px rgba(255,91,181,.18), inset 0 0 18px rgba(255,255,255,.14);filter:brightness(1.08);animation:pendingClearPulse .2s ease-in-out infinite alternate}
-    @keyframes pendingClearPulse{0%{opacity:.94;box-shadow:0 0 0 2px rgba(255,255,255,.24), 0 0 18px rgba(255,216,76,.24), 0 0 28px rgba(255,91,181,.12), inset 0 0 14px rgba(255,255,255,.12)}100%{opacity:1;box-shadow:0 0 0 2px rgba(255,255,255,.34), 0 0 28px rgba(255,216,76,.42), 0 0 42px rgba(255,91,181,.24), inset 0 0 20px rgba(255,255,255,.18)}}
-    #danger-fog{position:absolute;inset:0;pointer-events:none;z-index:10;opacity:0;background:linear-gradient(180deg, rgba(255,59,91,.04), rgba(255,59,91,.18));transition:opacity .3s}
-    #danger-fog.show{opacity:1}
-    #particle-canvas,#fx-canvas{position:absolute;inset:0;pointer-events:none}
-    #chat-lane-back{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:8;overflow:hidden;opacity:1}
-    #chat-lane{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:18;overflow:hidden;opacity:1}
-    #fx-canvas{z-index:16}
-    #particle-canvas{z-index:18}
-    #gameover-line{
-      position:absolute;left:10px;right:10px;top:var(--gameover-line-y);height:2px;z-index:14;pointer-events:none;
-      background:repeating-linear-gradient(90deg, rgba(255,104,145,.92) 0 20px, rgba(255,104,145,0) 20px 34px);
-      box-shadow:0 0 16px rgba(255,59,91,.34)
-    }
-    #gameover-line::before{
-      content:'限界ライン';position:absolute;right:8px;top:-18px;
-      padding:2px 8px;border-radius:999px;background:rgba(19,9,22,.9);border:1px solid rgba(255,104,145,.38);
-      color:#ffb3d3;font-size:.64rem;font-weight:900;letter-spacing:.08em
-    }
-    #top-danger-line{position:absolute;left:10px;right:10px;top:var(--danger-line-y);height:2px;z-index:15;background:linear-gradient(90deg, transparent, rgba(255,216,76,.95), transparent);box-shadow:0 0 14px rgba(255,216,76,.58);opacity:0;transition:opacity .15s}
-    #top-danger-line.show{opacity:1;animation:blink .55s linear infinite}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-
-    #drop-guide{position:absolute;top:0;bottom:0;width:2px;left:50%;transform:translateX(-1px);z-index:13;pointer-events:none;background:linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.08));opacity:.55;filter:drop-shadow(0 0 8px rgba(255,255,255,.8))}
-    #preview-item{position:static;width:74%;height:74%;transform:none;object-fit:contain;object-position:center center;z-index:14;pointer-events:none;filter:drop-shadow(0 0 14px rgba(255,255,255,.7));opacity:1}
-    #preview-ring{position:absolute;top:calc(var(--gameover-line-y) - 86px);left:50%;width:74px;height:74px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(255,255,255,.3);box-shadow:0 0 18px rgba(255,255,255,.12);z-index:14;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);isolation:isolate}
-
-    .hud-chip{
-      position:absolute;z-index:20;display:flex;align-items:center;gap:10px;pointer-events:auto;background:rgba(10,6,16,.94);border:1px solid rgba(255,255,255,.09);
-      border-radius:22px;box-shadow:0 12px 28px rgba(0,0,0,.26)
-    }
-    #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;min-width:0;max-width:none;align-items:center;gap:12px;min-height:var(--bottom-info-h);display:grid;grid-template-columns:minmax(0,1fr) auto;z-index:22}
-    #center-top{top:8px;left:8px;right:calc(var(--queue-w) + 16px);transform:none;padding:10px 12px;gap:0;width:auto;min-width:0;max-width:none;display:block;align-items:center;height:var(--top-hud-h);transition:box-shadow .18s,border-color .18s,transform .18s;overflow:visible;pointer-events:none}
-    #center-top.warning{border-color:rgba(255,216,76,.48);box-shadow:0 0 28px rgba(255,216,76,.18),0 12px 28px rgba(0,0,0,.26)}
-    #top-right{top:calc(var(--top-hud-h) + 10px);right:8px;padding:8px 8px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:44%;z-index:22}
-    #drop-queue{display:none !important}
-    #drop-selector{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;margin-top:6px;direction:rtl}
-    .drop-pick-btn{width:60px;height:60px;border:none;border-radius:18px;padding:5px 4px 4px;cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.18);display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;align-items:center;position:relative;transition:transform .12s ease, box-shadow .12s ease, background .12s ease;flex:0 0 auto;gap:1px}
-    .drop-pick-btn img{width:68%;height:68%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 0 10px rgba(255,255,255,.24))}
-    .drop-pick-btn .lbl{font-size:.48rem;line-height:1;color:#f7eefc;font-weight:900;letter-spacing:.01em;pointer-events:none;white-space:nowrap;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.34)}
-    .drop-pick-btn:hover{transform:translateY(-1px)}
-    .drop-pick-btn.active{background:linear-gradient(180deg, rgba(255,216,76,.94), rgba(255,123,208,.82));box-shadow:0 0 0 1px rgba(255,249,214,.42), 0 0 18px rgba(255,180,96,.26), 0 10px 18px rgba(0,0,0,.2)}
-    .drop-pick-btn.active::before{content:'';position:absolute;inset:-2px;border-radius:14px;border:2px solid rgba(255,249,214,.76);pointer-events:none}
-    #mood-text{display:none !important}
-    .queue-title{text-align:center;font-size:.6rem;line-height:1.05;align-self:end;color:#d9caeb}
-    .queue-token{position:relative !important;width:46px;height:46px;display:grid;place-items:center;padding:0;justify-self:center}
-    .queue-token img{width:70%;height:70%;object-fit:contain;object-position:center center;display:block}
-    .queue-token::after{display:none}
-    #bottom-left{display:none}
-    #bottom-right{display:none}
-    #pin-comment{display:none}
-    #pin-comment.hot{box-shadow:0 0 22px rgba(255,216,76,.16), 0 12px 28px rgba(0,0,0,.26)}
-    #pin-comment.super{border-color:rgba(255,150,0,.52);box-shadow:0 0 26px rgba(255,164,0,.2), 0 12px 28px rgba(0,0,0,.26)}
-    #pin-comment.low{border-color:rgba(255,91,115,.42)}
-    #pin-comment.next{border-color:rgba(0,236,255,.32)}
-    #pin-badge{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);font-size:1rem;flex:0 0 34px}
-    #pin-main{min-width:0;display:grid;gap:2px}
-    #pin-text{font-size:.9rem;font-weight:900;line-height:1.35;color:#fff}
-    #pin-side{display:grid;gap:2px;justify-items:end;text-align:right;font-family:'Orbitron',sans-serif}
-    #pin-need{font-size:.98rem;color:#fff4a3}
-    #pin-bonus{font-size:.76rem;color:#8ef8ff}
-
-    #avatar{display:none}
-    .mini-label{font-size:.7rem;color:#c7b8d8;letter-spacing:.1em;font-weight:900}
-    .big-num{font-family:'Orbitron',sans-serif;font-size:clamp(1.55rem,4vw,2.35rem);line-height:1}
-    .mood{font-size:.82rem;color:#fff;line-height:1.28;min-height:2.4em;max-width:unset;opacity:.94;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    #top-gap-text,#crown-track,#crown-mini{display:none}
-    #pin-side{display:none}
-    #pin-text{font-size:.8rem;line-height:1.25}
-    #pin-main .mini-label{display:none}
-    #score-view{font-size:clamp(2.35rem,7.8vw,3.35rem)}
-    #top-left > div{min-width:0}
-
-    #trend-main{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;justify-content:center;gap:8px;min-width:0;max-width:min(48vw, 210px);justify-self:center}
-    #trend-thumb{width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(255,255,255,.36))}
-    .trend-name{font-size:1.18rem;font-weight:900;line-height:1.04;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .trend-copy{font-size:.9rem;color:#fff0a3;font-weight:900}
-    #trend-progress{display:none}
-    #trend-progress-fill{display:block;height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#ffd84c,#ff7dd4,#00ecff);box-shadow:0 0 16px rgba(255,216,76,.34);transition:width .18s linear}
-    #trend-timer{display:block;font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;color:#fff0a3;white-space:nowrap}
-    #next-block{display:grid;justify-items:center;align-content:center;gap:4px;border-top:none;border-left:1px solid rgba(255,255,255,.08);padding-top:0;padding-left:10px;transition:transform .16s,box-shadow .16s,border-color .16s;width:86px;min-width:86px;position:relative;right:auto}
-    #next-block.warning{border-color:rgba(0,236,255,.42);box-shadow:0 0 22px rgba(0,236,255,.14);animation:pulse .88s infinite}
-    .tiny-stack{display:grid;grid-template-columns:repeat(2, 42px);gap:7px}
-    .tiny-stack img{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.34));border-radius:999px;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);padding:5px;border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 0 14px rgba(255,255,255,.22)}
-    .future-stack{display:grid;gap:4px;justify-items:center;width:86px;min-width:86px;padding-top:2px;border-top:1px solid rgba(255,255,255,.08)}
-    .future-stack img{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.3))}
-    .future-name{font-size:.68rem;font-weight:900;line-height:1.15;color:#d9caeb;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-    #next-trend-thumb{width:38px;height:38px;object-fit:contain}
-    #next-switch-copy{margin-top:2px;font-size:.68rem;font-weight:900;color:#8ef8ff;line-height:1.2;text-align:center}
-    #next-block > .queue-preview{display:flex;flex-direction:column;gap:4px;width:100%}
-    #future-block{justify-self:start}
-    #next-block{justify-self:end}
-    #trend-hero{display:grid;justify-items:center;gap:2px;min-width:0}
-    #trend-side{display:grid;gap:4px;min-width:0;align-content:center}
-    #trend-timer,#trend-copy{text-align:left}
-    .trend-shift-badge{display:inline-flex;align-items:center;gap:8px}
-    .trend-shift-badge img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,255,255,.3))}
-    .trend-shift-badge.mini img{width:24px;height:24px}
-    .seed-pill{display:grid;gap:3px;text-align:right;min-width:84px}
-    .seed-pill .big{font-family:'Orbitron',sans-serif;font-size:.95rem;color:#ffe37a}
-
-    .meter-grid{display:grid;gap:7px;min-width:156px}
-    .meter-row{display:grid;grid-template-columns:28px 1fr 36px;align-items:center;gap:8px}
-    .meter-row .ic{font-size:1rem;text-align:center}
-    .craving-row{display:none}
-    .heat-row{display:none}
-    .meter{height:10px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.06)}
-    .meter > span{display:block;height:100%;width:50%;border-radius:999px;transition:width .18s linear}
-    #tension-fill{background:linear-gradient(90deg, #00ecff, #8ef8ff);box-shadow:0 0 16px rgba(0,236,255,.55)}
-    #craving-fill{background:linear-gradient(90deg, #ff4f9f, #ff2f5b);box-shadow:0 0 16px rgba(255,47,146,.45)}
-    #heat-fill{background:linear-gradient(90deg, #ff8a00, #ff3b5b);box-shadow:0 0 16px rgba(255,59,91,.42)}
-    #buzz-fill{background:linear-gradient(90deg, #ffd84c, #fff0a3);box-shadow:0 0 18px rgba(255,216,76,.5)}
-    .meter-num{font-family:'Orbitron',sans-serif;font-size:.82rem;color:#f5e9ff;text-align:right}
-
-    .action-btn{min-width:82px;min-height:82px;border:none;border-radius:22px;padding:8px;cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));color:#fff;font-weight:900;display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 22px rgba(0,0,0,.2)}
-    .action-btn .icon{font-size:1.58rem;line-height:1}
-    .action-btn .txt{font-size:.72rem;color:#fbecc4;margin-top:4px}
-    .action-btn.ready{background:linear-gradient(180deg, rgba(255,225,120,.95), rgba(255,130,64,.86));color:#2c1200;box-shadow:0 0 0 1px rgba(255,250,220,.42), 0 0 34px rgba(255,180,72,.44), 0 18px 32px rgba(255,120,44,.24), inset 0 1px 0 rgba(255,255,255,.4);animation:pulse 1s infinite}
-    .action-btn.warn{background:linear-gradient(180deg, rgba(255,138,138,.24), rgba(255,87,114,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 10px 22px rgba(0,0,0,.22)}
-    #center-top #burst-btn{width:100%;min-width:88px;min-height:88px;border-radius:22px;padding:0;pointer-events:auto}
-    #center-top #burst-btn .txt{font-size:.9rem;line-height:1.05}
-    #center-top #burst-btn .icon{font-size:1.35rem}
-    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-    .action-btn.switch-flash{animation:burstReadyFlash .92s ease-out 1, pulse 1s .92s infinite}
-    @keyframes burstReadyFlash{0%{box-shadow:0 0 0 rgba(255,216,76,0), inset 0 1px 0 rgba(255,255,255,.06);filter:brightness(1)}25%{box-shadow:0 0 0 8px rgba(255,216,76,.18),0 0 34px rgba(255,216,76,.45),0 0 68px rgba(0,236,255,.22);filter:brightness(1.15)}100%{box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 26px rgba(255,216,76,.34), inset 0 1px 0 rgba(255,255,255,.1);filter:brightness(1)}}
-
-    .rising-chat{position:absolute;left:0;bottom:-28px;max-width:min(82%, 270px);display:flex;align-items:center;gap:6px;background:rgba(9,6,16,.72);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:5px 7px;color:#ffffff;font-size:.68rem;line-height:1.25;opacity:0;animation:chatRise linear forwards;will-change:transform,opacity;contain:layout paint style;--rise-distance:520px;--chat-drift:0px}
-    .rising-chat .live{display:none}
-    .rising-chat .badge{width:20px;height:20px;flex:0 0 20px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07);font-size:.72rem}
-    .rising-chat .body{min-width:0;display:grid;gap:2px}
-    .rising-chat .meta{display:flex;align-items:center;gap:4px;min-width:0;flex-wrap:wrap}
-    .rising-chat .topic{display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:.48rem;font-weight:900;letter-spacing:.03em;color:rgba(255,255,255,.82)}
-    .rising-chat .name{color:var(--cyan);font-weight:900;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .rising-chat .stamp{display:none}
-    .rising-chat .txt{word-break:break-word;text-shadow:0 1px 3px rgba(0,0,0,.28)}
-    .rising-chat.hot{border-color:rgba(255,216,76,.44);background:rgba(34,24,10,.76)}
-    .rising-chat.low{border-color:rgba(255,59,91,.42);background:rgba(32,10,18,.80)}
-    .rising-chat.next{border-color:rgba(0,236,255,.42);background:rgba(8,18,28,.76)}
-    .rising-chat.super{border-color:rgba(255,139,0,.48);background:rgba(34,18,10,.82)}
-    #chat-lane-back .rising-chat{background:rgba(9,6,16,.42);border-color:rgba(255,255,255,.10)}
-    #chat-lane-back .rising-chat .topic{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
-    #chat-lane .rising-chat.event-anti,#chat-lane .rising-chat.event-superchat{font-size:.8rem;line-height:1.32;padding:7px 10px;max-width:min(86%, 300px);border-width:2px;box-shadow:0 0 22px rgba(0,0,0,.24), 0 10px 28px rgba(0,0,0,.18)}
-    #chat-lane .rising-chat.event-anti{background:rgba(58,12,22,.96);border-color:rgba(255,94,126,.88);color:#ffe3ea}
-    #chat-lane .rising-chat.event-superchat{background:rgba(58,32,10,.96);border-color:rgba(255,190,78,.9);color:#fff3c6}
-    #chat-lane .rising-chat.event-anti .badge,#chat-lane .rising-chat.event-superchat .badge{width:24px;height:24px;flex:0 0 24px;font-size:.86rem}
-    #chat-lane .rising-chat.event-anti .badge{background:rgba(255,91,115,.24)}
-    #chat-lane .rising-chat.event-superchat .badge{background:rgba(255,190,78,.22)}
-    @keyframes chatRise{0%{transform:translate3d(var(--chat-drift,0px),0,0);opacity:0}8%{opacity:.9}84%{opacity:.78}100%{transform:translate3d(calc(var(--chat-drift,0px) * -0.18),calc(-1 * var(--rise-distance, 520px)),0);opacity:0}}
-
-    #trend-shift-banner{position:absolute;left:50%;top:124px;transform:translate(-50%,-14px) scale(.92);min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px;border-radius:24px;background:linear-gradient(180deg, rgba(15,8,25,.98), rgba(8,4,14,.94));border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 44px rgba(0,0,0,.38);pointer-events:none;z-index:26;display:grid;justify-items:center;gap:3px;opacity:0;transition:opacity .22s,transform .22s}
-    #trend-shift-banner.show{opacity:1;transform:translate(-50%,0) scale(1)}
-    #trend-shift-banner.shift{border-color:rgba(255,216,76,.62);box-shadow:0 0 32px rgba(255,216,76,.2), 0 18px 44px rgba(0,0,0,.38)}
-    #trend-shift-banner.warning{border-color:rgba(0,236,255,.48);box-shadow:0 0 30px rgba(0,236,255,.18), 0 18px 44px rgba(0,0,0,.38)}
-    #trend-shift-kicker{font-size:.68rem;font-weight:900;letter-spacing:.18em;color:#ffe9a1}
-    #trend-shift-main{display:flex;align-items:center;gap:10px;font-size:1.18rem;font-weight:900;text-shadow:0 0 18px rgba(0,0,0,.48);flex-wrap:wrap;justify-content:center}
-    #trend-shift-main .arrow{color:#8ef8ff}
-    #trend-shift-sub{font-size:.74rem;color:#d9caeb;line-height:1.35;text-align:center}
-
-    .pop-text{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:30;font-weight:900;text-shadow:0 0 15px rgba(0,0,0,.66);animation:popText 1.05s ease forwards}
-    @keyframes popText{0%{opacity:0;transform:translate(-50%,-10%) scale(.6)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.18)}100%{opacity:0;transform:translate(-50%,-200%) scale(.9)}}
-
-    #caption-box{position:absolute;left:50%;top:calc(var(--gameover-line-y) + 12px);transform:translateX(-50%);z-index:8;width:min(86%, 320px);background:rgba(10,6,14,.82);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:8px 14px;box-shadow:0 10px 22px rgba(0,0,0,.22);pointer-events:none;display:flex;align-items:center;justify-content:center;min-height:38px}
-    #caption-text{min-height:1.35em;font-size:.74rem;color:#fff;text-align:center;line-height:1.35}
-    #speech-bubble{position:absolute;left:50%;top:58.5%;transform:translate(-50%,12px) scale(.96);z-index:19;min-width:132px;max-width:340px;padding:10px 16px;border-radius:24px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.30);box-shadow:0 14px 30px rgba(0,0,0,.14),0 0 0 1px rgba(255,255,255,.05);pointer-events:none;opacity:0;transition:opacity .18s ease,transform .18s ease;backdrop-filter:blur(8px)}
-    #speech-bubble.show{opacity:1;transform:translate(-50%,0) scale(1)}
-    #speech-bubble::after{content:'';position:absolute;left:50%;top:-12px;bottom:auto;width:0;height:0;transform:translateX(-50%);border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:12px solid rgba(255,255,255,.16);filter:drop-shadow(0 -1px 0 rgba(255,255,255,.30))}
-    #speech-text{min-height:1.4em;font-size:.82rem;font-weight:900;color:#ffffff;text-align:center;line-height:1.45;letter-spacing:.01em;word-break:keep-all;overflow-wrap:anywhere;opacity:1;text-shadow:0 1px 4px rgba(0,0,0,.28)}
-    #board-combo-strip{position:absolute;left:50%;top:calc(var(--gameover-line-y) + 52px);transform:translateX(-50%);z-index:8;min-width:180px;padding:4px 10px;border-radius:12px;background:rgba(7,4,12,.72);border:1px solid rgba(255,255,255,.08);font-family:'Orbitron',sans-serif;font-size:.84rem;line-height:1.05;color:#fff;pointer-events:none;text-align:center}
-    #board-combo-strip .combo{color:#ffe37a}
-    #board-combo-strip .chain{color:#ffb7ff}
-
-        .panel-mobile{width:min(100%, 420px)}
-    .title-panel{display:grid;gap:14px;background:linear-gradient(180deg, rgba(9,1,13,.72), rgba(9,1,13,.84));background-size:cover;background-position:center}
-    .compact-copy{font-size:.92rem;line-height:1.55}
-    .mood.wide{min-height:2.6em;max-width:none}
-    #trend-main{display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:8px;min-width:0;padding-left:10px;border-left:1px solid rgba(255,255,255,.08)}
-    #trend-hero{display:grid;justify-items:center;gap:3px;min-width:0}
-    #trend-side{display:grid;gap:5px;align-content:center;min-width:0}
-    #trend-thumb{width:66px;height:66px}
-    .trend-name{font-size:1.1rem;font-weight:900;line-height:1.02;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;color:#fff;text-shadow:0 0 12px rgba(0,0,0,.45)}
-    #next-block{min-height:100%;padding-top:2px;padding-bottom:2px;border-left:none;padding-left:0;display:grid;justify-items:center;align-content:center;gap:4px;text-align:center;min-width:0}
-    #next-trend-thumb,#future-trend-thumb{width:42px;height:42px}
-    .future-stack{display:grid;gap:4px;justify-items:center;width:100%;padding-top:0;border-top:none;min-width:74px;align-self:stretch;align-content:center;text-align:center}
-    .future-stack img{width:38px;height:38px}
-    .future-name{font-size:.76rem;font-weight:900;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-    #next-switch-copy{display:none}
-    #center-top .hero-label{font-size:.66rem}
-    #center-top > .trend-copy{display:none}
-    #top-left #burst-btn{width:60px;min-width:60px;height:60px;min-height:60px;border-radius:18px;padding:0;margin-top:0}
-    #top-left #burst-btn .icon{font-size:1rem}
-    #top-left #burst-btn .txt{font-size:.56rem;line-height:1.02;letter-spacing:.02em}
-    #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;height:var(--bottom-info-h);min-height:var(--bottom-info-h);max-height:var(--bottom-info-h);min-width:0;max-width:none;align-items:center;gap:10px;justify-content:space-between;display:grid;grid-template-columns:minmax(0,1fr) 60px;z-index:22}
-    #top-left .mini-label{font-size:1.04rem}
-    #score-view.big-num{font-size:2.6rem}
-    #stream-time-mini{font-family:'Orbitron',sans-serif}
-    #play-controls{position:absolute;left:8px;right:8px;bottom:8px;padding:8px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;z-index:23;height:var(--bottom-controls-h)}
-    .play-mini-btn{font-size:.98rem}
-
-    #future-block{position:absolute;left:16px;top:50%;transform:translateY(-50%);justify-self:start;align-self:center;width:78px;min-width:78px}
-    #center-top #next-block{position:absolute;left:104px;top:50%;transform:translateY(-50%);justify-self:start;align-self:center;margin-right:0;min-width:78px;border-left:none;padding-left:0;width:78px}
-    #center-top #trend-main{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:8px;min-width:0;max-width:none;width:220px;padding-left:0;border-left:none;justify-content:center;justify-self:center}
-    @media (max-width:760px){
-      #trend-main{grid-template-columns:80px minmax(0,1fr) auto}
-      #trend-thumb{width:80px;height:80px}
-      .trend-name{font-size:1.08rem}
-      #next-trend-thumb{width:38px;height:38px}
-      .future-stack img{width:34px;height:34px}
-      #top-left #burst-btn{width:60px;min-width:60px;height:60px;min-height:60px}
-      #score-view.big-num{font-size:2.15rem}
-    }
-
-    #play-controls{position:absolute;left:8px;right:8px;bottom:8px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;z-index:23;height:var(--bottom-controls-h)}
-    .play-controls{display:none}
-    .play-mini-btn{min-width:0;min-height:calc(var(--bottom-controls-h) - 16px);border:none;border-radius:16px;padding:0 10px;background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.05));color:#fff;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 18px rgba(0,0,0,.16)}
-    .play-mini-btn.wide{min-width:88px}
-    @media (max-width: 520px){#drop-selector{gap:6px}.drop-pick-btn{width:48px;height:48px;border-radius:14px}#top-left #burst-btn{width:48px;min-width:48px;height:48px;min-height:48px;border-radius:14px}}
-    #pause-overlay{position:absolute;inset:0;z-index:40;background:rgba(6,3,10,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px}
-    #pause-overlay .pause-card{width:min(82%,320px);background:rgba(12,6,18,.94);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:18px;display:grid;gap:10px;box-shadow:0 18px 44px rgba(0,0,0,.36)}
-    .howto-diagram{margin-top:18px;display:grid;gap:12px}
-    .howto-row{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:12px}
-    .howto-icons{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap}
-    .howto-icons img{width:30px;height:30px;object-fit:contain;border-radius:999px;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);padding:4px;border:1px solid rgba(255,255,255,.16)}
-    .howto-panel{max-height:min(92dvh, 900px);overflow:auto;padding-right:12px}
-    .howto-panel::-webkit-scrollbar{width:10px}
-    .howto-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
-    .howto-note{margin-top:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;line-height:1.7;color:#e8def5;font-size:.86rem}
-    .howto-note strong{color:#fff}
-    #big-buzz-banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:32;opacity:0}
-    #big-buzz-banner .core{max-width:min(92%, 420px);padding:18px 20px;border-radius:32px;background:radial-gradient(circle at center, rgba(255,216,76,.45), rgba(255,47,146,.28) 48%, rgba(8,4,14,0) 76%);font-family:'Orbitron',sans-serif;font-size:clamp(2.2rem,11vw,4.4rem);font-weight:900;letter-spacing:.01em;line-height:1;white-space:nowrap;text-align:center;color:#fff4a3;text-shadow:0 0 22px rgba(255,216,76,.95),0 0 58px rgba(255,47,146,.78),0 0 96px rgba(255,255,255,.3);transform:scale(.8) rotate(-1deg)}
-    #big-buzz-banner.show{animation:bigBuzzBurst .96s cubic-bezier(.19,.89,.24,1)}
-    #big-buzz-banner.show .core{animation:bigBuzzPulse .96s cubic-bezier(.19,.89,.24,1)}
-    @keyframes bigBuzzBurst{0%{opacity:0}16%{opacity:1}72%{opacity:1}100%{opacity:0}}
-    @keyframes bigBuzzPulse{0%{transform:scale(.58) rotate(-5deg);filter:blur(8px)}22%{transform:scale(1.12) rotate(1deg);filter:blur(0)}56%{transform:scale(1) rotate(0)}100%{transform:scale(.95) rotate(0);filter:blur(1px)}}
-
-    #howto-screen,#result-screen{align-items:flex-start;overflow:auto;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
-    #start-screen .title-actions{grid-template-columns:1fr;gap:10px}
-    #howto-screen .panel,#result-screen .panel{width:min(100%,420px);margin:0 auto}
-    #result-screen .panel{max-width:560px;max-height:min(92dvh, 900px);overflow:auto;padding-right:12px}
-    #result-screen .panel::-webkit-scrollbar{width:10px}
-    #result-screen .panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
-    .result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
-    .result-card{background:rgba(255,255,255,.06);border-radius:20px;padding:14px;border:1px solid rgba(255,255,255,.06)}
-    .result-card .label{font-size:.72rem;color:#c6bad8;letter-spacing:.1em}
-    .result-card .value{margin-top:8px;font-family:'Orbitron',sans-serif;font-size:1.6rem}
-
-    @media (max-width: 760px){
-      .panel{padding:18px;border-radius:26px}
-      .chip-row{grid-template-columns:1fr}
-      #game-shell{--top-hud-h:102px;--queue-w:72px;--bottom-info-h:102px;--bottom-controls-h:58px;width:min(calc(100vw - 8px), 420px);height:min(calc(100dvh - 8px), var(--app-height));border-radius:24px}
-      #board-wrap{padding:calc(var(--top-hud-h) + 48px) 8px calc(var(--bottom-stack) + 8px)}
-      #chat-lane-back,#chat-lane{top:46px;bottom:86px}
-      #game-board{width:100%}
-      #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);min-width:0;padding:10px 12px;gap:10px;min-height:var(--bottom-info-h);grid-template-columns:minmax(0,1fr) 60px}
-      #center-top{top:8px;left:8px;right:8px;transform:none;min-width:0;width:auto;padding:8px 10px;display:block;gap:0;height:var(--top-hud-h)}
-      #trend-main{display:grid;grid-template-columns:70px minmax(0,1fr);gap:8px;justify-content:stretch;align-items:center;text-align:left;max-width:min(50vw, 190px);justify-self:center}
-      #trend-thumb{width:66px;height:66px}
-      .trend-name{font-size:1.1rem}
-      .trend-copy{display:block;font-size:.62rem;line-height:1.2}
-      #next-block{border-left:none;border-top:none;padding-left:0;padding-top:0;display:grid;gap:4px;justify-items:center;align-content:center;min-width:0;width:78px;position:absolute;left:100px;right:auto;top:50%;transform:translateY(-50%)}
-      #next-trend-thumb{width:34px;height:34px}
-      #bottom-left,#pin-comment{display:none}
-      #bottom-right{display:none}
-      #avatar{width:120px;height:120px;flex-basis:120px}
-      .big-num{font-size:1.18rem}
-      .mood{font-size:.72rem;min-height:2.5em}
-      #top-gap-text,#crown-track,#crown-mini{display:none}
-      .action-btn{min-width:66px;min-height:66px;border-radius:18px}
-      #caption-box{left:50%;right:auto;top:calc(var(--gameover-line-y) + 18px);width:min(84%, 320px);padding:7px 10px}
-      #caption-text{font-size:.74rem}
-      #speech-bubble{top:59.5%;max-width:min(82%, 320px);padding:9px 14px}
-      #speech-text{font-size:.78rem}
-      #preview-item{width:74%;height:74%}
-      #preview-ring{width:68px;height:68px;top:calc(var(--gameover-line-y) - 84px)}
-      .item-chip{width:82px;height:82px}
-      .item-chip::after{width:22px;height:22px;font-size:11px}
-      .rising-chat{font-size:.62rem;max-width:74%;padding:5px 6px}
-      #trend-shift-banner{top:116px;min-width:min(88vw,340px);padding:9px 10px}
-      #trend-shift-main{font-size:.96rem}
-    }
-
-    @media (max-width: 430px){
-      #game-screen{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
-      #game-shell{--top-hud-h:98px;--queue-w:70px;--bottom-info-h:100px;--bottom-controls-h:56px;width:min(calc((100dvh - 6px) * (1179 / 2556)), calc(100vw - 6px), 420px)}
-      #caption-box{left:50%;right:auto;top:calc(var(--gameover-line-y) + 18px);width:min(84%, 310px)}
-      #speech-bubble{top:60.2%;max-width:min(84%, 300px)}
-      #board-wrap{padding:calc(var(--top-hud-h) + 46px) 6px calc(var(--bottom-stack) + 6px)}
-      #center-top{left:6px;right:6px;top:6px;width:auto;padding:8px;height:var(--top-hud-h)}
-      #top-left{left:6px;right:6px;bottom:calc(var(--bottom-controls-h) + 8px);min-height:var(--bottom-info-h)}
-      #drop-queue{top:6px;right:6px;width:var(--queue-w);height:var(--top-hud-h)}
-      #avatar{width:110px;height:110px;flex-basis:110px}
-      #score-view{font-size:2.1rem}
-      #game-board{--gameover-line-y:118px;--danger-line-y:150px}
-    }
-
-    /* --- base 1206x2144 unified stage patch --- */
-    :root{
-      --stage-w:1206px;
-      --stage-h:2144px;
-      --stage-scale:1;
-      --game-shell-scale:2.30042918455;
-      --game-shell-w:524.25px;
-      --game-shell-h:932px;
-    }
-    .screen{
-      left:50%;
-      top:50%;
-      right:auto;
-      bottom:auto;
-      width:var(--stage-w);
-      height:var(--stage-h);
-      transform:translate(-50%,-50%) scale(var(--stage-scale));
-      transform-origin:center center;
-      padding:64px;
-      overflow:hidden;
-    }
-    #start-screen,#result-screen{align-items:center;justify-content:center;padding:0}
-    #howto-screen{align-items:flex-start;justify-content:center;padding:0;overflow:hidden}
-    #game-screen{padding:0;align-items:center;justify-content:center;overflow:hidden}
-
-    .panel{
-      width:980px;
-      max-width:980px;
-      border-radius:48px;
-      padding:54px;
-    }
-    .title-main{
-      font-size:84px;
-      text-shadow:0 0 24px rgba(255,47,146,.8);
-    }
-    .title-sub{
-      font-size:34px;
-      letter-spacing:.1em;
-    }
-    #title-art{width:100%;max-width:100%}
-    .intro-copy{margin-top:18px;font-size:28px;line-height:1.72}
-    .btn-row{gap:18px;margin-top:28px}
-    .btn{
-      min-height:112px;
-      padding:22px 28px;
-      border-radius:28px;
-      font-size:34px;
-    }
-    .small-note{margin-top:18px;font-size:24px;line-height:1.75}
-    .name-box{gap:10px;border-radius:24px;padding:18px}
-    .name-box span{font-size:24px}
-    .name-box input{
-      min-height:96px;
-      border-radius:20px;
-      padding:0 24px;
-      font-size:34px;
-    }
-    .daily-board-wrap{border-radius:26px;padding:20px}
-    .daily-title{font-size:28px;margin-bottom:12px}
-    .rank-row{
-      grid-template-columns:64px 1fr auto;
-      gap:14px;
-      padding:14px 18px;
-      border-radius:20px;
-    }
-    .rank-row .rk{font-size:30px}
-    .rank-row .nm{font-size:28px}
-    .rank-row .sc{font-size:28px}
-    .rank-empty{font-size:24px}
-
-    #start-screen .panel{
-      width:100%;
-      max-width:100%;
-      min-height:100%;
-      max-height:100%;
-      overflow:hidden;
-      display:grid;
-      gap:24px;
-      border-radius:0;
-      padding:72px 76px;
-    }
-    #start-screen .title-actions{grid-template-columns:1fr;gap:18px}
-    #start-screen .small-note{margin-top:0}
-    #start-screen .daily-board-wrap{margin-top:0}
-
-    #howto-screen .panel,#result-screen .panel{
-      width:100%;
-      max-width:100%;
-      min-height:100%;
-      max-height:100%;
-      margin:0;
-      border-radius:0;
-      padding:72px 76px;
-    }
-    #howto-screen .panel{
-      overflow:auto;
-      padding-right:44px;
-    }
-    #result-screen .panel{
-      overflow:auto;
-      padding-right:44px;
-    }
-    #howto-screen .title-main,#result-screen .title-main{font-size:72px !important}
-    .howto-diagram{margin-top:22px;gap:18px}
-    .howto-row{
-      grid-template-columns:132px 1fr;
-      gap:18px;
-      padding:18px;
-      border-radius:24px;
-      font-size:26px;
-      line-height:1.65;
-    }
-    .howto-icons{gap:10px}
-    .howto-icons img{
-      width:56px;
-      height:56px;
-      padding:8px;
-    }
-    .howto-note{
-      margin-top:20px;
-      border-radius:24px;
-      padding:22px;
-      font-size:24px;
-      line-height:1.76;
-    }
-    .result-grid{gap:16px;margin-top:22px}
-    .result-card{
-      border-radius:24px;
-      padding:18px;
-    }
-    .result-card .label{font-size:22px}
-    .result-card .value{font-size:52px}
-
-    #game-shell{
-      width:var(--game-shell-w) !important;
-      height:var(--game-shell-h) !important;
-      max-width:none !important;
-      max-height:none !important;
-      aspect-ratio:auto !important;
-      margin:0 !important;
-      transform:scale(var(--game-shell-scale));
-      transform-origin:center center;
-      border-radius:32px;
-    }
-    #game-screen #game-shell{position:relative}
-
-
-    /* --- exact 1206x2144 screen fitting / stage-safe tweaks --- */
-    .screen{will-change:transform}
-    #start-screen,#game-screen,#result-screen{overflow:hidden}
-    #howto-screen{overflow:hidden}
-    #howto-screen .panel{max-height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
-    #result-screen .panel{max-height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
-    #game-shell{overflow:hidden}
-
-
-    #title-art-wrap{width:100%;justify-items:center}
-    #start-screen .title-sub{text-align:center;width:100%}
-    #start-screen .small-note{display:none}
-    #start-screen .daily-board-wrap{margin-top:4px}
-    #center-top #burst-btn.ready .txt{color:#3a1a00}
-    #center-top #burst-btn.ready .icon{filter:drop-shadow(0 0 6px rgba(255,255,255,.32))}
-    #game-shell{--top-hud-h:108px !important;--queue-w:78px !important;--bottom-info-h:112px !important;--bottom-controls-h:60px !important;width:var(--game-shell-w) !important;height:var(--game-shell-h) !important;max-width:none !important;max-height:none !important;aspect-ratio:auto !important;transform:scale(var(--game-shell-scale)) !important;transform-origin:center center !important}
-    #board-wrap{padding:calc(var(--top-hud-h) + 22px) 8px calc(var(--bottom-stack) - 7px) !important}
-    #center-top{left:8px !important;right:calc(var(--queue-w) + 16px) !important;top:8px !important;padding:10px 12px !important;height:var(--top-hud-h) !important;display:block !important;transform:none !important}
-    #drop-queue{top:8px !important;right:8px !important;width:var(--queue-w) !important;height:var(--top-hud-h) !important}
-    #top-left{left:8px !important;right:8px !important;bottom:calc(var(--bottom-controls-h) + 10px) !important;min-height:var(--bottom-info-h) !important;display:grid !important;grid-template-columns:minmax(0,1fr) auto !important}
-    #trend-main{grid-template-columns:72px minmax(0,1fr) !important;gap:8px !important;max-width:268px !important;width:268px !important;justify-self:center !important}
-    #trend-hero{width:72px !important}
-    #trend-side{min-width:0 !important;width:188px !important}
-    #next-block{width:86px !important;min-width:86px !important;position:relative !important;left:auto !important;right:auto !important;top:auto !important;transform:none !important;padding-left:10px !important;border-left:1px solid rgba(255,255,255,.08) !important}
-    #trend-shift-banner{min-width:420px !important;max-width:420px !important}
-    #caption-box{width:320px !important}
-    #speech-bubble{top:58.5% !important;max-width:340px !important}
-    #preview-ring{top:calc(var(--gameover-line-y) - 90px) !important}
-
-    #preview-ring::before{content:'';position:absolute;inset:-8px;border-radius:999px;border:2px solid rgba(255,255,255,.0);opacity:0;transform:scale(.9);pointer-events:none}
-    #preview-ring.launch{animation:previewLaunch .42s cubic-bezier(.18,.82,.22,1)}
-    #preview-ring.launch::before{animation:previewLaunchRing .42s cubic-bezier(.12,.82,.22,1)}
-    @keyframes previewLaunch{0%{transform:translateX(-50%) scale(1);box-shadow:0 0 18px rgba(255,255,255,.14)}30%{transform:translateX(-50%) scale(1.14);box-shadow:0 0 28px rgba(255,255,255,.26),0 0 40px rgba(255,47,146,.24),0 0 52px rgba(0,236,255,.22)}100%{transform:translateX(-50%) scale(1);box-shadow:0 0 18px rgba(255,255,255,.12)}}
-    @keyframes previewLaunchRing{0%{opacity:.85;border-color:rgba(255,255,255,.68);transform:scale(.74)}100%{opacity:0;border-color:rgba(0,236,255,0);transform:scale(1.36)}}
-    #top-left .score-stack{display:grid;align-content:center;align-items:center;min-height:100%;gap:6px}
-    #mood-text{display:none !important}
-    #score-view{font-size:3.2rem !important;line-height:.94}
-    #top-left .mini-label{font-size:1.08rem}
-    #top-left .score-stack > .mini-label,
-    #top-left .score-stack > #score-view{display:none}
-    #top-right .seed-pill{display:grid;gap:3px;min-width:102px;padding:6px 8px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
-    #top-right .daily-pill,#top-right .leader-pill{display:none !important}
-    #top-right .seed-pill:last-child{flex:1 1 auto;min-width:0}
-    #event-mini{max-width:100%;font-size:.68rem;color:#ffe9a1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    #top-right .seed-pill.score-pill{min-width:128px}
-    #top-right .seed-pill.time-pill{min-width:112px}
-    #top-right .mini-label{font-size:.68rem}
-    #score-view-top{font-family:'Orbitron',sans-serif;font-size:1.52rem;line-height:1;color:#fff;white-space:nowrap}
-    #stream-time-top{font-family:'Orbitron',sans-serif;font-size:.98rem;color:#8ef8ff;line-height:1.1;white-space:nowrap}
-    #game-board{--gameover-line-y:96px !important;--danger-line-y:130px !important}
-
-
-    .screen[data-stage-size="1206x2144"]{width:var(--stage-w);height:var(--stage-h);transform:translate(-50%,-50%) scale(var(--stage-scale)) !important;transform-origin:center center}
-    #howto-screen[data-stage-width="1206"]{width:var(--stage-w);height:var(--howto-logical-h, var(--stage-h));transform:translate(-50%,-50%) scale(var(--howto-scale, var(--stage-scale))) !important;transform-origin:center center}
-    #howto-screen .panel{width:980px;max-width:980px;height:auto;max-height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
-    #start-screen .panel,#result-screen .panel{width:980px;max-width:980px}
-    #game-screen #game-shell{position:relative;left:0;top:0}
-    #start-screen .btn,#result-screen .btn,#howto-screen .btn{font-size:34px;line-height:1.15}
-    #start-screen .title-main,#result-screen .title-main,#howto-screen .title-main{font-size:84px !important;line-height:1.02}
-
-
-    /* --- v12 gameplay system/layout patch --- */
-    #game-shell{--top-hud-h:144px !important;--bottom-info-h:68px !important;--bottom-controls-h:44px !important}
-    #board-wrap{padding:calc(var(--top-hud-h) + 28px) 8px calc(var(--bottom-stack) - 34px) !important}
-    #top-right{position:absolute;left:8px;right:8px;top:8px;bottom:auto;display:grid !important;grid-template-columns:200px minmax(0,1fr);align-items:stretch;justify-content:stretch;gap:8px;height:44px;padding:6px 8px;z-index:24;flex-wrap:nowrap !important}
-    #top-right .time-pill{display:none !important}
-    #top-right .seed-pill{min-width:0 !important;padding:4px 8px !important;min-height:44px;height:44px;display:grid;align-content:center}
-    #top-right .seed-pill.score-pill{min-width:0 !important;width:auto !important}
-    #top-right .mini-label{font-size:.58rem !important}
-    #score-view-top{font-size:1.22rem !important;line-height:1 !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    #center-top{left:8px !important;right:8px !important;top:58px !important;height:82px !important;padding:8px 10px !important;display:grid !important;grid-template-columns:minmax(0,1fr) 112px !important;align-items:flex-start !important;justify-content:stretch !important;gap:10px !important;overflow:visible !important}
-    #future-block,#next-block,#trend-side,#trend-timer,#trend-progress,#trend-copy{display:none !important}
-    #trend-forecast{display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;flex:1 1 auto;min-width:0;overflow:visible;z-index:2;position:relative}
-    .forecast-slot{display:grid;justify-items:center;align-content:start;gap:3px;width:50px;flex:0 0 50px;min-width:50px}
-    .forecast-slot .forecast-label{font-size:.52rem;line-height:1;font-weight:900;color:#ffe9a1;opacity:0;min-height:.9em;white-space:nowrap}
-    .forecast-slot.next .forecast-label{opacity:1}
-    .forecast-slot img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.28));border-radius:999px;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);padding:5px;border:1px solid rgba(255,255,255,.14)}
-    .forecast-slot .forecast-name{width:100%;font-size:.52rem;line-height:1.04;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ece4f7}
-    #trend-main{position:relative !important;left:auto !important;right:auto !important;top:auto !important;transform:none !important;display:grid !important;grid-template-columns:1fr !important;justify-items:center !important;gap:4px !important;width:112px !important;max-width:112px !important;min-width:112px !important;margin-left:0 !important;z-index:1}
-    #trend-hero{width:100% !important;display:grid !important;justify-items:center !important;gap:4px !important}
-    #trend-thumb{width:50px !important;height:50px !important;transform:translateY(2px) !important}
-    #trend-name{font-size:.72rem !important;line-height:1.06 !important;text-align:center !important;white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
-    .hero-label{font-size:.58rem !important;line-height:1 !important;text-align:center !important}
-    #top-left{left:8px !important;right:8px !important;bottom:calc(var(--bottom-controls-h) + 8px) !important;height:var(--bottom-info-h) !important;min-height:var(--bottom-info-h) !important;padding:6px 8px !important;gap:8px !important;grid-template-columns:minmax(0,1fr) 60px !important;align-items:center !important}
-    #top-left .score-stack{display:grid !important;align-content:center !important;align-items:center !important;gap:0 !important;min-height:0 !important}
-    #top-left .score-stack > :not(#drop-selector){display:none !important}
-    #drop-selector{margin-top:0 !important;gap:8px !important;direction:ltr !important;justify-content:flex-start !important}
-    .drop-pick-btn,#top-left #burst-btn{width:60px !important;height:60px !important;min-width:60px !important;min-height:60px !important;border-radius:16px !important;padding:5px 4px 4px !important;margin-top:0 !important}
-    #play-controls{left:8px !important;right:8px !important;bottom:6px !important;height:var(--bottom-controls-h) !important;padding:0 !important;gap:6px !important}
-    .play-mini-btn{min-height:calc(var(--bottom-controls-h) - 2px) !important;border-radius:14px !important;font-size:.76rem !important;padding:0 8px !important}
-    .item-chip.hazard{background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%) !important;border-color:rgba(255,255,255,.34) !important}
-    .item-chip.hazard::after{display:none !important}
-    .item-chip.fire{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%) !important;border-color:rgba(255,91,115,.92) !important;box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,212,212,.16), 0 0 18px rgba(255,91,115,.22) !important}
-    .item-chip.fire::after{content:'🔥' !important;background:rgba(255,91,115,.22) !important}
-    .item-chip.buzz{background:radial-gradient(circle at 32% 24%, rgba(255,249,210,.98), rgba(255,232,112,.94) 24%, rgba(255,197,38,.88) 50%, rgba(116,74,0,.98) 82%) !important;border-color:rgba(255,223,110,.94) !important;box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 24px rgba(255,255,255,.18), 0 0 22px rgba(255,210,72,.34) !important}
-    .item-chip.buzz::after{content:'✨' !important;background:rgba(255,215,90,.24) !important}
-    #fire-banner,#superchat-banner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.88);pointer-events:none;z-index:34;opacity:0}
-    #fire-banner .core{min-width:320px;padding:22px 28px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,210,210,.26), rgba(255,70,70,.38) 44%, rgba(255,24,90,.22) 66%, rgba(8,4,14,0) 80%);font-family:'Orbitron',sans-serif;font-size:clamp(2.4rem,11vw,4.5rem);font-weight:900;letter-spacing:.02em;color:#fff0f0;text-shadow:0 0 18px rgba(255,255,255,.62),0 0 34px rgba(255,70,90,.9),0 0 72px rgba(255,44,44,.6);text-align:center;white-space:nowrap}
-    #fire-banner.show{animation:fireBurst 1.04s cubic-bezier(.19,.89,.24,1)}
-    #superchat-banner .card{min-width:240px;max-width:430px;padding:10px 14px;border-radius:22px;background:rgba(18,10,30,.42);border:3px solid rgba(142,248,255,.78);box-shadow:0 14px 34px rgba(0,0,0,.28);display:grid;gap:4px;justify-items:start;backdrop-filter:blur(3px)}
-    #superchat-banner .amount{font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;letter-spacing:.02em;color:#fff}
-    #superchat-banner .message{font-size:.96rem;font-weight:900;line-height:1.22;color:#fff}
-    #superchat-banner.show{animation:superchatBurst 3.6s cubic-bezier(.19,.89,.24,1)}
-    @keyframes fireBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.68)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
-    @keyframes superchatBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}9%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}84%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
-
-
-    /* --- v19 HUD / hype background / superchat timing patch --- */
-    #top-right{grid-template-columns:208px minmax(0,1fr) !important;height:56px !important;gap:8px !important;align-items:stretch !important}
-    #top-right .time-pill,#top-right .daily-pill,#top-right .leader-pill{display:none !important}
-    #top-right .score-pill{grid-column:1;justify-items:end;text-align:right}
-    #top-right .event-pill{grid-column:2;min-width:0 !important;display:grid !important;align-content:center !important;justify-items:start !important;text-align:left !important;padding:5px 10px !important}
-    #top-right .event-pill .mini-label{font-size:.64rem !important;line-height:1 !important}
-    #event-mini{max-width:100% !important;font-size:.74rem !important;line-height:1.12 !important;color:#ffe9a1 !important;white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
-    #top-right .seed-pill{overflow:hidden}
-    #top-right .score-pill .big{font-size:1.3rem !important;line-height:1 !important}
-    #game-screen.bigbuzz #game-board::before{opacity:.18 !important}
-    #game-screen.bigbuzz #board-glass{background:linear-gradient(180deg, rgba(6,3,10,.14), rgba(6,3,10,.10)) !important}
-    #superchat-banner.show{animation:superchatBurst 4.8s cubic-bezier(.19,.89,.24,1)}
-    @keyframes superchatBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}8%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}91%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
-
-
-    /* --- v22 user patch: no apology button / bigger item buttons / wider peak / board bigbuzz video --- */
-    #game-shell{--top-hud-h:154px !important; --bottom-info-h:86px !important; --bottom-controls-h:44px !important}
-    #board-wrap{padding:calc(var(--top-hud-h) + 4px) 8px calc(var(--bottom-stack) + 4px) !important}
-    #top-left{left:8px !important;right:8px !important;bottom:calc(var(--bottom-controls-h) + 8px) !important;height:calc(var(--bottom-info-h) + 9px) !important;min-height:calc(var(--bottom-info-h) + 9px) !important;padding:0 8px 10px !important;gap:0 !important;grid-template-columns:minmax(0,1fr) !important;align-items:center !important;overflow:hidden !important}
-    #top-left #burst-btn{display:none !important}
-    #top-left .score-stack{width:100% !important;display:grid !important;align-content:center !important;gap:0 !important;min-width:0 !important}
-    #top-left .score-stack > :not(#drop-selector){display:none !important}
-    #drop-selector{margin-top:0 !important;direction:ltr !important;justify-content:space-between !important;align-items:center !important;gap:6px !important;width:100% !important;flex-wrap:nowrap !important;min-width:0 !important;overflow:hidden !important;padding:0 2px !important}
-    .drop-pick-btn{flex:1 1 0 !important;max-width:80px !important;width:auto !important;height:80px !important;min-width:0 !important;min-height:80px !important;border-radius:18px !important;padding:7px 4px 6px !important;gap:3px !important;transform:translateY(3px) !important;align-self:center !important}
-    .drop-pick-btn img{width:68% !important;height:68% !important}
-    .drop-pick-btn .lbl{font-size:.56rem !important;line-height:1.04 !important}
-    #top-right{left:8px !important;right:8px !important;top:8px !important;max-width:none !important;width:auto !important;display:grid !important;grid-template-columns:188px minmax(0,1fr) !important;justify-content:stretch !important;align-items:stretch !important;gap:8px !important;height:56px !important}
-    #top-right .score-pill{grid-column:1 !important;justify-items:end !important;text-align:right !important}
-    #top-right .event-pill{grid-column:2 !important;min-width:0 !important;width:auto !important;display:grid !important;align-content:center !important;justify-items:start !important;text-align:left !important;padding:6px 12px !important}
-    #event-mini{max-width:none !important;width:100% !important;font-size:.82rem !important;line-height:1.14 !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important}
-    #center-top{top:58px !important;height:100px !important;grid-template-columns:minmax(0,1fr) 122px !important;align-items:flex-start !important}
-    #board-bg-video-hype{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none;z-index:0;opacity:0;transition:opacity .22s ease;filter:saturate(1.08) brightness(.98)}
-    #game-screen.bigbuzz #board-bg-video-hype{opacity:1 !important}
-    #game-screen.bigbuzz #game-board::before{opacity:0 !important}
-    #game-screen.bigbuzz #board-glass{background:linear-gradient(180deg, rgba(6,3,10,.10), rgba(6,3,10,.08)) !important}
-
-
-    /* --- v24 layout / falling fix patch --- */
-    #trend-forecast{justify-content:flex-end !important;padding-right:0 !important;gap:6px !important;margin-right:-8px !important;transform:translate(40px,15px) !important}
-    #trend-main{width:122px !important;max-width:122px !important;min-width:122px !important}
-    #trend-thumb{width:50px !important;height:50px !important;transform:translateY(2px) !important}
-    #trend-name{font-size:.68rem !important;line-height:1.02 !important;max-height:none !important}
-    .forecast-slot{width:50px !important;flex:0 0 50px !important;min-width:50px !important}
-    .forecast-slot img{width:38px !important;height:38px !important;transform:translateY(2px) !important}
-    .forecast-slot .forecast-name{font-size:.52rem !important}
-    .forecast-slot.next{width:64px !important;flex:0 0 64px !important;min-width:64px !important}
-    .forecast-slot .forecast-label{white-space:nowrap !important;font-size:.5rem !important;line-height:1 !important}
-
-  </style>
-</head>
-<body>
-  <div id="bg-container">
-    <video id="bg-video" src="assets/bg/bg_cyber.mp4" autoplay muted loop playsinline preload="auto"></video>
-    <video id="bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" autoplay muted loop playsinline preload="auto"></video>
-  </div>
-  <div id="bg-vignette"></div>
-  <div id="global-flash"></div>
-
-  <audio id="audio-bgm-lofi" src="assets/audio/bgm_lofi.wav" loop preload="auto"></audio>
-  <audio id="audio-bgm-hyper" src="assets/audio/bgm_hyper.wav" loop preload="auto"></audio>
-  <audio id="audio-merge" src="assets/audio/se_clear_small_01.wav" preload="auto"></audio>
-  <audio id="voice-start" src="assets/audio/voice_mc_start_01.wav" preload="auto"></audio>
-  <audio id="voice-alert" src="assets/audio/voice_mc_fire_01.wav" preload="auto"></audio>
-  <audio id="voice-win" src="assets/audio/voice_mc_win_01.wav" preload="auto"></audio>
-  <audio id="voice-lose" src="assets/audio/voice_mc_lose_01.wav" preload="auto"></audio>
-
-  <div id="start-screen" class="screen" data-stage-size="1206x2144">
-    <div class="panel panel-mobile title-panel">
-      <div id="title-art-wrap">
-        <img id="title-art" src="assets/img/title_logo.png" alt="限界メルトダウン（Limit Meltdown）" onerror="this.style.display='none';document.getElementById('title-fallback').style.display='block'">
-        <div id="title-fallback" style="display:none">
-          <div class="title-main">限界メルトダウン</div>
-          <div class="title-sub">Limit Meltdown</div>
-        </div>
-      </div>
-      <div class="title-sub">バズれ、狂え、私を見ろ！最推し確定宣言</div>
-      <label class="name-box">
-        <span>配信名</span>
-        <input id="handle-input" type="text" maxlength="14" placeholder="例：ねむりねこ">
-      </label>
-      <div class="btn-row title-actions">
-        <button id="start-btn" class="btn btn-main">配信開始</button>
-        <button id="howto-btn" class="btn btn-sub">遊び方</button>
-        <button id="mute-btn" class="btn btn-sub">🔊 サウンド ON / OFF</button>
-      </div>
-      <div class="daily-board-wrap">
-        <div class="daily-title">DAILY 王冠レース（共通条件）</div>
-        <div id="daily-board" class="daily-board"></div>
-      </div>
-      <div class="small-note" aria-hidden="true"></div>
-    </div>
-  </div>
-
-  <div id="game-screen" class="screen hidden" data-stage-size="1206x2144">
-    <div id="game-shell">
-      <div id="board-wrap">
-        <div id="game-board">
-          <video id="board-bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" autoplay muted loop playsinline preload="auto"></video>
-          <div id="board-grid"></div>
-          <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
-          <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
-          <div id="danger-fog"></div>
-          <div id="gameover-line"></div>
-          <div id="top-danger-line"></div>
-          <div id="chat-lane-back"></div>
-          <div id="chat-lane"></div>
-          <div id="speech-bubble" aria-hidden="true"><div id="speech-text"></div></div>
-          <canvas id="merge-canvas"></canvas>
-          <div id="caption-box"><div id="caption-text">タップして落とす。今の話題を3つ消す。次の波は上のアイコンで先読み。</div></div>
-          <div id="board-combo-strip">COMBO <span id="combo-view" class="combo">x0</span> ・ <span id="chain-view" class="chain">0連鎖</span></div>
-          <div id="item-layer"></div>
-          <canvas id="fx-canvas"></canvas>
-          <canvas id="particle-canvas"></canvas>
-          <div id="drop-guide"></div>
-          <div id="preview-ring" class="item-chip preview-token" data-emoji="💬"><img id="preview-item" src="assets/img/item_1.png" alt="next item"></div>
-          <div id="board-glass"></div>
-          <div id="big-buzz-banner" aria-hidden="true"><div class="core">大バズり!!</div></div>
-          <div id="fire-banner" aria-hidden="true"><div class="core">大炎上！！</div></div>
-          <div id="superchat-banner" aria-hidden="true"><div class="card"><div class="amount">+0</div><div class="message">スパチャありがとうございます！</div></div></div>
-          <video id="gameover-fx-video" src="assets/bg/overlay_gameover_glitch.mp4" playsinline muted preload="auto"></video>
-        </div>
-      </div>
-
-      <div id="center-top" class="hud-chip">
-        <div id="future-block" class="side-trend-block future-stack">
-          <div class="mini-label">次の次</div>
-          <img id="future-trend-thumb" src="assets/img/item_3.png" alt="future trend">
-          <div id="future-trend-name" class="future-name">歌枠</div>
-        </div>
-        <div id="trend-main">
-          <div id="trend-hero">
-            <div class="mini-label hero-label">今のトレンド</div>
-            <img id="trend-thumb" src="assets/img/item_1.png" alt="trend">
-            <div id="trend-name" class="trend-name">雑談</div>
-          </div>
-          <div id="trend-side">
-            <div id="trend-timer">あと3消し！</div>
-            <div id="trend-progress"><span id="trend-progress-fill"></span></div>
-            <div id="trend-copy" class="trend-copy">3つ以上で消える</div>
-          </div>
-        </div>
-        <div id="next-block" class="side-trend-block">
-          <div class="mini-label">次のトレンド</div>
-          <img id="next-trend-thumb" src="assets/img/item_2.png" alt="next trend">
-          <div id="next-trend-name" class="future-name">ゲーム配信</div>
-          <div id="next-switch-copy"></div>
-        </div>
-      </div>
-      <div id="drop-queue" class="hud-chip">
-        <div class="queue-token item-chip" data-emoji="💬"><img id="next-mini-2" src="assets/img/item_3.png" alt="after next drop"></div>
-        <div class="queue-token item-chip" data-emoji="💬"><img id="next-mini-1" src="assets/img/item_2.png" alt="next drop"></div>
-        <div class="queue-title">次に落とす</div>
-      </div>
-
-      <div id="pin-comment" class="hud-chip hot" style="display:none">
-        <div id="pin-badge">📌</div>
-        <div id="pin-main">
-          <div class="mini-label">ピンコメ</div>
-          <div id="pin-text">ピンコメ『雑談』3つ</div>
-        </div>
-        <div id="pin-side">
-          <div id="pin-need">3+</div>
-          <div id="pin-bonus">+800</div>
-        </div>
-      </div>
-
-      <div id="trend-shift-banner" aria-hidden="true">
-        <div id="trend-shift-kicker">TREND SHIFT</div>
-        <div id="trend-shift-main">
-          <span class="trend-shift-badge">
-            <img id="trend-shift-from-thumb" src="assets/img/item_1.png" alt="current trend">
-            <span id="trend-shift-from">雑談</span>
-          </span>
-          <span class="arrow">→</span>
-          <span class="trend-shift-badge">
-            <img id="trend-shift-to-thumb" src="assets/img/item_2.png" alt="next trend">
-            <span id="trend-shift-to">ゲーム配信</span>
-          </span>
-        </div>
-        <div id="trend-shift-sub">
-          <span class="trend-shift-badge mini">
-            <span>次の次</span>
-            <img id="trend-shift-future-thumb" src="assets/img/item_3.png" alt="future trend">
-            <span id="trend-shift-future-name">歌枠</span>
-          </span>
-        </div>
-      </div>
-
-      <div id="top-right" class="hud-chip">
-        <div class="seed-pill score-pill">
-          <div class="mini-label">SCORE</div>
-          <div id="score-view-top" class="big">0</div>
-        </div>
-        <div class="seed-pill time-pill">
-          <div class="mini-label">TIME</div>
-          <div id="stream-time-top" class="big">残り100s</div>
-        </div>
-        <div class="seed-pill daily-pill">
-          <div class="mini-label">DAILY</div>
-          <div id="seed-view" class="big">#00000000</div>
-        </div>
-        <div class="seed-pill leader-pill">
-          <div class="mini-label">1位まで</div>
-          <div id="best-mini" class="big">0</div>
-        </div>
-        <div class="seed-pill event-pill">
-          <div class="mini-label">山場</div>
-          <div id="event-mini" class="big">NEXT</div>
-        </div>
-      </div>
-
-      <div id="bottom-left" class="hud-chip">
-        <div class="meter-grid">
-          <div class="meter-row"><div class="ic">💙</div><div class="meter"><span id="tension-fill"></span></div><div id="tension-num" class="meter-num">100</div></div>
-          <div class="meter-row craving-row"><div class="ic">💔</div><div class="meter"><span id="craving-fill"></span></div><div id="craving-num" class="meter-num">0</div></div>
-          <div class="meter-row heat-row"><div class="ic">🔥</div><div class="meter"><span id="heat-fill"></span></div><div id="heat-num" class="meter-num">0</div></div>
-          <div class="meter-row"><div class="ic">✨</div><div class="meter"><span id="buzz-fill"></span></div><div id="buzz-num" class="meter-num">0</div></div>
-        </div>
-      </div>
-
-      <div id="top-left" class="hud-chip">
-        <img id="avatar" src="assets/img/char_normal.png" alt="主人公" style="display:none">
-        <div class="score-stack">
-          <div class="mini-label" style="font-size:1.04rem">SCORE <span id="stream-time-mini" style="margin-left:12px;color:#8ef8ff;font-size:1.08rem">残り100s</span></div>
-          <div id="score-view" class="big-num" style="font-size:2.68rem">0</div>
-          <div id="mood-text" class="mood wide">こんばんは、今日もバズらせにきた。</div>
-          <div id="top-gap-text" style="display:none">👑 まずは今日の1位を作ろう</div>
-          <div id="crown-track" style="display:none"><span id="crown-fill"></span></div>
-          <div id="crown-mini" style="display:none">1位レース開始前</div>
-          <div id="drop-selector" aria-label="落とすアイテムの選択">
-            <button class="drop-pick-btn" data-drop-index="5" data-label="暴露" title="暴露"><img src="assets/img/item_6.png" alt="暴露"><span class="lbl">暴露</span></button>
-            <button class="drop-pick-btn" data-drop-index="4" data-label="恋バナ" title="恋バナ"><img src="assets/img/item_5.png" alt="恋バナ"><span class="lbl">恋バナ</span></button>
-            <button class="drop-pick-btn" data-drop-index="3" data-label="ASMR" title="ASMR"><img src="assets/img/item_4.png" alt="ASMR"><span class="lbl">ASMR</span></button>
-            <button class="drop-pick-btn" data-drop-index="2" data-label="歌枠" title="歌枠"><img src="assets/img/item_3.png" alt="歌枠"><span class="lbl">歌枠</span></button>
-            <button class="drop-pick-btn" data-drop-index="1" data-label="ゲーム配信" title="ゲーム配信"><img src="assets/img/item_2.png" alt="ゲーム配信"><span class="lbl">ゲーム</span></button>
-            <button class="drop-pick-btn active" data-drop-index="0" data-label="雑談" title="雑談"><img src="assets/img/item_1.png" alt="雑談"><span class="lbl">雑談</span></button>
-          </div>
-        </div>
-        <button id="burst-btn" class="action-btn"><div><div class="icon">🧯</div><div class="txt">謝罪配信</div></div></button>
-      </div>
-
-      <div id="play-controls">
-        <button id="pause-btn" class="play-mini-btn">一時停止</button>
-        <button id="retry-play-btn" class="play-mini-btn">やり直し</button>
-        <button id="title-btn" class="play-mini-btn wide">タイトル</button>
-      </div>
-
-      <div id="pause-overlay" class="hidden">
-        <div class="pause-card">
-          <div class="title-sub" style="letter-spacing:.08em">PAUSE</div>
-          <button id="resume-btn" class="btn btn-main">再開する</button>
-          <button id="pause-retry-btn" class="btn btn-sub">やり直す</button>
-          <button id="pause-title-btn" class="btn btn-sub">タイトルに戻る</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="howto-screen" class="screen hidden" data-stage-width="1206">
-    <div class="panel howto-panel">
-      <div class="title-main" style="font-size:clamp(1.8rem,5vw,3rem)">遊び方</div>
-      <div class="intro-copy" style="margin-top:12px">
-        <b>今のトレンド</b>を3つ以上くっつけて消しながら、<b>次のトレンド</b>と<b>次の次</b>を先に仕込んでいくゲームです。<br>
-        いま消すか、次の切替後にすぐ取れる形を作るかを考えるほど強くなれます。
-      </div>
-      <div class="howto-diagram">
-        <div class="howto-row">
-          <div class="howto-icons"><img src="assets/img/item_1.png"><img src="assets/img/item_1.png"><img src="assets/img/item_1.png"></div>
-          <div><b>1. 今のトレンドを3つ以上つなぐ</b><br><span style="color:#d8ccea;line-height:1.7">今のトレンドに書かれている話題だけが消せます。まずはその話題を3つ以上くっつけて、盤面を広くしよう。</span></div>
-        </div>
-        <div class="howto-row">
-          <div class="howto-icons"><img src="assets/img/item_2.png"><span style="font-weight:900;color:#8ef8ff">→</span><img src="assets/img/item_3.png"></div>
-          <div><b>2. 消えたらトレンドが次へ進む</b><br><span style="color:#d8ccea;line-height:1.7">今のトレンドが消えた瞬間、上の「次のトレンド」が本命になります。さらに「次の次」まで見て置くと、切り替わった直後から続けて消しやすいです。</span></div>
-        </div>
-        <div class="howto-row">
-          <div class="howto-icons"><img src="assets/img/item_1.png"><img src="assets/img/item_2.png"><img src="assets/img/item_2.png"></div>
-          <div><b>3. 先読みが強い</b><br><span style="color:#d8ccea;line-height:1.7">切り替わる瞬間に、次のトレンドが2個つながった形で盤面に残っていると先読みボーナスが入ります。3個以上つながっているとさらに強く、切替時には光ってわかりやすくなります。</span></div>
-        </div>
-        <div class="howto-row">
-          <div class="howto-icons"><span style="font-weight:900;color:#ffe37a">COMBO</span><span style="font-weight:900;color:#ffb7ff">連鎖</span></div>
-          <div><b>4. コンボと連鎖で点がどんどん増える</b><br><span style="color:#d8ccea;line-height:1.7">続けて消すとコンボが伸びます。同じ1回の落下で何回も消えると連鎖になり、大きな追加点になります。</span></div>
-        </div>
-        <div class="howto-row">
-          <div class="howto-icons"><span style="font-weight:900;color:#fff4a3">大バズり!!</span></div>
-          <div><b>5. 大バズりは時間でやってくる見せ場</b><br><span style="color:#d8ccea;line-height:1.7">しばらく遊ぶと大バズりタイムが始まります。大バズり中はBGMも切り替わり、3つ以上消した時の持ち時間ボーナスもふだんより大きくなるので、一気に稼ぐチャンスです。</span></div>
-        </div>
-        <div class="howto-row">
-          <div class="howto-icons"><img src="assets/img/hazard.png"><img src="assets/img/fire.png"></div>
-          <div><b>6. 爆弾と大炎上</b><br><span style="color:#d8ccea;line-height:1.7">爆弾が3つつながると大炎上になります。炎上中は邪魔ブロックが落ちます。炎上は通常消しに巻き込むと一緒に消せます。</span></div>
-        </div>
-        <div class="howto-row">
-          <div class="howto-icons"><span style="color:#ff9bb1;font-weight:900">限界ライン</span></div>
-          <div><b>7. 限界ラインをこえると危険</b><br><span style="color:#d8ccea;line-height:1.7">上のピンクの線より上に物がたまり続けるとゲームオーバーです。高い山を作りすぎず、まず消せるものを優先しよう。</span></div>
-        </div>
-      </div>
-      <div class="howto-note">
-        <strong>点数の目安</strong><br>
-        ・基本点は <b>雑談 280</b> / <b>ゲーム 330</b> / <b>歌枠 390</b> / <b>ASMR 460</b> / <b>恋バナ 560</b> / <b>暴露 700</b>。むずかしい話題ほど高得点です。<br>
-        ・コンボは <b>1回増えるごとに +400</b>。同じ1回の落下で続けて消える連鎖は、その回の得点に大きく上乗せされます。<br>
-        ・3つ以上消すと持ち時間が増えます。ふだんは <b>+10秒</b>、大バズり中は <b>+20秒</b> です。<br>
-        ・ピンコメのお題を達成すると <b>+920〜+2580</b> 前後。大バズり中のお題はさらに高くなります。<br>
-        ・先読み成功は <b>+2100 以上</b>、仕込みまでつながる波読みは <b>+1180〜+1960 以上</b>。<br>
-        ・危ない場面で消すとクラッチ点、1位に近い時は王冠ボーナスも入ります。<br>
-        ・爆弾が3つつながると大炎上になり、盤面に炎上アイテムが落ちてきます。下のセリフ欄には、その時に流れたボイスの台詞が文字でも出ます。<br><br>
-        <strong>子ども向けのコツ</strong><br>
-        「今を消す」→「次を2個つなげて仕込む」→「切り替わったらすぐ消す」の順番で考えると強いです。迷ったら高く積まず、今すぐ消せる場所を作るのが安全です。
-      </div>
-      <div class="btn-row">
-        <button id="howto-start-btn" class="btn btn-main">このまま遊ぶ</button>
-        <button id="howto-back-btn" class="btn btn-sub">タイトルへ戻る</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="result-screen" class="screen hidden" data-stage-size="1206x2144">
-    <div class="panel result-panel">
-      <div class="title-main" style="font-size:clamp(1.8rem,5vw,3.2rem)">配信リザルト</div>
-      <div id="result-copy" class="intro-copy" style="margin-top:14px">今の話題と次の波を読んで王冠を狙った。</div>
-      <div class="result-grid">
-        <div class="result-card"><div class="label">SCORE</div><div id="final-score" class="value">0</div></div>
-        <div class="result-card"><div class="label">自己ベスト</div><div id="best-score" class="value">0</div></div>
-        <div class="result-card"><div class="label">最大コンボ / 連鎖</div><div id="peak-combo" class="value">0</div></div>
-        <div class="result-card"><div class="label">DAILY順位</div><div id="daily-rank" class="value">-</div></div>
-        <div class="result-card"><div class="label">謝罪配信 / 大バズり / 先読み / 波読み / 奪取 / 防衛</div><div id="peak-buzz" class="value">0 / 0 / 0 / 0 / 0 / 0</div></div>
-      </div>
-      <div class="daily-board-wrap" style="margin-top:14px">
-        <div class="daily-title">DAILY 王冠レース（共通条件）</div>
-        <div id="result-daily-board" class="daily-board"></div>
-      </div>
-      <div class="btn-row">
-        <button id="retry-btn" class="btn btn-main">もう一回配信する</button>
-        <button id="share-btn" class="btn btn-sub">📋 結果をコピー</button>
-        <button id="result-title-btn" class="btn btn-sub">タイトルに戻る</button><button id="result-mute-btn" class="btn btn-sub">🔊 サウンド ON / OFF</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
   (() => {
     const { Engine, Render, Runner, Bodies, Composite, Events, Body, Sleeping } = Matter;
 
@@ -1129,7 +111,6 @@
       bgmHyper: document.getElementById('audio-bgm-hyper'),
       bgVideo: document.getElementById('bg-video'),
       bgVideoHype: document.getElementById('bg-video-hype'),
-      boardBgVideoHype: document.getElementById('board-bg-video-hype'),
       bgContainer: document.getElementById('bg-container'),
       audioMerge: document.getElementById('audio-merge'),
       voiceStart: document.getElementById('voice-start'),
@@ -1147,10 +128,10 @@
       dom.centerTop.insertBefore(forecast, dom.trendMain);
       dom.trendForecast = forecast;
       dom.trendForecastSlots = [];
-      for (let i = 0; i < 7; i += 1) {
+      for (let i = 0; i < 6; i += 1) {
         const slot = document.createElement('div');
         slot.className = 'forecast-slot';
-        slot.innerHTML = `<div class="forecast-label">${i === 6 ? '次のトレンド' : '&nbsp;'}</div><img alt="forecast trend"><div class="forecast-name"></div>`;
+        slot.innerHTML = `<div class="forecast-label">${i === 5 ? '次のトレンド' : '&nbsp;'}</div><img alt="forecast trend"><div class="forecast-name"></div>`;
         forecast.appendChild(slot);
         dom.trendForecastSlots.push(slot);
       }
@@ -1158,13 +139,6 @@
       dom.trendForecast = document.getElementById('trend-forecast');
       dom.trendForecastSlots = Array.from(document.querySelectorAll('#trend-forecast .forecast-slot'));
     }
-    dom.trendForecastSlots?.forEach(slot => {
-      slot._img = slot.querySelector('img');
-      slot._label = slot.querySelector('.forecast-label');
-      slot._name = slot.querySelector('.forecast-name');
-      slot.dataset.uiKey = '';
-    });
-    dom.dropSelectorButtonMap = new Map((dom.dropSelectorButtons || []).map(btn => [Number(btn.dataset.dropIndex || '-1'), btn]));
 
     const CONTENTS = [
       { id:'talk', name:'雑談', img:'assets/img/item_1.png', accent:'#ffffff', lines:['雑談して','近況トークちょうだい','ゆるい空気がほしい','作業しながら聞きたい'], physics:{ bboxW:512, bboxH:463, body:22, chat:'💬' } },
@@ -1174,7 +148,7 @@
       { id:'love', name:'恋バナ', img:'assets/img/item_5.png', accent:'#ff68c1', lines:['恋バナまだ？','今日は甘めで','沼らせて','惚気でも失恋でも聞きたい'], physics:{ bboxW:306, bboxH:512, body:27, chat:'💗' } },
       { id:'secret', name:'暴露', img:'assets/img/item_6.png', accent:'#ff9b42', lines:['ちょっと危ない話して','裏話まだ？','秘密トークほしい','ギリギリの話待ってる'], physics:{ bboxW:380, bboxH:512, body:29, chat:'💎' } }
     ];
-    const SPECIAL = { hazard:'assets/img/hazard.png', fire:'assets/img/fire.png', buzz:'assets/img/buzz.png', physics:{ bboxW:454, bboxH:512, body:32, chat:'💣' }, firePhysics:{ bboxW:454, bboxH:512, body:32, chat:'🔥' }, buzzPhysics:{ bboxW:454, bboxH:512, body:32, chat:'✨' } };
+    const SPECIAL = { hazard:'assets/img/hazard.png', fire:'assets/img/fire.png', physics:{ bboxW:454, bboxH:512, body:32, chat:'💣' }, firePhysics:{ bboxW:454, bboxH:512, body:32, chat:'🔥' } };
     const PLAYER_LINES = {
       calm:[
         'よし、まだ空気はこっちにある。','今日はちゃんと伸ばせる気がする。','焦らない、流れだけ見れば勝てる。','いまは土台を作る時間。','まだ余裕ある、丁寧に拾う。','この感じなら配信としておいしい。','コメントの温度、悪くない。','まずは一回しっかり当てる。'
@@ -1272,70 +246,6 @@
     save.dailyRankings = save.dailyRankings || {};
     save.playerName = (save.playerName || '名無し配信者').slice(0, 14);
     const bodyVisuals = new Map();
-    const SPATIAL_HASH_CELL = 112;
-    let lastTrendForecastSignature = '';
-    let lastQueueSignature = '';
-    let lastDropSelectorIndex = -1;
-    let lastPreviewRenderKey = '';
-
-    function buildSpatialHash(bodies, cellSize = SPATIAL_HASH_CELL) {
-      const buckets = new Map();
-      for (const body of bodies) {
-        const cx = Math.floor(body.position.x / cellSize);
-        const cy = Math.floor(body.position.y / cellSize);
-        const key = `${cx},${cy}`;
-        let bucket = buckets.get(key);
-        if (!bucket) {
-          bucket = [];
-          buckets.set(key, bucket);
-        }
-        bucket.push(body);
-      }
-      return { buckets, cellSize };
-    }
-
-    function visitNearbyFromHash(hash, body, radiusCells = 1, fn) {
-      const { buckets, cellSize } = hash;
-      const baseX = Math.floor(body.position.x / cellSize);
-      const baseY = Math.floor(body.position.y / cellSize);
-      for (let cy = baseY - radiusCells; cy <= baseY + radiusCells; cy += 1) {
-        for (let cx = baseX - radiusCells; cx <= baseX + radiusCells; cx += 1) {
-          const bucket = buckets.get(`${cx},${cy}`);
-          if (!bucket) continue;
-          for (let i = 0; i < bucket.length; i += 1) {
-            if (fn(bucket[i]) === true) return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function buildTouchGroupsFromBodies(targetBodies, pad = 0.5) {
-      if (!targetBodies.length) return [];
-      const hash = buildSpatialHash(targetBodies);
-      const groups = [];
-      const visited = new Set();
-      for (let i = 0; i < targetBodies.length; i += 1) {
-        const body = targetBodies[i];
-        if (visited.has(body.id)) continue;
-        const stack = [body];
-        const group = [];
-        visited.add(body.id);
-        while (stack.length) {
-          const current = stack.pop();
-          group.push(current);
-          visitNearbyFromHash(hash, current, 1, other => {
-            if (visited.has(other.id) || other.id === current.id) return false;
-            if (!touchingWithPad(current, other, pad)) return false;
-            visited.add(other.id);
-            stack.push(other);
-            return false;
-          });
-        }
-        groups.push(group);
-      }
-      return groups;
-    }
     const missingAvatarFiles = new Set();
     let trendBannerTimer = 0;
     let lastCommentSpawnAt = 0;
@@ -1577,7 +487,6 @@
       fireMode:0,
       fireClearCount:0,
       hazardTimer:0,
-      buzzItemTimer:0,
       showCaptionTimer:0,
       queue:[0,0,0],
       selectedDropIndex:0,
@@ -1730,7 +639,6 @@
     function contentBodyRadius(index, specialType = false) {
       if (specialType === true || specialType === 'hazard') return 31;
       if (specialType === 'fire') return 31;
-      if (specialType === 'buzz') return 31;
       const map = [28, 30, 32, 34, 36, 38, 40];
       return map[index] || 36;
     }
@@ -1740,7 +648,6 @@
     function contentScoreValue(index, specialType = false) {
       if (specialType === true || specialType === 'hazard') return 240;
       if (specialType === 'fire') return 180;
-      if (specialType === 'buzz') return 260;
       return CONTENT_SCORE_VALUES[index] || 320;
     }
     function weightedContentPick(weights) {
@@ -1757,26 +664,23 @@
       return 0.001;
     }
     function visualDiameter(radius, specialType = false) {
-      return Math.round(radius * ((specialType === true || specialType === 'hazard' || specialType === 'fire' || specialType === 'buzz') ? 2.06 : 2.02));
+      return Math.round(radius * ((specialType === true || specialType === 'hazard' || specialType === 'fire') ? 2.06 : 2.02));
     }
     function contentChatIcon(index, specialType = false) {
       if (specialType === true || specialType === 'hazard') return SPECIAL.physics.chat;
       if (specialType === 'fire') return SPECIAL.firePhysics.chat;
-      if (specialType === 'buzz') return SPECIAL.buzzPhysics.chat;
       return CONTENTS[index]?.physics?.chat || '💬';
     }
 
     function bodyImageSrc(body) {
       if (body.gameType === 'hazard') return SPECIAL.hazard;
       if (body.gameType === 'fire') return SPECIAL.fire;
-      if (body.gameType === 'buzz') return SPECIAL.buzz;
       return CONTENTS[body.contentIndex]?.img || 'assets/img/item_1.png';
     }
 
     function bodyImageAlt(body) {
       if (body.gameType === 'hazard') return 'bomb';
       if (body.gameType === 'fire') return 'big fire';
-      if (body.gameType === 'buzz') return 'big buzz';
       return CONTENTS[body.contentIndex]?.name || 'content';
     }
 
@@ -1978,7 +882,7 @@
       let node = bodyVisuals.get(body.id);
       if (node) return node;
       node = document.createElement('div');
-      node.className = `item-chip ${body.gameType === 'hazard' ? 'hazard' : ''} ${body.gameType === 'fire' ? 'fire' : ''} ${body.gameType === 'buzz' ? 'buzz' : ''}`.trim();
+      node.className = `item-chip ${body.gameType === 'hazard' ? 'hazard' : ''} ${body.gameType === 'fire' ? 'fire' : ''}`.trim();
       node.dataset.emoji = contentChatIcon(body.contentIndex, body.gameType);
       const img = document.createElement('img');
       img.alt = bodyImageAlt(body);
@@ -1993,7 +897,6 @@
         node.textContent = node.dataset.emoji || '💬';
       }, { once:true });
       node.appendChild(img);
-      node._img = img;
       node.style.display = 'grid';
       node.style.visibility = 'visible';
       dom.itemLayer.appendChild(node);
@@ -2007,10 +910,6 @@
       const activeIds = new Set();
       const previewMap = new Map();
       const nextPreviewMap = new Map();
-      const boardW = dom.board?.clientWidth || 1;
-      const boardH = dom.board?.clientHeight || 1;
-      const now = performance.now();
-      const glowSet = state.shiftGlowTimer > 0 && state.shiftGlowIds.length ? new Set(state.shiftGlowIds) : null;
       state.previewGroups.forEach(group => group.ids.forEach(id => previewMap.set(id, Math.max(previewMap.get(id) || 0, group.len))));
       state.nextPreviewGroups.forEach(group => group.ids.forEach(id => nextPreviewMap.set(id, Math.max(nextPreviewMap.get(id) || 0, group.len))));
       bodies.forEach(body => {
@@ -2018,7 +917,7 @@
         const node = ensureBodyVisual(body);
         if (!node) return;
         if (!node.isConnected && dom.itemLayer) dom.itemLayer.appendChild(node);
-        let img = node._img;
+        let img = node.querySelector('img');
         if (!img) {
           img = document.createElement('img');
           img.alt = bodyImageAlt(body);
@@ -2027,7 +926,6 @@
           img.decoding = 'sync';
           node.textContent = '';
           node.appendChild(img);
-          node._img = img;
         }
         const radius = body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType);
         const diameter = visualDiameter(radius, body.gameType);
@@ -2038,13 +936,15 @@
         }
         const trendBody = body.gameType === 'content' && body.contentIndex === state.trendIndex;
         const forecastReady = body.gameType === 'content' && body.contentIndex === state.nextTrendIndex && (nextPreviewMap.get(body.id) || 0) >= 2;
+        const boardW = dom.board?.clientWidth || 1;
+        const boardH = dom.board?.clientHeight || 1;
         const safeRadius = Math.max(8, radius);
         if (!Number.isFinite(body.position.x) || !Number.isFinite(body.position.y) || !Number.isFinite(body.angle)) {
           Body.setPosition(body, { x: clamp(body.position.x || boardW / 2, safeRadius + 6, boardW - safeRadius - 6), y: clamp(body.position.y || boardH * 0.5, safeRadius + 6, boardH - safeRadius - 6) });
           Body.setVelocity(body, { x:0, y:0 });
           Body.setAngularVelocity(body, 0);
         }
-        const bodyAge = now - (body.spawnAt || 0);
+        const bodyAge = performance.now() - (body.spawnAt || 0);
         const outsideSoftBounds = bodyAge > 120 && (body.position.x < safeRadius + 2 || body.position.x > boardW - safeRadius - 2 || body.position.y < safeRadius + 2 || body.position.y > boardH - safeRadius - 2);
         if (outsideSoftBounds) repairBodyPosition(body, boardW, boardH, 'sync-soft-bounds');
         const drawX = clamp(body.position.x, safeRadius, boardW - safeRadius);
@@ -2061,15 +961,16 @@
         node.classList.toggle('forecast', forecastReady);
         node.classList.toggle('fire', body.gameType === 'fire');
         node.classList.toggle('hazard', body.gameType === 'hazard');
-        node.classList.toggle('buzz', body.gameType === 'buzz');
-        if (node.style.opacity !== '1') node.style.opacity = '1';
+        const opacityValue = '1';
+        if (node.style.opacity !== opacityValue) node.style.opacity = opacityValue;
         if (node.style.display !== 'grid') node.style.display = 'grid';
         if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
         node.hidden = false;
         const zValue = String(100 + Math.round(body.position.y * 10) + (body.id % 10));
         if (node.style.zIndex !== zValue) node.style.zIndex = zValue;
-        node.classList.toggle('shift-glow', !!glowSet && glowSet.has(body.id));
-        const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
+        const glowActive = state.shiftGlowTimer > 0 && state.shiftGlowIds.includes(body.id);
+        node.classList.toggle('shift-glow', glowActive);
+        const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
         if (node.style.filter !== filterValue) node.style.filter = filterValue;
       });
       bodyVisuals.forEach((node, id) => {
@@ -2223,70 +1124,14 @@
 
 
     function updateBackgroundState(strength = 0) {
-      const hype = !!(state.active && state.clipTime > 0);
+      const hype = state.active && state.clipTime > 0;
       dom.bgContainer?.classList.toggle('hype', hype);
-      dom.gameScreen?.classList.toggle('bigbuzz', hype);
-      dom.gameShell?.classList.toggle('bigbuzz', hype);
       if (dom.bgContainer) {
-        dom.bgContainer.style.setProperty('--bg-base-opacity', hype ? '0' : '0.96');
-        dom.bgContainer.style.setProperty('--bg-hype-opacity', hype ? '1' : '0');
+        dom.bgContainer.style.setProperty('--bg-base-opacity', hype ? '0.92' : '0.96');
+        dom.bgContainer.style.setProperty('--bg-hype-opacity', hype ? '0.10' : '0');
       }
-      if (dom.bgVideoHype) {
-        dom.bgVideoHype.style.opacity = hype ? '1' : '0';
-        try {
-          if (hype) {
-            dom.bgVideoHype.currentTime = Math.max(0, dom.bgVideoHype.currentTime || 0);
-            dom.bgVideoHype.play?.();
-          } else {
-            dom.bgVideoHype.pause?.();
-            dom.bgVideoHype.currentTime = 0;
-          }
-        } catch (_) {}
-      }
-      if (dom.boardBgVideoHype) {
-        dom.boardBgVideoHype.style.opacity = hype ? '1' : '0';
-        try {
-          if (hype) {
-            dom.boardBgVideoHype.currentTime = Math.max(0, dom.boardBgVideoHype.currentTime || 0);
-            dom.boardBgVideoHype.play?.();
-          } else {
-            dom.boardBgVideoHype.pause?.();
-            dom.boardBgVideoHype.currentTime = 0;
-          }
-        } catch (_) {}
-      }
-      if (dom.bgVideo) {
-        dom.bgVideo.style.opacity = hype ? '0' : '0.96';
-        try {
-          if (hype) {
-            dom.bgVideo.pause?.();
-          } else {
-            dom.bgVideo.play?.();
-          }
-        } catch (_) {}
-      }
-    }
-
-    function avatarMoodForVoiceKind(kind = 'calm') {
-      const map = {
-        start:'focus',
-        calm:'normal',
-        focus:'focus',
-        warning:'warning',
-        clear:'normal',
-        chain:'hype',
-        hype:'hype',
-        fire:'panic',
-        apology_ready:'apology',
-        apology_fire:'apology',
-        rush:'focus',
-        jack:'hype',
-        big:'hype',
-        top:'panic',
-        win:'win',
-        lose:'yami'
-      };
-      return map[kind] || 'normal';
+      if (dom.bgVideoHype) dom.bgVideoHype.style.opacity = hype ? '0.10' : '0';
+      if (dom.bgVideo) dom.bgVideo.style.opacity = hype ? '0.92' : '0.96';
     }
 
     function getVoiceAudio(path) {
@@ -2318,7 +1163,7 @@
       return chosen;
     }
 
-    function tryPlayVoicePath(path, kind = 'calm', volume = 0.72) {
+    function tryPlayVoicePath(path, volume = 0.72) {
       const audio = getVoiceAudio(path);
       applyVoiceSubtitle(path);
       if (!audio || muted || audio.dataset.failed === '1') return !!voiceTextForPath(path);
@@ -2329,14 +1174,13 @@
       } catch (_) {}
       audio.volume = volume;
       audio.play().catch(() => {});
-      setAvatarVisual(avatarMoodForVoiceKind(kind));
       return true;
     }
 
     function playVoice(kind) {
       const pool = voicePools[kind] || [];
       const chosen = pickRandomVoicePath(kind, pool);
-      if (chosen) return tryPlayVoicePath(chosen, kind, kind === 'lose' ? 0.84 : 0.72);
+      if (chosen) return tryPlayVoicePath(chosen, kind === 'lose' ? 0.84 : 0.72);
       const map = { start:dom.voiceStart, fire:dom.voiceFire, win:dom.voiceWin, lose:dom.voiceLose };
       const audio = map[kind];
       applyVoiceSubtitle(audio?.currentSrc || audio?.src || '');
@@ -2392,7 +1236,7 @@
       const chosen = pickRandomVoicePath(kind, variants);
       let played = false;
       if (chosen) {
-        played = tryPlayVoicePath(chosen, kind, kind === 'chain' ? 0.84 : (kind === 'lose' ? 0.84 : 0.72));
+        played = tryPlayVoicePath(chosen, kind === 'chain' ? 0.84 : (kind === 'lose' ? 0.84 : 0.72));
       }
       if (!played) {
         if (kind === 'warning') played = playVoice('fire');
@@ -2402,7 +1246,6 @@
         else played = playVoice(kind);
       }
       if (played) {
-        setAvatarVisual(avatarMoodForVoiceKind(kind));
         lastVoiceAt = now;
         voiceCooldowns[slot] = now + (cooldownMap[slot] || 900);
         if (kind === 'start') startupVoiceLockUntil = now + 3200;
@@ -2511,11 +1354,11 @@
     }
 
     function currentTrend() { return CONTENTS[state.trendIndex]; }
-    function nextTrend() { ensureUpcomingTrendQueue(7); return CONTENTS[state.nextTrendIndex]; }
-    function futureTrend() { ensureUpcomingTrendQueue(7); return CONTENTS[state.futureTrendIndex]; }
-    function trendDuration() { return Number.POSITIVE_INFINITY; }
-    function ensureUpcomingTrendQueue(min = 7) {
-      state.upcomingTrendQueue = Array.isArray(state.upcomingTrendQueue) ? state.upcomingTrendQueue.slice(0, 14) : [];
+    function nextTrend() { ensureUpcomingTrendQueue(6); return CONTENTS[state.nextTrendIndex]; }
+    function futureTrend() { ensureUpcomingTrendQueue(6); return CONTENTS[state.futureTrendIndex]; }
+    function trendDuration() { return clamp(17.8 - Math.floor(state.runTime / 105) * 0.40, 11.8, 17.8); }
+    function ensureUpcomingTrendQueue(min = 6) {
+      state.upcomingTrendQueue = Array.isArray(state.upcomingTrendQueue) ? state.upcomingTrendQueue.slice(0, 12) : [];
       while (state.upcomingTrendQueue.length < min) {
         const tail = state.upcomingTrendQueue.slice(-2);
         const nextIdx = pickTrendExcluding(state.trendIndex, ...tail);
@@ -2526,38 +1369,30 @@
     }
 
     function shiftTrendQueue() {
-      ensureUpcomingTrendQueue(7);
+      ensureUpcomingTrendQueue(6);
       const previousTrendIndex = state.trendIndex;
       state.trendIndex = state.upcomingTrendQueue.shift() ?? pickTrendExcluding(state.trendIndex);
-      ensureUpcomingTrendQueue(7);
+      ensureUpcomingTrendQueue(6);
       setTrend(state.trendIndex, true, previousTrendIndex);
     }
 
     function refreshTrendForecastUi() {
-      ensureUpcomingTrendQueue(7);
-      if (!Array.isArray(dom.trendForecastSlots)) return;
-      const ordered = state.upcomingTrendQueue.slice(0, 7).reverse();
-      const signature = ordered.join(',');
-      if (signature === lastTrendForecastSignature) return;
-      lastTrendForecastSignature = signature;
-      dom.trendForecastSlots.forEach((slot, slotIndex) => {
-        const trendIndex = ordered[slotIndex];
-        const info = CONTENTS[trendIndex] || CONTENTS[0];
-        const img = slot._img;
-        const label = slot._label;
-        const name = slot._name;
-        const isNext = slotIndex === ordered.length - 1;
-        const uiKey = `${trendIndex}|${isNext ? 1 : 0}`;
-        if (slot.dataset.uiKey === uiKey) return;
-        slot.dataset.uiKey = uiKey;
-        slot.classList.toggle('next', isNext);
-        if (img && img.getAttribute('src') !== info.img) img.src = info.img;
-        if (img && img.alt !== info.name) img.alt = info.name;
-        if (name && name.textContent !== info.name) name.textContent = info.name;
-        if (name && name.style.color !== (info.accent || '#ece4f7')) name.style.color = info.accent || '#ece4f7';
-        const labelText = isNext ? '次のトレンド' : '';
-        if (label && label.textContent !== labelText) label.textContent = labelText;
-      });
+      ensureUpcomingTrendQueue(6);
+      if (Array.isArray(dom.trendForecastSlots)) {
+        const ordered = state.upcomingTrendQueue.slice(0, 6).reverse();
+        dom.trendForecastSlots.forEach((slot, slotIndex) => {
+          const trendIndex = ordered[slotIndex];
+          const info = CONTENTS[trendIndex] || CONTENTS[0];
+          const img = slot.querySelector('img');
+          const label = slot.querySelector('.forecast-label');
+          const name = slot.querySelector('.forecast-name');
+          slot.classList.toggle('next', slotIndex === ordered.length - 1);
+          if (img) img.src = info.img;
+          if (img) img.alt = info.name;
+          if (name) { name.textContent = info.name; name.style.color = info.accent || '#ece4f7'; }
+          if (label) label.textContent = slotIndex === ordered.length - 1 ? '次のトレンド' : '';
+        });
+      }
     }
     function pickTrendExcluding(...exclude) {
       const deny = new Set(exclude);
@@ -2805,12 +1640,10 @@
 
     function updateDropSelectorUi() {
       const selected = clamp(Math.floor(state.selectedDropIndex || 0), 0, CONTENTS.length - 1);
-      if (selected === lastDropSelectorIndex) return;
-      const prevBtn = dom.dropSelectorButtonMap?.get(lastDropSelectorIndex);
-      const nextBtn = dom.dropSelectorButtonMap?.get(selected);
-      if (prevBtn) prevBtn.classList.remove('active');
-      if (nextBtn) nextBtn.classList.add('active');
-      lastDropSelectorIndex = selected;
+      dom.dropSelectorButtons?.forEach(btn => {
+        const idx = Number(btn.dataset.dropIndex || '-1');
+        btn.classList.toggle('active', idx === selected);
+      });
     }
 
     function setSelectedDropIndex(index, opts = {}) {
@@ -2825,18 +1658,11 @@
 
     function refreshQueue() {
       ensureQueueLength(3);
-      const selected = state.selectedDropIndex ?? 0;
-      const q0 = CONTENTS[selected] || CONTENTS[0];
-      const signature = String(selected);
-      if (signature !== lastQueueSignature) {
-        if (dom.previewItem && dom.previewItem.getAttribute('src') !== q0.img) dom.previewItem.src = q0.img;
-        if (dom.previewItem && dom.previewItem.alt !== q0.name) dom.previewItem.alt = q0.name;
-        if (dom.nextMini1 && dom.nextMini1.getAttribute('src') !== q0.img) dom.nextMini1.src = q0.img;
-        if (dom.nextMini1 && dom.nextMini1.alt !== q0.name) dom.nextMini1.alt = q0.name;
-        if (dom.nextMini2 && dom.nextMini2.getAttribute('src') !== q0.img) dom.nextMini2.src = q0.img;
-        if (dom.nextMini2 && dom.nextMini2.alt !== q0.name) dom.nextMini2.alt = q0.name;
-        lastQueueSignature = signature;
-      }
+      const q0 = CONTENTS[state.selectedDropIndex ?? 0] || CONTENTS[0];
+      dom.previewItem.src = q0.img;
+      dom.previewItem.alt = q0.name;
+      if (dom.nextMini1) { dom.nextMini1.src = q0.img; dom.nextMini1.alt = q0.name; }
+      if (dom.nextMini2) { dom.nextMini2.src = q0.img; dom.nextMini2.alt = q0.name; }
       updateDropSelectorUi();
     }
 
@@ -2849,9 +1675,6 @@
       const ringSize = Math.round(size + 12);
       const itemSize = Math.max(48, Math.round(size * 0.82));
       const previewTop = Math.max(20, metrics.fullLineY - ringSize - 4);
-      const previewKey = `${Math.round(x * 10)}|${previewTop}|${ringSize}|${itemSize}`;
-      if (previewKey === lastPreviewRenderKey) return;
-      lastPreviewRenderKey = previewKey;
       dom.dropGuide.style.left = `${x}px`;
       dom.previewRing.style.left = `${x}px`;
       dom.previewRing.style.top = `${previewTop}px`;
@@ -2859,6 +1682,7 @@
       dom.previewItem.style.height = `${itemSize}px`;
       dom.previewRing.style.width = `${ringSize}px`;
       dom.previewRing.style.height = `${ringSize}px`;
+      refreshQueue();
     }
 
     function triggerPreviewLaunchFx(color = '#ffffff') {
@@ -3211,43 +2035,31 @@
       state.fireBannerTimer = setTimeout(() => dom.fireBanner?.classList.remove('show'), 1020);
     }
 
-    function showSuperchatBanner(chainTier, gain, comboCount = 1) {
+    function showSuperchatBanner(chainTier, gain) {
       if (!dom.superchatBanner) return;
       const tier = clamp(Math.max(1, Math.floor(chainTier || 1)), 1, 7);
-      const comboTier = clamp(Math.max(1, Math.floor(comboCount || 1)), 1, 10);
       const theme = SUPERCHAT_CHAIN_THEME[tier] || SUPERCHAT_CHAIN_THEME[1];
       const card = dom.superchatBanner.querySelector('.card');
       const amount = dom.superchatBanner.querySelector('.amount');
       const message = dom.superchatBanner.querySelector('.message');
-      const scale = 0.72 + Math.min(1.02, (tier - 1) * 0.13) + Math.min(0.26, (comboTier - 1) * 0.024);
       if (card) {
         card.style.borderColor = theme.border;
-        card.style.boxShadow = `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${26 + comboTier * 5}px ${theme.fill}`;
-        card.style.transform = `scale(${scale})`;
+        card.style.boxShadow = `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 26px ${theme.fill}`;
       }
-      if (amount) {
-        amount.textContent = `+${fmt(Math.max(0, Math.round(gain || 0)))}`;
-        amount.style.color = theme.border;
-        amount.style.fontSize = `${0.76 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)}rem`;
-      }
-      if (message) {
-        message.textContent = choice(SUPERCHAT_CHAIN_MESSAGES);
-        message.style.fontSize = `${0.82 + Math.min(1.34, (tier - 1) * 0.18) + Math.min(0.28, (comboTier - 1) * 0.024)}rem`;
-      }
+      if (amount) { amount.textContent = `+${fmt(Math.max(0, Math.round(gain || 0)))}`; amount.style.color = theme.border; }
+      if (message) message.textContent = choice(SUPERCHAT_CHAIN_MESSAGES);
       dom.superchatBanner.classList.remove('show');
       void dom.superchatBanner.offsetWidth;
       dom.superchatBanner.classList.add('show');
       clearTimeout(state.superchatBannerTimer);
-      state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), 4000 + tier * 520 + comboTier * 150);
-      sfx('ready', Math.min(2.2, 0.56 + tier * 0.2 + comboTier * 0.05));
+      state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), 1060);
     }
 
     function makeBody(x, y, index, specialType = false) {
       const isBomb = specialType === true || specialType === 'hazard';
       const isFire = specialType === 'fire';
-      const isBuzz = specialType === 'buzz';
       const radius = contentBodyRadius(index, specialType);
-      const texture = isBomb ? SPECIAL.hazard : (isFire ? SPECIAL.fire : (isBuzz ? SPECIAL.buzz : CONTENTS[index].img));
+      const texture = isBomb ? SPECIAL.hazard : (isFire ? SPECIAL.fire : CONTENTS[index].img);
       const opacity = 0;
       const scale = spriteScaleFor(index, radius, specialType);
       const body = Bodies.circle(x, y, radius, {
@@ -3255,15 +2067,15 @@
         friction:0.008,
         frictionStatic:0.01,
         frictionAir:0.006,
-        density:isBomb ? 0.00245 : (isFire ? 0.00255 : (isBuzz ? 0.0022 : 0.002)),
+        density:isBomb ? 0.00245 : (isFire ? 0.00255 : 0.002),
         slop:0.05,
-        label:isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content')),
+        label:isBomb ? 'hazard' : (isFire ? 'fire' : 'content'),
         render:{
           opacity,
           sprite:{ texture, xScale:scale, yScale:scale }
         }
       });
-      body.gameType = isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content'));
+      body.gameType = isBomb ? 'hazard' : (isFire ? 'fire' : 'content');
       body.contentIndex = index;
       body.spawnAt = performance.now();
       body.displayScale = scale;
@@ -3281,7 +2093,7 @@
     }
 
     function worldBodies() {
-      return Composite.allBodies(engine.world).filter(b => !b.isStatic && !b.plugin?.pendingRemoval && (b.gameType === 'content' || b.gameType === 'hazard' || b.gameType === 'fire' || b.gameType === 'buzz'));
+      return Composite.allBodies(engine.world).filter(b => !b.isStatic && !b.plugin?.pendingRemoval && (b.gameType === 'content' || b.gameType === 'hazard' || b.gameType === 'fire'));
     }
 
     function computeBoardStats() {
@@ -3291,7 +2103,7 @@
       const now = performance.now();
       const settledBodies = [];
       for (const body of bodies) {
-        if (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') hazards.push(body);
+        if (body.gameType === 'hazard' || body.gameType === 'fire') hazards.push(body);
         else content.push(body);
         if (now - (body.spawnAt || 0) > 1100) settledBodies.push(body);
       }
@@ -3387,9 +2199,7 @@
       const bodies = worldBodies();
       if (!bodies.length || !dom.board) return;
       const boardHeight = dom.board.clientHeight || 0;
-      const boardWidth = dom.board.clientWidth || 0;
       const now = performance.now();
-      const hash = buildSpatialHash(bodies);
       for (const body of bodies) {
         const age = now - (body.spawnAt || 0);
         if (age < 420) continue;
@@ -3400,18 +2210,17 @@
           continue;
         }
         let hasSupportBelow = false;
-        visitNearbyFromHash(hash, body, 1, other => {
-          if (other.id === body.id) return false;
+        for (const other of bodies) {
+          if (other.id === body.id) continue;
           const dx = Math.abs(other.position.x - body.position.x);
           const dy = other.position.y - body.position.y;
           const supportDx = body.circleRadius + other.circleRadius - 6;
-          if (dx > supportDx || dy < 0) return false;
+          if (dx > supportDx || dy < 0) continue;
           if (dy <= body.circleRadius + other.circleRadius + 16) {
             hasSupportBelow = true;
-            return true;
+            break;
           }
-          return false;
-        });
+        }
         if (hasSupportBelow) {
           body.floatStartAt = 0;
           continue;
@@ -3419,7 +2228,7 @@
         if (!body.floatStartAt) body.floatStartAt = now;
         if (now - body.floatStartAt < 90) continue;
         Sleeping.set(body, false);
-        Body.setPosition(body, { x: clamp(body.position.x, body.circleRadius + 6, boardWidth - body.circleRadius - 6), y: Math.min(boardHeight - body.circleRadius - 10, body.position.y + 12) });
+        Body.setPosition(body, { x: clamp(body.position.x, body.circleRadius + 6, dom.board.clientWidth - body.circleRadius - 6), y: Math.min(boardHeight - body.circleRadius - 10, body.position.y + 12) });
         Body.setVelocity(body, { x: body.velocity.x * 0.2, y: Math.max(1.45, body.velocity.y + 0.7) });
         Body.setAngularVelocity(body, body.angularVelocity * 0.28);
         body.floatStartAt = now;
@@ -3475,17 +2284,29 @@
       return dx * dx + dy * dy <= rr * rr;
     }
 
-    function touchingWithPad(a, b, pad = 0.5) {
-      const dx = b.position.x - a.position.x;
-      const dy = b.position.y - a.position.y;
-      const rr = a.circleRadius + b.circleRadius + pad;
-      return dx * dx + dy * dy <= rr * rr;
-    }
-
     function buildTouchGroupsForIndex(targetIndex) {
-      const now = performance.now();
-      const targetBodies = worldBodies().filter(body => body.gameType === 'content' && body.contentIndex === targetIndex && now - body.spawnAt > 220);
-      return buildTouchGroupsFromBodies(targetBodies, 0.5);
+      const targetBodies = worldBodies().filter(body => body.gameType === 'content' && body.contentIndex === targetIndex && performance.now() - body.spawnAt > 220);
+      const groups = [];
+      const visited = new Set();
+      for (const body of targetBodies) {
+        if (visited.has(body.id)) continue;
+        const stack = [body];
+        visited.add(body.id);
+        const group = [];
+        while (stack.length) {
+          const current = stack.pop();
+          group.push(current);
+          for (const other of targetBodies) {
+            if (visited.has(other.id) || other.id === current.id) continue;
+            if (touching(current, other)) {
+              visited.add(other.id);
+              stack.push(other);
+            }
+          }
+        }
+        groups.push(group);
+      }
+      return groups;
     }
 
     function scanGroups() {
@@ -3496,26 +2317,12 @@
       return groups.filter(g => g.length >= 3 && g.every(body => body.speed < 4.2));
     }
 
-    function buildTouchGroupsForType(gameType, contentIndex = null) {
-      const now = performance.now();
-      const targetBodies = worldBodies().filter(body => {
-        if (body.gameType !== gameType) return false;
-        if (gameType === 'content' && body.contentIndex !== contentIndex) return false;
-        return now - body.spawnAt > 220;
-      });
-      const loosePad = gameType === 'hazard' ? 8 : (gameType === 'buzz' ? 6 : 0.5);
-      return buildTouchGroupsFromBodies(targetBodies, loosePad);
-    }
-
     function scanAllClearableGroups() {
       const groups = [];
-      groups.push(...buildTouchGroupsForIndex(state.trendIndex));
-      groups.push(...buildTouchGroupsForType('hazard'));
-      groups.push(...buildTouchGroupsForType('buzz'));
-      return groups.filter(g => {
-        const special = g[0]?.gameType === 'hazard' || g[0]?.gameType === 'buzz';
-        return g.length >= 3 && g.every(body => body.speed < (special ? 6.4 : 4.8));
-      });
+      for (let idx = 0; idx < CONTENTS.length; idx += 1) {
+        groups.push(...buildTouchGroupsForIndex(idx));
+      }
+      return groups.filter(g => g.length >= 3 && g.every(body => body.speed < 4.8));
     }
 
     function biggestPreviewLen() {
@@ -3583,150 +2390,13 @@
       state.pendingTrendClear = null;
       updatePendingClearVisual([]);
       if (!groups.length) return false;
-      const groupPriority = group => {
-        const type = group[0]?.gameType;
-        if (type === 'hazard') return 3;
-        if (type === 'buzz') return 2;
-        return 1;
-      };
-      groups.sort((a, b) => groupPriority(b) - groupPriority(a) || b.length - a.length || a.reduce((m, x) => m + x.position.y, 0) - b.reduce((m, x) => m + x.position.y, 0));
+      groups.sort((a, b) => b.length - a.length || a.reduce((m, x) => m + x.position.y, 0) - b.reduce((m, x) => m + x.position.y, 0));
       clearGroup(groups[0]);
       return true;
     }
 
-    function collectAdjacentFireBodies(seedBodies = []) {
-      if (!seedBodies.length) return [];
-      const fireBodies = worldBodies().filter(body => body.gameType === 'fire');
-      if (!fireBodies.length) return [];
-      return fireBodies.filter(fire => seedBodies.some(body => touching(fire, body)));
-    }
-
-    function comboScoreValue(comboCount = 1) {
-      const combo = Math.max(1, Math.floor(comboCount || 1));
-      return 280 + combo * 240 + combo * combo * 140;
-    }
-
-    function applyComboGain({ center, accent = '#ffffff', chainTier = 1, comboCount = 1, noteText = '', baseOnly = false } = {}) {
-      const baseGain = comboScoreValue(comboCount);
-      const multiplier = state.clipTime > 0 ? 2 : 1;
-      const gain = Math.round(baseGain * multiplier);
-      state.score += gain;
-      if (center) {
-        popText(center.x, center.y, `+${fmt(gain)}`, accent, comboCount >= 4 ? 30 : 24);
-        if (state.clipTime > 0) popText(center.x, center.y + 42, '大バズり中 2倍', '#fff0a3', 18);
-        if (noteText) popText(center.x, center.y - 42, noteText, '#ffffff', 18);
-      }
-      showSuperchatBanner(chainTier, gain, comboCount);
-      return gain;
-    }
-
-
-
-    function clearBombGroup(group) {
-      if (!group.length) return;
-      const center = group.reduce((acc, body) => {
-        acc.x += body.position.x;
-        acc.y += body.position.y;
-        return acc;
-      }, { x:0, y:0 });
-      center.x /= group.length;
-      center.y /= group.length;
-      const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
-      hardRemoveBodies(removed);
-      state.boardStatsCache = null;
-      state.clearCount += 1;
-      state.heat = clamp(state.heat + 20, 0, 100);
-      state.craving = clamp(state.craving + 10, 0, 100);
-      state.tension = clamp(state.tension + 8, 0, 100);
-      state.buzz = clamp(state.buzz + 10, 0, 100);
-
-      for (const body of group) {
-        addParticles(body.position.x, body.position.y, 'rgba(255,224,120,.96)', 18, 7.0);
-        addParticles(body.position.x, body.position.y, 'rgba(255,120,40,.94)', 16, 7.6);
-        addParticles(body.position.x, body.position.y, 'rgba(255,90,110,.9)', 14, 6.4);
-        addRing(body.position.x, body.position.y, '#ffd84c', 22, 240);
-        addRing(body.position.x, body.position.y, '#ff6f3d', 32, 300);
-      }
-      for (const body of adjacentFire) {
-        addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
-        addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
-      }
-      addRing(center.x, center.y, '#ff5b73', 56, 420);
-      addRing(center.x, center.y, '#ffd84c', 82, 360);
-      flashScreen('#ff7b5b');
-      popText(center.x, center.y - 18, 'BOMB!!', '#fff4a3', 32);
-      playAssetSfx('hazard', 0.96);
-      sfx('burst', 1.5);
-      const gain = Math.round((state.clipTime > 0 ? 2400 : 1200));
-      state.score += gain;
-      popText(center.x, center.y + 24, `+${fmt(gain)}`, '#ffd84c', 24);
-      if (adjacentFire.length) popText(center.x, center.y + 64, `炎上巻き込み x${adjacentFire.length}`, '#ffb7c5', 18);
-      spawnComment(false, `${group.length}連爆で大炎上！！`, 'low', '💣');
-      triggerFire('bomb_chain');
-      const fireCount = 5 + Math.floor(rand() * 6);
-      const dropped = spawnHazardBurst(fireCount, center.x);
-      popText(dom.board.clientWidth / 2, dom.board.clientHeight * 0.34, '大炎上!!', '#fff0f0', 42);
-      showFireBanner();
-      spawnComment(false, `大炎上 x${dropped}`, 'low', '🔥');
-      if (adjacentFire.length) state.fireMode = Math.max(state.fireMode, 999);
-      return gain;
-    }
-
-    function clearBuzzGroup(group) {
-      if (!group.length) return;
-      const center = group.reduce((acc, body) => {
-        acc.x += body.position.x;
-        acc.y += body.position.y;
-        return acc;
-      }, { x:0, y:0 });
-      center.x /= group.length;
-      center.y /= group.length;
-      const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
-      hardRemoveBodies(removed);
-      state.boardStatsCache = null;
-      state.clearCount += 1;
-      state.tension = clamp(state.tension + 14, 0, 100);
-      state.craving = clamp(state.craving - 8, 0, 100);
-      state.heat = clamp(state.heat - 8, 0, 100);
-      state.buzz = clamp(state.buzz + 20, 0, 100);
-      for (const body of group) {
-        addParticles(body.position.x, body.position.y, 'rgba(255,239,128,.98)', 18, 7.2);
-        addParticles(body.position.x, body.position.y, 'rgba(255,93,190,.88)', 16, 6.8);
-        addRing(body.position.x, body.position.y, '#ffe37a', 24, 260);
-        addRing(body.position.x, body.position.y, '#ff63d6', 34, 300);
-      }
-      for (const body of adjacentFire) {
-        addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
-        addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
-      }
-      flashScreen('#ffe37a');
-      addRing(center.x, center.y, '#ffe37a', 56, 340);
-      addRing(center.x, center.y, '#ff5ab1', 88, 420);
-      playAssetSfx('ready', 0.96);
-      sfx('big', 1.46);
-      const gain = Math.round((state.clipTime > 0 ? 3200 : 1600));
-      state.score += gain;
-      popText(center.x, center.y + 18, `+${fmt(gain)}`, '#ffe37a', 24);
-      popText(center.x, center.y + 56, '大バズり突入!!', '#fff4a3', 26);
-      spawnComment(false, 'バズり3連結！ 大バズり発動！', 'super', '✨');
-      triggerVoiceCue('hype', 2, { force:true });
-      activateClipTime('buzz_item');
-      if (adjacentFire.length) popText(center.x, center.y + 96, `炎上巻き込み x${adjacentFire.length}`, '#ffb7c5', 18);
-      return gain;
-    }
-
     function clearGroup(group) {
       if (!group.length) return;
-      if (group[0]?.gameType === 'hazard') {
-        clearBombGroup(group);
-        return;
-      }
-      if (group[0]?.gameType === 'buzz') {
-        clearBuzzGroup(group);
-        return;
-      }
       const mainIndex = group[0]?.contentIndex ?? state.trendIndex;
       const accent = CONTENTS[mainIndex]?.accent || currentTrend().accent;
       const center = group.reduce((acc, body) => {
@@ -3737,84 +2407,247 @@
       center.x /= group.length;
       center.y /= group.length;
 
-      const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
+      const toRemove = new Set(group);
+      let collateral = 0;
+      let collateralScore = 0;
+      if (state.buzzMode > 0) {
+        worldBodies().forEach(body => {
+          const dx = body.position.x - center.x;
+          const dy = body.position.y - center.y;
+          if (dx * dx + dy * dy <= 190 * 190) {
+            if (!toRemove.has(body)) { collateral += 1; collateralScore += body.gameType === 'hazard' ? contentScoreValue(-1, true) : Math.round(contentScoreValue(body.contentIndex) * 0.42); }
+            toRemove.add(body);
+          }
+        });
+      }
+
+      const removed = Array.from(toRemove);
+      const bombsTouched = worldBodies().filter(body => body.gameType === 'hazard' && removed.some(rem => {
+        const rr = (body.circleRadius || 0) + (rem.circleRadius || 0) + 8;
+        const dx = body.position.x - rem.position.x;
+        const dy = body.position.y - rem.position.y;
+        return dx * dx + dy * dy <= rr * rr;
+      }));
       hardRemoveBodies(removed);
-      state.boardStatsCache = null;
+      if (bombsTouched.length) {
+        const fireCount = 5 + Math.floor(rand() * 6);
+        const dropped = spawnHazardBurst(fireCount, center.x);
+        popText(dom.board.clientWidth / 2, dom.board.clientHeight * 0.34, '大炎上!!', '#fff0f0', 42);
+        addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.34, '#ff5b73', 42, 360);
+        showFireBanner();
+        spawnComment(false, `爆弾に触れて大炎上 x${dropped}`, 'low', '🔥');
+      }
       const sameDropCascade = state.currentChainDropSerial === state.dropSerial && state.chainDecay > 0;
       state.chainCount = sameDropCascade ? state.chainCount + 1 : 1;
       state.currentChainDropSerial = state.dropSerial;
       state.chainDecay = 1.28;
       state.peakChain = Math.max(state.peakChain, state.chainCount);
       const chainTier = state.chainCount;
+      const statsNow = boardStats(true);
+      const rushBonus = state.rushWindow > 0 && state.setupCarryLen >= 2;
+      const switchBonus = rushBonus && state.recentSwitchBonus > 0 ? 1800 : 0;
+      const base = group.length * contentScoreValue(mainIndex);
+      const comboBonus = state.combo * 400;
+      const collateralBonus = collateralScore;
+      const clipBonus = 0;
+      const pinTargetHit = state.pinTimer > 0 && group[0] && group[0].labelContent === state.pinTargetIndex;
+      const pinBonus = pinTargetHit && group.length >= state.pinMinLen ? state.pinBonusValue : 0;
+      const clutchBonus = (state.fireMode > 0 || statsNow.pressure > 0.58 || state.topDangerTime > 0.9) ? (680 + group.length * 112 + collateral * 96) : 0;
       const topGapBefore = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
+      const crownRush = crownTargetScore(state.seed) > 0 && topGapBefore > 0 && topGapBefore <= 5200;
+      const nextPreviewLen = biggestNextPreviewLen();
+      const forecastReady = nextPreviewLen >= 2;
+      let rushBonusValue = 0;
+      let jackBonus = 0;
+      let jackLevelUp = false;
+      let crownKeepBonus = 0;
+      let forecastBonus = 0;
+      let crownClutchBonus = 0;
+      let waveLinkBonus = 0;
+      let chainBonus = 0;
+      if (rushBonus) {
+        state.rushHits += 1;
+        state.rushWindow = 0;
+        state.switchCleared = true;
+        state.jackChain += 1;
+        state.peakJackChain = Math.max(state.peakJackChain, state.jackChain);
+        rushBonusValue = 2100 + state.combo * 260;
+        jackBonus = 820 * state.jackChain;
+        if (state.jackChain >= 3) jackLevelUp = true;
+      }
+      if (forecastReady) {
+        forecastBonus = (nextPreviewLen >= 3 ? 1520 : 880) + state.combo * 180;
+      }
+      if (rushBonus && state.setupCarryLen >= 2) {
+        waveLinkBonus = (state.setupCarryLen >= 3 ? 1960 : 1180) + state.combo * 220;
+      }
+      if (topGapBefore > 0 && topGapBefore <= 1800) {
+        crownClutchBonus = 520 + state.combo * 140 + (forecastReady ? 220 : 0);
+      }
+      if (chainTier >= 2) {
+        chainBonus = Math.round((base + comboBonus + forecastBonus + waveLinkBonus) * Math.min(0.88, 0.16 * chainTier)) + chainTier * 320;
+      }
+      const crownRushBonus = crownRush ? Math.round((base + comboBonus + switchBonus) * (topGapBefore <= 2500 ? 0.40 : 0.32)) : 0;
+      const alreadyLeading = crownTargetScore(state.seed) > 0 && topGapBefore <= 0;
+      if (alreadyLeading) {
+        state.crownHoldStreak += 1;
+        state.peakCrownHold = Math.max(state.peakCrownHold, state.crownHoldStreak);
+        crownKeepBonus = 320 + Math.min(6, state.crownHoldStreak) * 120;
+      } else {
+        state.crownHoldStreak = 0;
+      }
+      const gain = base + comboBonus + collateralBonus + switchBonus + clipBonus + pinBonus + rushBonusValue + jackBonus + clutchBonus + crownRushBonus + crownKeepBonus + forecastBonus + crownClutchBonus + waveLinkBonus + chainBonus;
+      state.score += gain;
+      const timeBonus = 0;
+      const topGapAfter = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
+      const tookCrown = topGapBefore > 0 && topGapAfter <= 0 && crownTargetScore(state.seed) > 0;
       state.clearCount += 1;
+      if (pinBonus) state.pinHits += 1;
+      if (forecastBonus) state.forecastHits += 1;
+      if (waveLinkBonus) state.waveLinkHits += 1;
+      if (crownClutchBonus) state.crownClutchHits += 1;
+      state.tension = clamp(state.tension + 12 + group.length * 3.2 + collateral * 0.7 + (state.clipTime > 0 ? 6 : 0) + (pinBonus ? 4 : 0) + (rushBonus ? 6 : 0) + (clutchBonus ? 8 : 0) + (forecastBonus ? 5 : 0) + (crownClutchBonus ? 4 : 0) + (waveLinkBonus ? 5 : 0) + (chainBonus ? 6 : 0), 0, 100);
+      state.craving = clamp(state.craving - 14 - group.length * 2.5 - (clutchBonus ? 8 : 0) - (forecastBonus ? 5 : 0) - (waveLinkBonus ? 5 : 0), 0, 100);
+      state.heat = clamp(state.heat - 18 - group.length * 8 - collateral * 2 - (clutchBonus ? 16 : 0) - (forecastBonus ? 10 : 0) - (waveLinkBonus ? 10 : 0), 0, 100);
+      state.buzz = clamp(state.buzz + 22 + group.length * 9 + collateral * 2 + (rushBonus ? 12 + state.jackChain * 3 : 0) + (clutchBonus ? 12 : 0) + (crownRush ? 8 : 0) + (forecastBonus ? 10 : 0) + (crownClutchBonus ? 8 : 0) + (waveLinkBonus ? 12 : 0) + (chainBonus ? 14 + chainTier * 2 : 0), 0, 100);
       state.combo += 1;
-      state.comboTimer = 3.0;
+      state.comboTimer = 8.8;
       state.peakCombo = Math.max(state.peakCombo, state.combo);
       state.idle = 0;
       state.fireClearCount += state.fireMode > 0 ? 1 : 0;
-      state.tension = clamp(state.tension + 11 + (state.clipTime > 0 ? 6 : 0), 0, 100);
-      state.craving = clamp(state.craving - 12, 0, 100);
-      state.heat = clamp(state.heat - 16 - adjacentFire.length * 3, 0, 100);
-      state.buzz = clamp(state.buzz + 18 + chainTier * 3, 0, 100);
 
-      addParticles(center.x, center.y, accent, 18, 7.4);
-      addRing(center.x, center.y, accent, 18, state.clipTime > 0 ? 280 : 200);
+      addParticles(center.x, center.y, accent, 22 + collateral * 2, 8.2);
+      addRing(center.x, center.y, accent, 18, state.buzzMode > 0 ? 290 : 200);
       flashScreen(accent);
-      if (adjacentFire.length) {
-        adjacentFire.forEach(body => {
-          addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
-          addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
-        });
-        popText(center.x, center.y + 66, `炎上巻き込み x${adjacentFire.length}`, '#ffb7c5', 18);
-      }
-      const gain = applyComboGain({ center, accent, chainTier, comboCount:state.combo, noteText:state.combo >= 2 ? `COMBO x${state.combo}` : '' });
-      if (chainTier >= 2) popText(center.x, center.y - 78, `${chainTier}連鎖`, '#ffb7ff', 22);
-      if (state.clipTime > 0) spawnComment(false, '大バズり中！ ポイント2倍！', 'super', '✨');
-      const topGapAfter = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
-      const tookCrown = topGapBefore > 0 && topGapAfter <= 0 && crownTargetScore(state.seed) > 0;
+      popText(center.x, center.y, `${group.length}ヒット +${fmt(gain)}`, accent, state.buzzMode > 0 ? 30 : 24);
+      if (switchBonus) popText(center.x, center.y + 40, '先読みHIT', '#8ef8ff', 18);
+      if (state.clipTime > 0) popText(center.x, center.y + 72, '大バズり中', '#fff0a3', 18);
+      if (rushBonus) popText(center.x, center.y + 102, `先読み +${fmt(rushBonusValue)}`, '#8ef8ff', 19);
+      if (jackBonus) popText(center.x, center.y + 126, `先読み連勝 x${state.jackChain} +${fmt(jackBonus)}`, '#fff0a3', 20);
+      if (forecastBonus) popText(center.x, center.y - 156, `仕込み +${fmt(forecastBonus)}`, '#86f1ff', 18);
+      if (waveLinkBonus) popText(center.x, center.y - 204, `波読み +${fmt(waveLinkBonus)}`, '#7ffcff', 20);
+      if (chainBonus) popText(center.x, center.y - 228, `${chainTier}連鎖 +${fmt(chainBonus)}`, '#ffb7ff', 22);
+      if (crownKeepBonus) popText(center.x, center.y - 132, `王冠防衛 +${fmt(crownKeepBonus)}`, '#fff4a3', 18);
+      if (crownClutchBonus) popText(center.x, center.y - 180, `王冠クラッチ +${fmt(crownClutchBonus)}`, '#ffd84c', 18);
+      if (pinBonus) popText(center.x, center.y + 152, state.pinClass === 'next' ? '次の波ピンコメ!' : 'ピンコメ達成!', '#8ef8ff', 18);
+      if (clutchBonus) popText(center.x, center.y - 108, `逆転 +${fmt(clutchBonus)}`, '#ffb7d6', 20);
+      if (state.combo >= 2) popText(center.x, center.y - 42, `COMBO x${state.combo}`, '#ffe37a', 22);
+      showSuperchatBanner(chainTier, gain);
 
+      if (jackLevelUp) {
+        state.clipTime = Math.max(state.clipTime, 10);
+        state.clipCooldown = Math.max(state.clipCooldown, 16);
+        state.buzz = clamp(state.buzz + 26, 0, 100);
+        popText(center.x, center.y - 76, '先読み3連!', '#fff4a3', 30);
+        spawnComment(false, '先読み3連！ ここから一気に伸びる', 'super', '🚀');
+        if (crownRush) popText(center.x, center.y - 136, `王冠チャンス +${fmt(crownRushBonus)}`, '#ffe37a', 20);
+        spawnComment(false, choice(COMMENT_BANK.jack), 'super', '⚡');
+        say('jack', 2.0);
+        triggerVoiceCue('jack', state.jackChain);
+        flashScreen('#fff0a3');
+        sfx('ready', 1.2);
+      } else if (rushBonus) {
+        spawnComment(false, choice(COMMENT_BANK.jack), 'super', '🚀');
+        say('jack', 1.7);
+        triggerVoiceCue(state.jackChain >= 2 ? 'jack' : 'rush', state.jackChain || 1);
+      }
+      if (alreadyLeading && crownKeepBonus) {
+        if (state.crownHoldStreak === 1) {
+          spawnComment(false, '王冠キープ開始。このまま逃げ切りたい', 'super', '👑');
+        } else if (state.crownHoldStreak % 2 === 0) {
+          spawnComment(false, `王冠防衛 x${state.crownHoldStreak}`, 'super', '🏆');
+        }
+      }
+
+      if (state.clipTime > 0) {
+        spawnComment(false, 'うわ今のめっちゃ切り抜ける', 'super', '📸');
+      }
+      if (crownRush) {
+        spawnComment(false, '1位チャンス。この山で抜ける', 'super', '👑');
+        popText(center.x, center.y - 160, 'DAILY!', '#ffe37a', 18);
+      }
+      if (forecastBonus) {
+        spawnComment(false, nextPreviewLen >= 3 ? '次の波まで見えてる。うますぎる' : '次の波の仕込みが効いてる', 'super', '🌊');
+      }
+      if (waveLinkBonus) {
+        spawnComment(false, state.setupCarryLen >= 3 ? '先に仕込んだ波をそのまま取り切った。かなり強い' : '次の波を読んで取れた。うまい', 'super', '🌊');
+      }
+      if (crownClutchBonus) {
+        spawnComment(false, 'ここで王冠いける。クラッチ決めたい', 'super', '👑');
+      }
+      if (chainBonus) {
+        spawnComment(false, chainTier >= 4 ? `やばい ${chainTier}連鎖！` : `${chainTier}連鎖きた`, 'super', chainTier >= 4 ? '💥' : '⚡');
+      }
+      state.crownLead = crownTargetScore(state.seed) > 0 && topGapAfter <= 0;
       if (tookCrown) {
         state.crownTakeovers += 1;
         state.crownLead = true;
         state.crownHoldStreak = 0;
-        popText(center.x, center.y - 162, '1位到達!', '#fff4a3', 34);
-        showBigBuzzBanner('1位到達!!');
+        popText(center.x, center.y - 188, '王冠奪取!', '#fff4a3', 28);
+        spawnComment(false, '1位きた！ いま王冠持ってる', 'super', '👑');
+        spawnComment(false, 'その山で抜いた、デカい', 'super', '🏆');
+        say('big', 2.2);
         flashScreen('#fff4a3');
-        addRing(center.x, center.y - 34, '#fff4a3', 34, 320);
-        addRing(center.x, center.y - 34, '#ff5ab1', 64, 380);
-        spawnComment(false, '1位きた！ 王冠獲得！', 'super', '👑');
-        triggerVoiceCue('win', 1, { force:true });
-        sfx('big', 1.7);
+        sfx('big', 1.28);
+      }
+      if (pinBonus) {
+        triggerVoiceCue('big', Math.max(group.length, state.pinMinLen));
+        spawnComment(false, `${state.pinText} それ！`, 'super', state.pinIcon || '📌');
+        if (Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score)) <= 2500 && crownTargetScore(state.seed) > 0) {
+          spawnComment(false, 'あと少しで1位いける', 'super', '👑');
+        }
+        say('big', 1.8);
+        rollPinnedComment(state.clipTime > 0 ? 'clip' : 'normal');
+      }
+      if (clutchBonus) {
+        triggerVoiceCue('big', Math.max(group.length, 4));
+        spawnComment(false, 'うわその返しで流れ戻した', 'super', '🩷');
+        spawnComment(false, 'いまの逆転アツい', 'super', '🔥');
+        say('big', 1.7);
+      }
+      if (chainTier >= 4) {
+        popText(center.x, center.y + 76, `${chainTier} CHAIN!`, '#fff0ff', 24);
+        say('big', 2.4);
+        spawnComment(false, 'うわ連鎖エグい', 'super', '💥');
+        spawnComment(false, '配信の山きた', 'super', '📸');
+        sfx('chain', Math.min(1.75, 1.05 + chainTier * 0.15));
+        triggerVoiceCue('chain', chainTier);
+      } else if (group.length >= 5 || collateral >= 4) {
+        popText(center.x, center.y + 76, 'CLIP! CLIP! CLIP!', '#fff4a3', 20);
+        say('big', 2.2);
+        spawnComment(false, 'うわ今の気持ちいい', 'super', '✨');
+        spawnComment(false, '切り抜き確定', 'super', '📸');
+        spawnComment(false, choice(COMMENT_BANK.super), 'super', '🚀');
+        sfx('big', Math.min(1.4, 1 + group.length * 0.08));
+        if (group.length >= 6 || collateral >= 5) triggerVoiceCue('hype', Math.max(chainTier, 2));
+        else triggerVoiceCue('big', Math.max(group.length, collateral));
+      } else {
+        say('clear', 1.9);
+        spawnComment(false, '今の当たり！', 'hot', '✅');
+        if (state.combo >= 2) spawnComment(false, `COMBO x${state.combo} うまい`, 'hot', '⚡');
+        if (chainTier >= 2) {
+          sfx('chain', Math.min(1.45, 0.92 + chainTier * 0.14));
+          triggerVoiceCue('chain', chainTier);
+        } else {
+          sfx('clear', Math.min(1.2, 0.84 + group.length * 0.08));
+          triggerVoiceCue('clear', group.length);
+        }
       }
 
-      if (chainTier >= 4) {
-        popText(center.x, center.y + 88, `${chainTier} CHAIN!`, '#fff0ff', 24);
-        spawnComment(false, '連鎖きた！', 'super', '💥');
-        triggerVoiceCue('chain', chainTier);
-        sfx('chain', Math.min(1.85, 1.0 + chainTier * 0.18));
-      } else if (state.combo >= 4) {
-        triggerVoiceCue('big', state.combo);
-        sfx('big', Math.min(1.6, 1.0 + state.combo * 0.1));
-      } else {
-        triggerVoiceCue('clear', group.length);
-        sfx('clear', Math.min(1.2, 0.9 + state.combo * 0.08));
-      }
 
       if (mainIndex === state.trendIndex) {
+        const previousTrendIndex = state.trendIndex;
         shiftTrendQueue();
       }
 
-      if (state.fireMode > 0 && !worldBodies().some(body => body.gameType === 'fire')) {
-        state.fireMode = 0;
+
+      if (state.fireMode <= 0 && dom.dangerFog.classList.contains('show')) {
         dom.dangerFog.classList.remove('show');
-        setCaption('大炎上は収まった。まだ立て直せる。', 1.7);
+        setCaption('炎上を押し返した。まだ伸ばせる。', 1.8);
       }
     }
 
     function destroyEngine() {
-
       if (rafId) cancelAnimationFrame(rafId);
       if (render) {
         Render.stop(render);
@@ -3870,7 +2703,7 @@
       state.upcomingTrendQueue = [];
       state.nextTrendIndex = pickTrendExcluding(state.trendIndex);
       state.futureTrendIndex = pickTrendExcluding(state.trendIndex, state.nextTrendIndex);
-      ensureUpcomingTrendQueue(7);
+      ensureUpcomingTrendQueue(6);
       state.trendTimer = trendDuration();
       state.trendWarning = false;
       state.idle = 0;
@@ -3880,7 +2713,6 @@
       state.fireMode = 0;
       state.fireClearCount = 0;
       state.hazardTimer = 4.2;
-      state.buzzItemTimer = 8.8;
       state.showCaptionTimer = 0;
       state.selectedDropIndex = 0;
       state.queue = [0,0,0];
@@ -3933,10 +2765,6 @@
       state.rescueTimer = 0;
       state.boardStatsCache = null;
       state.boardStatsCacheAt = 0;
-      lastTrendForecastSignature = '';
-      lastQueueSignature = '';
-      lastDropSelectorIndex = -1;
-      lastPreviewRenderKey = '';
       state.lastVoiceText = '';
       state.voiceSubtitleTimer = 0;
       state.speechBubbleText = '';
@@ -3958,22 +2786,25 @@
       updateSeedLabels();
     }
 
-    function activateClipTime(reason = 'buzz_item') {
+    function activateClipTime(reason = 'superchat') {
       const fresh = state.clipTime <= 0.05;
       state.clipTime = Math.max(state.clipTime, fresh ? 15 : state.clipTime + 3.5);
       state.clipCooldown = 999;
       if (fresh) state.clipActivations += 1;
-      setCaption(reason === 'buzz_item' ? 'バズりが3つつながって大バズり発動！ しばらくポイント2倍。' : '大バズり中！ いまが最大の見せ場。ポイント2倍。', 2.6);
-      spawnComment(false, reason === 'buzz_item' ? 'バズり連結で大バズり！' : '大バズり継続！', 'super', '✨');
-      triggerVoiceCue('hype', 2, { force:fresh });
+      setCaption(reason === 'superchat' ? 'スパチャを拾って大バズり発動！ いまが最大の見せ場。' : '大バズり中！ いまが最大の見せ場。いまのトレンドをまとめて取って一気に伸ばそう。', 2.6);
+      spawnComment(false, reason === 'superchat' ? 'スパチャの波きた！' : '大バズりきた！', 'super', reason === 'superchat' ? '💰' : '🎬');
+      triggerVoiceCue('hype', 2);
+      spawnComment(false, 'いま切り抜きどころ', 'super', '🚀');
+      say('big', 2.1);
       flashScreen('#ffe37a');
       showBigBuzzBanner('大バズり!!');
       setHyperMix(1);
-      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,216,76,.96)', 18, 7.6);
-      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,47,146,.9)', 12, 6.8);
+      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,216,76,.96)', 22, 8);
+      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,47,146,.9)', 14, 7);
       addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#fff4a3', 24, 260);
       addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#ff5ab1', 38, 320);
-      sfx('ready', 1.12);
+      rollPinnedComment('clip');
+      sfx('ready', 1.0);
     }
 
 
@@ -4056,7 +2887,21 @@
     }
 
     function activateBurst() {
-      return 0;
+      if (!state.active) return;
+      state.buzzReady = false;
+      state.buzz = 0;
+      state.buzzMode = 0;
+      state.buzzActivations += 1;
+      dom.burstBtn.classList.remove('ready');
+      setBurstButtonLabel('default');
+      setAvatarVisual('apology');
+      const clearedHazards = clearAllHazards(true);
+      if (!clearedHazards) {
+        flashScreen('#ffe37a');
+        addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, '#ffe37a', 20, 240);
+      }
+      triggerVoiceCue('apology_fire');
+      say('buzz', 2.4);
     }
 
     function triggerFire(reason = 'bomb') {
@@ -4067,7 +2912,7 @@
       state.hazardTimer = Math.max(state.hazardTimer, 3.6);
       dom.dangerFog.classList.add('show');
       dom.gameShell.classList.add('shake');
-      setCaption(reason === 'bomb_chain' ? '爆弾が3つつながって大炎上。炎上アイテムが盤面に降ってくる。' : '大炎上中。炎上アイテムを巻き込みながら盤面を立て直そう。', 2.2);
+      setCaption(reason === 'bomb' ? '爆弾の近くを消して大炎上。謝罪配信で炎上だけを消せる。' : '大炎上中。謝罪配信で炎上だけを消せる。', 2.2);
       spawnComment(false, 'うわっ、大炎上！！', 'low', '🔥');
       triggerVoiceCue('fire');
       flashScreen('#ff5b73');
@@ -4077,7 +2922,6 @@
       setTimeout(() => dom.gameShell.classList.remove('shake'), 260);
     }
 
-
     function spawnHazard() {
       const boardW = dom.board.clientWidth || boardLogicalRect().width;
       const x = 40 + gameRand() * (boardW - 80);
@@ -4086,48 +2930,22 @@
       Body.setAngularVelocity(body, (gameRand() - 0.5) * 0.14);
       addParticles(x, 48, 'rgba(255,255,255,.88)', 8, 3.8);
       popText(x, 92, '爆弾', '#ffffff', 22);
-      spawnComment(false, '爆弾きた、3つつながると大炎上！', 'low', '💣');
+      spawnComment(false, '爆弾きた、近くを消すと危ない', 'low', '💣');
       playAssetSfx('hazard', 0.74);
     }
 
-    function spawnBuzzItem() {
-      const boardW = dom.board.clientWidth || boardLogicalRect().width;
-      const x = 40 + gameRand() * (boardW - 80);
-      const body = makeBody(x, 44, -1, 'buzz');
-      state.boardStatsCache = null;
-      Body.setAngularVelocity(body, (gameRand() - 0.5) * 0.12);
-      addParticles(x, 48, 'rgba(255,223,110,.94)', 8, 3.8);
-      popText(x, 92, 'バズり', '#fff0a3', 22);
-      spawnComment(false, 'バズりきた、3つつなげると大バズり！', 'super', '✨');
-      playAssetSfx('ready', 0.76);
-      sfx('ready', 0.92);
-    }
-
-
-    function spawnHazardBurst(count = 6, originX = null) {
-      if (!state.active || !engine) return 0;
-      const boardW = dom.board.clientWidth || boardLogicalRect().width;
-      const spawnCount = clamp(Math.round(count || 0), 0, 18);
-      if (spawnCount <= 0) return 0;
-      const centerX = Number.isFinite(originX) ? originX : boardW / 2;
-      const spread = Math.min(boardW * 0.32, 110 + spawnCount * 12);
-      let dropped = 0;
-      for (let i = 0; i < spawnCount; i += 1) {
-        const laneOffset = (rand() - 0.5) * spread;
-        const x = clamp(centerX + laneOffset, 36, boardW - 36);
-        const y = 30 - i * 10;
-        const body = makeBody(x, y, -1, 'fire');
-        Body.setVelocity(body, { x:(rand() - 0.5) * 1.3, y:0.55 + rand() * 0.55 });
-        Body.setAngularVelocity(body, (rand() - 0.5) * 0.18);
-        addParticles(x, Math.max(34, y + 20), 'rgba(255,110,120,.94)', 6, 3.8);
-        addParticles(x, Math.max(34, y + 20), 'rgba(255,196,120,.92)', 4, 3.4);
-        dropped += 1;
+    function spawnHazardBurst(count = 1, centerX = null) {
+      const total = clamp(Math.floor(count || 0), 0, 14);
+      if (!total) return 0;
+      triggerFire('bomb');
+      for (let i = 0; i < total; i++) {
+        const boardW = dom.board.clientWidth || boardLogicalRect().width;
+        const spreadBase = centerX == null ? (40 + gameRand() * (boardW - 80)) : clamp(centerX + (gameRand() - 0.5) * 220, 40, boardW - 40);
+        const body = makeBody(spreadBase, 42 + i * 2, -1, 'fire');
+        Body.setAngularVelocity(body, (gameRand() - 0.5) * 0.16);
       }
-      state.boardStatsCache = null;
-      state.fireMode = Math.max(state.fireMode, 999);
       playAssetSfx('hazard', 0.86);
-      sfx('bad', 0.94);
-      return dropped;
+      return total;
     }
 
     function clearAllHazards(fromBurst = false) {
@@ -4135,46 +2953,44 @@
       const hazards = worldBodies().filter(body => body.gameType === 'fire');
       if (!hazards.length) {
         if (fromBurst) {
-          setCaption('いま消せる大炎上は出ていない。', 1.4);
+          setCaption('いま消す大炎上は出ていない。爆弾はそのまま残る。', 1.4);
           sfx('warn', 0.72);
         }
         return 0;
       }
-      const desired = Math.min(hazards.length, 3 + Math.floor(rand() * 3));
-      const shuffled = hazards.slice().sort(() => rand() - 0.5).slice(0, desired);
       let centerX = 0;
       let centerY = 0;
-      for (const body of shuffled) {
+      for (const body of hazards) {
         centerX += body.position.x;
         centerY += body.position.y;
-        addParticles(body.position.x, body.position.y, 'rgba(255,180,120,.95)', 10, 5.6);
-        addParticles(body.position.x, body.position.y, 'rgba(255,91,115,.92)', 8, 4.8);
+        addParticles(body.position.x, body.position.y, 'rgba(255,180,120,.95)', 12, 6);
+        addParticles(body.position.x, body.position.y, 'rgba(255,91,115,.92)', 10, 5);
         addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
       }
-      centerX /= shuffled.length;
-      centerY /= shuffled.length;
-      hardRemoveBodies(shuffled);
-      if (!worldBodies().some(body => body.gameType === 'fire')) state.fireMode = 0;
-      state.fireCooldown = Math.max(state.fireCooldown || 0, 2.2);
-      state.heat = clamp(state.heat - (12 + shuffled.length * 4), 0, 100);
-      state.craving = clamp(state.craving - (6 + shuffled.length * 1.5), 0, 100);
-      state.tension = clamp(state.tension + 6 + shuffled.length * 2, 0, 100);
-      if (!worldBodies().some(body => body.gameType === 'fire')) dom.dangerFog.classList.remove('show');
+      centerX /= hazards.length;
+      centerY /= hazards.length;
+      hardRemoveBodies(hazards);
+      state.fireMode = 0;
+      state.fireCooldown = Math.max(state.fireCooldown || 0, 2.5);
+      state.heat = clamp(state.heat - (18 + hazards.length * 5), 0, 100);
+      state.craving = clamp(state.craving - (8 + hazards.length * 2), 0, 100);
+      state.tension = clamp(state.tension + 8 + hazards.length * 2.5, 0, 100);
+      state.score += hazards.length * 420;
+      dom.dangerFog.classList.remove('show');
       dom.gameShell.classList.add('shake');
       flashScreen('#ffcf5b');
       addRing(centerX, centerY, '#ffe37a', 34, 320);
       addRing(centerX, centerY, '#ff5b73', 62, 260);
-      popText(centerX, centerY, `火消し x${shuffled.length}`, '#fff0a3', 28);
-      spawnComment(false, `謝罪配信で大炎上を${shuffled.length}個だけ消した！`, 'super', '🧯');
-      setCaption('謝罪配信で大炎上を3〜5個だけ消した。爆弾はそのまま残る。', 2.2);
-      triggerVoiceCue('apology_fire', Math.max(2, shuffled.length));
-      sfx('burst', 1.18);
+      popText(centerX, centerY, `大炎上全消し x${hazards.length}`, '#fff0a3', 28);
+      spawnComment(false, `謝罪配信で大炎上を${hazards.length}個消した！`, 'super', '🧯');
+      setCaption('謝罪配信で大炎上だけを消した。爆弾は盤面に残っている。', 2.2);
+      triggerVoiceCue('apology_fire', Math.max(2, hazards.length));
+      sfx('burst', 1.24);
       setTimeout(() => dom.gameShell.classList.remove('shake'), 320);
-      return shuffled.length;
+      return hazards.length;
     }
 
     function dropAt(clientX) {
-
       if (!state.active || !engine || state.paused) return;
       const info = boardLogicalRect();
       if (clientX < info.left || clientX > info.right) return;
@@ -4212,8 +3028,10 @@
       if (idx2 !== state.trendIndex) {
         state.craving = clamp(state.craving + 1.2, 0, 100);
         state.combo = Math.max(0, state.combo - 1);
+        state.comboTimer = Math.min(state.comboTimer, 2.2);
         if (rand() < 0.08) spawnComment(false, `${CONTENTS[idx2].name}は今の本命ではないかも`, 'low', contentChatIcon(idx2));
       } else {
+        state.comboTimer = Math.max(state.comboTimer, 5.2);
         if (rand() < 0.08) spawnComment(false, `${CONTENTS[idx2].name}、いま欲しいやつ`, 'hot', contentChatIcon(idx2));
       }
       renderPreview();
@@ -4256,8 +3074,8 @@
       dom.burstBtn.classList.remove('ready');
       setBurstButtonLabel('default');
       dom.topDangerLine.classList.toggle('show', state.topDangerTime > 0.45 || state.overfillTime > 0.35);
-      if (dom.streamTimeMini) dom.streamTimeMini.textContent = '';
-      if (dom.streamTimeTop) dom.streamTimeTop.textContent = '';
+      if (dom.streamTimeMini) dom.streamTimeMini.textContent = ''; 
+      if (dom.streamTimeTop) dom.streamTimeTop.textContent = ''; 
       const crownRushActive = topGap > 0 && topGap <= 5200;
       const crownClutchActive = topGap > 0 && topGap <= 1800;
       const previewLen = biggestPreviewLen();
@@ -4266,15 +3084,21 @@
       let eventMiniText = '';
       if (isFeverActive()) eventMiniText = `大バズり中 ${Math.max(1, Math.ceil(state.clipTime))}s`;
       else if (state.fireMode > 0) eventMiniText = '大炎上中';
-      else if (state.chainCount >= 2 && state.chainDecay > 0) eventMiniText = `${state.chainCount}連鎖`; 
+      else if (state.rushWindow > 0) eventMiniText = previewLen >= 2 ? `先読みGO x${previewLen}` : '先読み';
       else if (state.overfillTime > 0.2) eventMiniText = '満杯危険';
-      else eventMiniText = state.crownHoldStreak > 0 ? `王冠防衛 x${state.crownHoldStreak}` : '山場待ち';
-      const crownMini = topGap > 0 ? `1位まで ${fmt(topGap)}` : 'いま1位';
-      dom.eventMini.textContent = `${eventMiniText}｜DAILY #${state.seed}｜${crownMini}`;
+      else if (state.chainCount >= 2 && state.chainDecay > 0) eventMiniText = `${state.chainCount}連鎖`;
+      else if (state.jackChain > 0) eventMiniText = `先読み連勝 x${state.jackChain}`;
+      else if (state.trendWarning && nextPreviewLen >= 3) eventMiniText = `次波READY x${nextPreviewLen}`;
+      else if (state.trendWarning && nextPreviewLen >= 2) eventMiniText = '次波あと1';
+      else if (state.crownHoldStreak > 0) eventMiniText = `王冠防衛 x${state.crownHoldStreak}`;
+      else if (crownClutchActive) eventMiniText = '王冠クラッチ';
+      else if (crownRushActive) eventMiniText = '王冠圏';
+      else eventMiniText = topGap > 0 ? `1位まで ${fmt(topGap)}` : '1位ペース';
+      dom.eventMini.textContent = eventMiniText;
       if (state.showCaptionTimer <= 0 && state.active) {
         let caption = '';
         if (state.clipTime > 0) {
-          caption = `大バズり中。『${currentTrend().name}』を取ってポイント2倍。`;
+          caption = `大バズり中。『${currentTrend().name}』をまとめて取る時間。`;
         } else if (state.rushWindow > 0) {
           caption = previewLen >= 2
             ? `先読みGO。『${currentTrend().name}』あと1つ。`
@@ -4386,11 +3210,6 @@
         spawnHazard();
         state.hazardTimer = 7.4 + rand() * 4.6;
       }
-      state.buzzItemTimer = Math.max(0, state.buzzItemTimer - dt);
-      if (state.buzzItemTimer <= 0 && state.runTime >= 7.2) {
-        spawnBuzzItem();
-        state.buzzItemTimer = 10.2 + rand() * 6.4;
-      }
 
       if (state.scanTimer >= 0.14) {
         state.scanTimer = 0;
@@ -4446,7 +3265,7 @@
       if (state.buzzMode > 0) {
         state.buzzMode -= dt;
         if (state.buzzMode <= 0 && !state.buzzReady) {
-          setCaption('大バズり終了。次の見せ場まで盤面を整えよう。', 1.6);
+          setCaption('火消しの構えは終了。次の謝罪配信ゲージを溜めよう。', 1.6);
         }
       }
 
@@ -4480,12 +3299,14 @@
       if ((state.overfillTime > 1.65 && fullLineCluster) || stats.restedOverfillCount >= 5) {
         state.gameOverReason = 'full';
         finishGame();
+      } else if (state.tension <= 0) {
+        state.gameOverReason = 'tension';
+        finishGame();
       }
     }
 
     function finishGame() {
       if (!state.active || state.finishing) return;
-      if (state.gameOverReason === 'time') state.gameOverReason = 'full';
       state.finishing = true;
       state.active = false;
       cancelAnimationFrame(rafId);
@@ -4493,7 +3314,7 @@
 
       const resultDelay = 700;
       if (dom.gameoverFxVideo) { try { dom.gameoverFxVideo.currentTime = 0; dom.gameoverFxVideo.classList.add('show'); dom.gameoverFxVideo.play().catch(() => {}); } catch(_) {} }
-      const isTimeUp = false;
+      const isTimeUp = state.gameOverReason === 'time';
       const fxColor = isTimeUp ? '#ffe37a' : '#ff5b73';
       flashScreen(fxColor);
       dom.gameShell.classList.add('shake');
@@ -4696,7 +3517,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     renderDailyBoard(dom.dailyBoard);
     renderDailyBoard(dom.resultDailyBoard);
     setSelectedDropIndex(0, { silent:true });
-    ensureUpcomingTrendQueue(7);
+    ensureUpcomingTrendQueue(6);
     refreshTrendForecastUi();
     refreshQueue();
     renderPreview();
@@ -4704,6 +3525,4 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
   })();
   
   
-  </script>
-</body>
-</html>
+  
