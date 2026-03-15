@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>限界メルトダウン（Limit Meltdown）</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#09010d">
+  <meta name="theme-color" content="#2a0a30">
   <meta property="og:title" content="限界メルトダウン（Limit Meltdown）">
   <meta property="og:description" content="今バズる話題をつなぎ、次の波を先読みして王冠ラインを超える。配信向けの物理演算トレンドパズル。">
   <meta property="og:image" content="assets/img/ogp_image.png">
@@ -360,7 +360,9 @@
     .howto-note{margin-top:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;line-height:1.7;color:#e8def5;font-size:.86rem}
     .howto-note strong{color:#fff}
     #big-buzz-banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:32;opacity:0}
-    #big-buzz-banner .core{max-width:min(92%, 420px);padding:18px 20px;border-radius:32px;background:radial-gradient(circle at center, rgba(255,216,76,.45), rgba(255,47,146,.28) 48%, rgba(8,4,14,0) 76%);font-family:'Orbitron',sans-serif;font-size:clamp(2.2rem,11vw,4.4rem);font-weight:900;letter-spacing:.01em;line-height:1;white-space:nowrap;text-align:center;color:#fff4a3;text-shadow:0 0 22px rgba(255,216,76,.95),0 0 58px rgba(255,47,146,.78),0 0 96px rgba(255,255,255,.3);transform:scale(.8) rotate(-1deg)}
+    #big-buzz-banner .core{max-width:min(94%, 500px);padding:18px 20px 20px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,216,76,.45), rgba(255,47,146,.28) 48%, rgba(8,4,14,0) 76%);display:grid;justify-items:center;gap:8px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff4a3;text-shadow:0 0 22px rgba(255,216,76,.95),0 0 58px rgba(255,47,146,.78),0 0 96px rgba(255,255,255,.3);transform:scale(.8) rotate(-1deg)}
+    #big-buzz-banner .title{font-size:clamp(2.2rem,11vw,4.4rem);font-weight:900;letter-spacing:.01em;line-height:1;white-space:nowrap}
+    #big-buzz-banner .sub{display:inline-flex;align-items:center;justify-content:center;min-width:150px;padding:8px 18px;border-radius:999px;background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));border:1px solid rgba(255,248,190,.45);font-size:clamp(.92rem,4vw,1.35rem);font-weight:900;letter-spacing:.08em;color:#fffef6;box-shadow:0 0 18px rgba(255,227,122,.32)}
     #big-buzz-banner.show{animation:bigBuzzBurst .96s cubic-bezier(.19,.89,.24,1)}
     #big-buzz-banner.show .core{animation:bigBuzzPulse .96s cubic-bezier(.19,.89,.24,1)}
     @keyframes bigBuzzBurst{0%{opacity:0}16%{opacity:1}72%{opacity:1}100%{opacity:0}}
@@ -670,7 +672,8 @@
     .item-chip.buzz{background:radial-gradient(circle at 32% 24%, rgba(255,249,210,.98), rgba(255,232,112,.94) 24%, rgba(255,197,38,.88) 50%, rgba(116,74,0,.98) 82%) !important;border-color:rgba(255,223,110,.94) !important;box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 24px rgba(255,255,255,.18), 0 0 22px rgba(255,210,72,.34) !important}
     .item-chip.buzz::after{content:'✨' !important;background:rgba(255,215,90,.24) !important}
     #fire-banner,#superchat-banner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.88);pointer-events:none;z-index:34;opacity:0}
-    #fire-banner .core{min-width:320px;padding:22px 28px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,210,210,.26), rgba(255,70,70,.38) 44%, rgba(255,24,90,.22) 66%, rgba(8,4,14,0) 80%);font-family:'Orbitron',sans-serif;font-size:clamp(2.4rem,11vw,4.5rem);font-weight:900;letter-spacing:.02em;color:#fff0f0;text-shadow:0 0 18px rgba(255,255,255,.62),0 0 34px rgba(255,70,90,.9),0 0 72px rgba(255,44,44,.6);text-align:center;white-space:nowrap}
+    #fire-banner .core{min-width:320px;padding:22px 28px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,210,210,.26), rgba(255,70,70,.38) 44%, rgba(255,24,90,.22) 66%, rgba(8,4,14,0) 80%);display:grid;justify-items:center;gap:6px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff0f0;text-shadow:0 0 18px rgba(255,255,255,.62),0 0 34px rgba(255,70,90,.9),0 0 72px rgba(255,44,44,.6)}
+    #fire-banner .title{font-size:clamp(2.4rem,11vw,4.5rem);font-weight:900;letter-spacing:.02em;white-space:nowrap}
     #fire-banner.show{animation:fireBurst 1.04s cubic-bezier(.19,.89,.24,1)}
     #superchat-banner .card{min-width:240px;max-width:430px;padding:10px 14px;border-radius:22px;background:rgba(18,10,30,.42);border:3px solid rgba(142,248,255,.78);box-shadow:0 14px 34px rgba(0,0,0,.28);display:grid;gap:4px;justify-items:start;backdrop-filter:blur(3px)}
     #superchat-banner .amount{font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;letter-spacing:.02em;color:#fff}
@@ -1272,23 +1275,242 @@
       opacity:0 !important;
     }
 
+
+    /* --- v62 kawaii pink + aqua glam pass --- */
+    :root{
+      --pink:#ff5db7;
+      --pink2:#ff92d9;
+      --cyan:#78efff;
+      --gold:#ffe47f;
+      --green:#7fffc6;
+      --danger:#ff5f97;
+      --bg:#120313;
+      --glass:rgba(36,12,42,.78);
+      --glass-2:rgba(54,17,60,.58);
+      --text:#fff8ff;
+    }
+    html,body{
+      background:
+        radial-gradient(circle at 12% 10%, rgba(255,118,198,.18), transparent 26%),
+        radial-gradient(circle at 88% 14%, rgba(120,239,255,.14), transparent 22%),
+        linear-gradient(180deg, #19051a 0%, #100211 52%, #08010a 100%) !important;
+    }
+    body::after{
+      content:'';
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:-1;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(255,255,255,.08), transparent 10%),
+        radial-gradient(circle at 78% 12%, rgba(120,239,255,.08), transparent 12%),
+        radial-gradient(circle at 50% 100%, rgba(255,93,183,.12), transparent 34%);
+      mix-blend-mode:screen;
+    }
+    .panel,
+    .hud-chip,
+    #caption-box,
+    #board-combo-strip,
+    #trend-shift-banner,
+    .daily-board-wrap,
+    .result-card,
+    .intro-chip,
+    .name-box,
+    .rank-row,
+    #pause-overlay .pause-card{
+      background:linear-gradient(180deg, rgba(42,10,48,.86), rgba(20,6,28,.86)) !important;
+      border-color:rgba(120,239,255,.22) !important;
+      box-shadow:0 18px 46px rgba(0,0,0,.34), 0 0 0 1px rgba(255,255,255,.03), 0 0 26px rgba(255,93,183,.12) !important;
+      backdrop-filter:blur(16px) saturate(1.08);
+    }
+    #start-screen .title-panel,
+    #result-screen .panel,
+    #howto-screen .panel{
+      background:
+        radial-gradient(circle at top right, rgba(120,239,255,.12), transparent 26%),
+        radial-gradient(circle at top left, rgba(255,93,183,.18), transparent 30%),
+        linear-gradient(180deg, rgba(39,10,45,.88), rgba(18,5,27,.90)) !important;
+    }
+    .btn-main{
+      background:linear-gradient(135deg, #ff5db7 0%, #ff8fd6 42%, #9c5bff 100%) !important;
+      box-shadow:0 10px 28px rgba(255,93,183,.32), 0 0 22px rgba(120,239,255,.14) !important;
+    }
+    .btn-sub,
+    .play-mini-btn,
+    .drop-pick-btn{
+      background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06)) !important;
+      border:1px solid rgba(120,239,255,.24) !important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.16), 0 8px 18px rgba(0,0,0,.2), 0 0 18px rgba(255,93,183,.08) !important;
+    }
+    .btn-sub:hover,
+    .play-mini-btn:hover,
+    .drop-pick-btn:hover{
+      transform:translateY(-1px);
+      filter:saturate(1.08) brightness(1.04);
+    }
+    .drop-pick-btn.active{
+      background:linear-gradient(180deg, rgba(255,150,216,.98), rgba(109,238,255,.78)) !important;
+      box-shadow:0 0 0 1px rgba(255,255,255,.28), 0 0 20px rgba(255,93,183,.24), 0 10px 20px rgba(0,0,0,.22) !important;
+    }
+    .drop-pick-btn.active::before{border-color:rgba(255,255,255,.72) !important;}
+    .mini-label,
+    .queue-title,
+    .result-card .label,
+    .daily-title,
+    .name-box span{color:#ead8ff !important;}
+    .title-main{
+      color:#ff7cc9 !important;
+      text-shadow:0 0 18px rgba(255,93,183,.82), 0 0 36px rgba(120,239,255,.18) !important;
+    }
+    .title-sub,
+    #trend-timer,
+    #next-switch-copy,
+    #stream-time-mini{color:#86f1ff !important;}
+    #trend-progress,
+    .meter,
+    #crown-track{
+      background:rgba(255,255,255,.10) !important;
+      border-color:rgba(255,255,255,.08) !important;
+    }
+    #crown-fill{
+      background:linear-gradient(90deg,#ff95d9,#fff0ff,#86f1ff) !important;
+      box-shadow:0 0 16px rgba(255,93,183,.38) !important;
+    }
+    #tension-fill{
+      background:linear-gradient(90deg,#7deeff,#baf8ff) !important;
+      box-shadow:0 0 16px rgba(120,239,255,.45) !important;
+    }
+    #craving-fill{
+      background:linear-gradient(90deg,#ff7dc8,#ff5f97) !important;
+      box-shadow:0 0 16px rgba(255,93,183,.42) !important;
+    }
+    #heat-fill{
+      background:linear-gradient(90deg,#ff8ab8,#ff709e) !important;
+      box-shadow:0 0 16px rgba(255,112,158,.40) !important;
+    }
+    #buzz-fill{
+      background:linear-gradient(90deg,#ff9ee0,#86f1ff) !important;
+      box-shadow:0 0 18px rgba(120,239,255,.36) !important;
+    }
+    #game-shell::before{
+      background:
+        radial-gradient(circle at 0% 0%, rgba(255,111,199,.20), transparent 22%),
+        radial-gradient(circle at 100% 0%, rgba(120,239,255,.16), transparent 20%),
+        radial-gradient(circle at 50% 100%, rgba(255,143,214,.12), transparent 24%) !important;
+      opacity:1 !important;
+    }
+    #board-glass{
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)) !important;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.04) !important;
+    }
+    #speech-bubble{
+      background:linear-gradient(180deg, rgba(255,164,223,.24), rgba(120,239,255,.14)) !important;
+      border-color:rgba(255,255,255,.34) !important;
+      box-shadow:0 16px 30px rgba(22,5,27,.26), 0 0 22px rgba(255,93,183,.12) !important;
+    }
+    #speech-bubble::after{border-bottom-color:rgba(255,164,223,.24) !important;}
+    #big-buzz-banner .core{
+      background:radial-gradient(circle at center, rgba(255,183,231,.48), rgba(255,93,183,.34) 44%, rgba(120,239,255,.22) 68%, rgba(8,4,14,0) 82%) !important;
+      color:#fff7ff !important;
+      text-shadow:0 0 22px rgba(255,255,255,.72), 0 0 48px rgba(255,93,183,.94), 0 0 90px rgba(120,239,255,.34) !important;
+    }
+    #big-buzz-banner .sub{
+      background:linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.10)) !important;
+      border-color:rgba(255,255,255,.48) !important;
+      box-shadow:0 0 18px rgba(255,93,183,.24) !important;
+    }
+    #fire-banner .core{
+      background:radial-gradient(circle at center, rgba(255,221,236,.20), rgba(255,95,151,.42) 42%, rgba(255,52,106,.24) 68%, rgba(8,4,14,0) 82%) !important;
+      text-shadow:0 0 18px rgba(255,255,255,.52), 0 0 36px rgba(255,95,151,.88), 0 0 72px rgba(255,52,106,.52) !important;
+    }
+    #game-screen.bigbuzz #board-glass{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)) !important;
+    }
+    #board-bg-video-hype,
+    #bg-video-hype,
+    #bg-video{
+      will-change:opacity,transform;
+      transform:translateZ(0);
+      backface-visibility:hidden;
+      -webkit-backface-visibility:hidden;
+    }
+
+    body.mobile-lowpower .panel,
+    body.mobile-lowpower .hud-chip,
+    body.mobile-lowpower #caption-box,
+    body.mobile-lowpower #speech-bubble,
+    body.mobile-lowpower #superchat-banner .card,
+    body.mobile-lowpower .result-card,
+    body.mobile-lowpower .daily-board-wrap,
+    body.mobile-lowpower #pause-overlay .pause-card{
+      backdrop-filter:none !important;
+      box-shadow:0 10px 24px rgba(0,0,0,.24), 0 0 0 1px rgba(255,255,255,.03) !important;
+    }
+    body.mobile-lowpower #board-glass{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)) !important;
+      box-shadow:none !important;
+    }
+    body.mobile-lowpower .item-chip{
+      border-width:1px !important;
+      box-shadow:0 2px 7px rgba(0,0,0,.20) !important;
+      filter:none !important;
+    }
+    body.mobile-lowpower .item-chip img,
+    body.mobile-lowpower #preview-item,
+    body.mobile-lowpower .drop-pick-btn img,
+    body.mobile-lowpower #trend-thumb,
+    body.mobile-lowpower .tiny-stack img,
+    body.mobile-lowpower .future-stack img,
+    body.mobile-lowpower .trend-shift-badge img{
+      filter:none !important;
+    }
+    body.mobile-lowpower .item-chip.trend,
+    body.mobile-lowpower .item-chip.ready,
+    body.mobile-lowpower .item-chip.near,
+    body.mobile-lowpower .item-chip.forecast,
+    body.mobile-lowpower .item-chip.fire,
+    body.mobile-lowpower .item-chip.buzz,
+    body.mobile-lowpower .item-chip.shift-glow{
+      box-shadow:0 3px 9px rgba(0,0,0,.22) !important;
+    }
+    body.mobile-lowpower .item-chip.pending-clear{
+      animation:none !important;
+      filter:none !important;
+      box-shadow:0 3px 10px rgba(0,0,0,.22) !important;
+    }
+    body.mobile-lowpower #big-buzz-banner .core,
+    body.mobile-lowpower #fire-banner .core{
+      text-shadow:0 0 10px rgba(255,255,255,.40), 0 0 20px rgba(255,93,183,.32) !important;
+    }
+    body.mobile-lowpower #superchat-banner .card{
+      min-width:220px;
+      max-width:340px;
+    }
+    body.mobile-lowpower .board-character-layer,
+    body.mobile-lowpower #bg-video,
+    body.mobile-lowpower #bg-video-hype,
+    body.mobile-lowpower #board-bg-video-hype{
+      filter:none !important;
+    }
+
+
   </style>
 </head>
 <body>
   <div id="bg-container">
-    <video id="bg-video" src="assets/bg/bg_cyber.mp4" muted loop playsinline autoplay preload="auto"></video>
-    <video id="bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline preload="none"></video>
+    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" data-mobile-src="assets/bg/bg_cyber_mobile.mp4" muted loop playsinline autoplay preload="metadata"></video>
+    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" data-mobile-src="assets/bg/bg_bigbuzz_loop_mobile.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
 
-  <audio id="audio-bgm-lofi" src="assets/audio/bgm_lofi.wav" loop preload="auto"></audio>
-  <audio id="audio-bgm-hyper" src="assets/audio/bgm_hyper.wav" loop preload="metadata"></audio>
-  <audio id="audio-merge" src="assets/audio/se_clear_small_01.wav" preload="auto"></audio>
-  <audio id="voice-start" src="assets/audio/voice_mc_start_01.wav" preload="auto"></audio>
-  <audio id="voice-alert" src="assets/audio/voice_mc_fire_01.wav" preload="auto"></audio>
-  <audio id="voice-win" src="assets/audio/voice_mc_win_01.wav" preload="auto"></audio>
-  <audio id="voice-lose" src="assets/audio/voice_mc_lose_01.wav" preload="auto"></audio>
+  <audio id="audio-bgm-lofi" src="assets/audio/bgm_lofi.m4a" loop preload="metadata"></audio>
+  <audio id="audio-bgm-hyper" src="assets/audio/bgm_hyper.m4a" loop preload="metadata"></audio>
+  <audio id="audio-merge" src="assets/audio/se_clear_small_01.m4a" preload="metadata"></audio>
+  <audio id="voice-start" src="assets/audio/voice_mc_start_01.m4a" preload="metadata"></audio>
+  <audio id="voice-alert" src="assets/audio/voice_mc_fire_01.m4a" preload="metadata"></audio>
+  <audio id="voice-win" src="assets/audio/voice_mc_win_01.m4a" preload="metadata"></audio>
+  <audio id="voice-lose" src="assets/audio/voice_mc_lose_01.m4a" preload="metadata"></audio>
 
   <div id="start-screen" class="screen" data-stage-size="1206x2144">
     <div class="panel panel-mobile title-panel">
@@ -1321,7 +1543,7 @@
     <div id="game-shell">
       <div id="board-wrap">
         <div id="game-board">
-          <video id="board-bg-video-hype" src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline preload="none"></video>
+          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" data-mobile-src="assets/bg/bg_bigbuzz_loop_mobile.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
           <div id="board-grid"></div>
           <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
           <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
@@ -1340,10 +1562,10 @@
           <div id="drop-guide"></div>
           <div id="preview-ring" class="item-chip preview-token" data-emoji="💬"><img id="preview-item" src="assets/img/item_1.png" alt="next item"></div>
           <div id="board-glass"></div>
-          <div id="big-buzz-banner" aria-hidden="true"><div class="core">大バズり!!</div></div>
-          <div id="fire-banner" aria-hidden="true"><div class="core">大炎上！！</div></div>
+          <div id="big-buzz-banner" aria-hidden="true"><div class="core"><div class="title">大バズリ!!</div><div class="sub">ポイント×２</div></div></div>
+          <div id="fire-banner" aria-hidden="true"><div class="core"><div class="title">大炎上!!</div></div></div>
           <div id="superchat-banner" aria-hidden="true"><div class="card"><div class="amount">+0</div><div class="message">スパチャありがとうございます！</div></div></div>
-          <video id="gameover-fx-video" src="assets/bg/overlay_gameover_glitch.mp4" playsinline muted preload="auto"></video>
+          <video id="gameover-fx-video" src="assets/bg/overlay_gameover_glitch.mp4" playsinline muted preload="metadata"></video>
         </div>
       </div>
 
@@ -1572,6 +1794,7 @@
   </div>
 
   <script>
+
   (() => {
     const { Engine, Render, Runner, Bodies, Composite, Events, Body, Sleeping } = Matter;
 
@@ -2131,9 +2354,13 @@
     let bigBuzzBannerTimer = 0;
     let lastHyperBgmActive = false;
     let avatarVisualFile = 'char_normal.png';
+    const avatarVariantCursor = Object.create(null);
     let pendingAvatarMood = 'normal';
     let pendingAvatarMoodSince = 0;
     let boardCharacterSwapToken = 0;
+    let avatarLockUntil = 0;
+    let avatarLockMood = 'normal';
+    let lastBigBuzzVisualActive = false;
     let warningVoiceLatched = false;
     let topVoiceLatched = false;
     let focusVoiceCooldownUntil = 0;
@@ -2258,7 +2485,10 @@
       finishing:false,
       lastClearAt:0,
       lastContentClearAt:0,
-      chainSuppressUntil:0
+      chainSuppressUntil:0,
+      fxNeedsClear:false,
+      backgroundWatchdogTimer:0,
+      paused:false
     };
 
     function resetChainState() {
@@ -2496,14 +2726,168 @@
 
     const BOARD_BODY_ITEM_SCALE = 1.3248;
     const UNIFIED_BODY_RADIUS = Math.round(31 * BOARD_BODY_ITEM_SCALE);
-    const LIGHT_MODE_SCAN_INTERVAL = 0.28;
-    const LIGHT_MODE_VISUAL_INTERVAL = 1 / 45;
-    const LIGHT_MODE_UI_INTERVAL = 0.28;
-    const LIGHT_MODE_CLEANUP_INTERVAL = 0.82;
-    const LIGHT_MODE_RESCUE_INTERVAL = 0.92;
-    const LIGHT_MODE_BOARD_STATS_CACHE_MS = 520;
-    const LIGHT_MODE_PARTICLE_BUDGET = 8;
-    const LIGHT_MODE_PARTICLE_SCALE = 0.12;
+    const PERF_PRESET_DEFAULT = Object.freeze({
+      mobileLowPower:false,
+      physicsFps:60,
+      runnerMaxUpdates:2,
+      scanInterval:0.28,
+      visualInterval:1 / 45,
+      uiInterval:0.28,
+      cleanupInterval:0.82,
+      rescueInterval:0.92,
+      boardStatsCacheMs:520,
+      particleBudget:8,
+      particleScale:0.12,
+      particleFadeRate:1.6,
+      particleLife:1,
+      particleSizeScale:1,
+      ringBudget:14,
+      minorRingThreshold:0,
+      majorRingThreshold:86,
+      popTextMax:6,
+      popTextMinGapMs:0,
+      popTextScale:1,
+      commentCooldownScale:1,
+      commentIntervalScale:1,
+      commentDropChance:0,
+      commentLaneMax:3,
+      specialCommentLaneMax:2,
+      superchatMinGapMs:1600,
+      videoPreload:'auto',
+      transformPositionThreshold:0.18,
+      transformAngleThreshold:0.01,
+      motionThreshold:0.03,
+      motionAngularThreshold:0.015,
+      newBodyVisualMs:380,
+      backgroundWatchdogInterval:1.8,
+      bgmNormalVolume:0.34,
+      bgmHyperVolume:0.42
+    });
+    const PERF_PRESET_MOBILE = Object.freeze({
+      mobileLowPower:true,
+      physicsFps:30,
+      runnerMaxUpdates:1,
+      scanInterval:0.33,
+      visualInterval:1 / 30,
+      uiInterval:0.36,
+      cleanupInterval:1.0,
+      rescueInterval:1.08,
+      boardStatsCacheMs:780,
+      particleBudget:4,
+      particleScale:0.07,
+      particleFadeRate:2.15,
+      particleLife:0.72,
+      particleSizeScale:0.78,
+      ringBudget:5,
+      minorRingThreshold:34,
+      majorRingThreshold:86,
+      popTextMax:3,
+      popTextMinGapMs:120,
+      popTextScale:0.9,
+      commentCooldownScale:1.45,
+      commentIntervalScale:1.28,
+      commentDropChance:0.28,
+      commentLaneMax:2,
+      specialCommentLaneMax:1,
+      superchatMinGapMs:5200,
+      videoPreload:'metadata',
+      transformPositionThreshold:0.52,
+      transformAngleThreshold:0.03,
+      motionThreshold:0.06,
+      motionAngularThreshold:0.03,
+      newBodyVisualMs:280,
+      backgroundWatchdogInterval:2.0,
+      bgmNormalVolume:0.28,
+      bgmHyperVolume:0.34
+    });
+    let perfSettings = { ...PERF_PRESET_DEFAULT };
+    let titleBackgroundActive = true;
+    let lastBackgroundMode = 'boot';
+    let viewportResizeTimer = 0;
+    let appHeightRaf = 0;
+    let lastViewportWidth = 0;
+    let lastViewportHeight = 0;
+    let activePopTextCount = 0;
+    let lastPopTextAt = 0;
+    let lastSuperchatBannerAt = 0;
+    let pauseRequestedByVisibility = false;
+
+    function detectPerformanceProfile() {
+      const viewportW = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      const viewportH = Math.max(window.visualViewport?.height || 0, document.documentElement.clientHeight || 0, window.innerHeight || 0);
+      const coarsePointer = !!window.matchMedia?.('(pointer: coarse)').matches;
+      const reducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const ua = navigator.userAgent || '';
+      const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+      const hw = navigator.hardwareConcurrency || 4;
+      const smallViewport = Math.max(viewportW, viewportH) <= 1400 || Math.min(viewportW, viewportH) <= 860;
+      const mobileLowPower = reducedMotion || (coarsePointer && (mobileUa || smallViewport || hw <= 8));
+      return mobileLowPower ? { ...PERF_PRESET_MOBILE } : { ...PERF_PRESET_DEFAULT };
+    }
+
+    function resolveAudioAsset(path) {
+      return String(path || '').replace(/\.wav(\?.*)?$/i, '.m4a$1');
+    }
+
+    function normalizeAudioKey(path) {
+      return String(path || '').split('/').pop().replace(/\.[^.]+$/u, '');
+    }
+
+    function resolveVideoAsset(video) {
+      if (!video) return '';
+      const base = video.dataset.src || video.getAttribute('src') || '';
+      const mobile = video.dataset.mobileSrc || base;
+      return perfSettings.mobileLowPower ? mobile : base;
+    }
+
+    function applyElementSource(media, src, preload = 'metadata') {
+      if (!media || !src) return false;
+      const current = media.dataset.assignedSrc || media.getAttribute('src') || '';
+      try { media.preload = preload; } catch (_) {}
+      if (current === src) return false;
+      try { media.pause?.(); } catch (_) {}
+      media.setAttribute('src', src);
+      media.dataset.assignedSrc = src;
+      try { media.load?.(); } catch (_) {}
+      return true;
+    }
+
+    function applyMediaProfile() {
+      applyElementSource(dom.bgVideo, resolveVideoAsset(dom.bgVideo), perfSettings.videoPreload);
+      applyElementSource(dom.bgVideoHype, resolveVideoAsset(dom.bgVideoHype), perfSettings.videoPreload);
+      applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), perfSettings.videoPreload);
+      [dom.bgmNormal, dom.bgmHyper, dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(audio => {
+        if (!audio) return;
+        const desired = resolveAudioAsset(audio.getAttribute('src') || audio.dataset.assignedSrc || '');
+        if (desired) applyElementSource(audio, desired, 'metadata');
+      });
+    }
+
+    function configureRunnerPerformance() {
+      if (!runner) return;
+      try {
+        runner.delta = 1000 / Math.max(24, perfSettings.physicsFps || 60);
+        runner.maxUpdates = perfSettings.runnerMaxUpdates || 1;
+      } catch (_) {}
+    }
+
+    function applyPerformanceProfile() {
+      const next = detectPerformanceProfile();
+      const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
+      perfSettings = next;
+      document.body.classList.toggle('mobile-lowpower', !!perfSettings.mobileLowPower);
+      applyMediaProfile();
+      configureRunnerPerformance();
+      return changed;
+    }
+
+    function scheduleAppHeightRefresh(delay = 140) {
+      clearTimeout(viewportResizeTimer);
+      viewportResizeTimer = setTimeout(() => {
+        cancelAnimationFrame(appHeightRaf);
+        appHeightRaf = requestAnimationFrame(() => applyAppHeight(false));
+      }, delay);
+    }
     function contentBodyRadius(index, specialType = false) {
       return UNIFIED_BODY_RADIUS;
     }
@@ -2883,24 +3267,26 @@
       return `rgba(${r},${g},${b},${alpha})`;
     }
 
-    function setAvatarVisual(key = 'normal') {
+    function setAvatarVisual(key = 'normal', opts = {}) {
       const moodMap = { apology:'apology', win:'win' };
       const lookup = moodMap[key] || key;
       const now = performance.now();
-      if (state.avatarVisualMood === lookup && pendingAvatarMood === lookup) return;
-      if (pendingAvatarMood !== lookup) {
+      const force = !!opts.force;
+      const cycle = !!opts.cycle;
+      if (!force && state.avatarVisualMood === lookup && pendingAvatarMood === lookup) return;
+      if (pendingAvatarMood !== lookup || force) {
         pendingAvatarMood = lookup;
         pendingAvatarMoodSince = now;
       }
-      const instantSwap = lookup === 'apology' || lookup === 'win' || lookup === 'panic' || lookup === 'yami';
+      const instantSwap = force || lookup === 'apology' || lookup === 'win' || lookup === 'panic' || lookup === 'yami';
       if (!instantSwap && state.avatarVisualMood && state.avatarVisualMood !== lookup && (now - pendingAvatarMoodSince) < 120) {
         state.avatarMood = lookup;
         return;
       }
-      const pool = avatarVariants[lookup] || avatarVariants.normal;
+      const pool = (avatarVariants[lookup] || avatarVariants.normal).filter(file => !missingAvatarFiles.has(file));
       state.avatarMood = lookup;
       const applyAvatarSrc = (el, file, nextSrc) => {
-        if (!el || avatarVisualFile === file || el.dataset.file === file) return;
+        if (!el || (!force && avatarVisualFile === file && el.dataset.file === file)) return;
         el.decoding = 'sync';
         el.loading = 'eager';
         el.style.aspectRatio = '1 / 1';
@@ -2909,27 +3295,40 @@
         el.dataset.file = file;
         el.src = nextSrc;
       };
-      for (const file of pool) {
-        if (missingAvatarFiles.has(file)) continue;
+      const readyPool = pool.filter(file => {
+        const cached = preloadAvatarFile(file);
+        return !!(cached && cached.complete && cached.naturalWidth > 0);
+      });
+      const source = readyPool.length ? readyPool : pool;
+      if (source.length) {
+        let file = source[0];
+        if (cycle && source.length > 1) {
+          const base = typeof avatarVariantCursor[lookup] === 'number' ? avatarVariantCursor[lookup] : -1;
+          let idx = (base + 1) % source.length;
+          if (source[idx] === avatarVisualFile && source.length > 1) idx = (idx + 1) % source.length;
+          avatarVariantCursor[lookup] = idx;
+          file = source[idx];
+        } else {
+          const currentIdx = source.indexOf(avatarVisualFile);
+          file = currentIdx >= 0 ? source[currentIdx] : source[0];
+        }
         const cached = preloadAvatarFile(file);
         const nextSrc = `assets/img/${file}`;
-        const ready = !!(cached && cached.complete && cached.naturalWidth > 0);
-        if (!ready) {
-          cached?.addEventListener?.('load', () => {
-            if (state.avatarMood === lookup) setAvatarVisual(lookup);
-          }, { once:true });
-          continue;
-        }
-        Promise.resolve(cached?.decode?.()).catch(() => {}).finally(() => {
-          if (state.avatarMood !== lookup) return;
+        const applyReady = () => {
+          if (state.avatarMood !== lookup && !force) return;
           requestAnimationFrame(() => {
-            if (state.avatarMood !== lookup) return;
+            if (state.avatarMood !== lookup && !force) return;
             applyAvatarSrc(dom.avatar, file, nextSrc);
             swapBoardCharacter(file, nextSrc);
             avatarVisualFile = file;
             state.avatarVisualMood = lookup;
           });
-        });
+        };
+        if (cached && cached.complete && cached.naturalWidth > 0) {
+          Promise.resolve(cached.decode?.()).catch(() => {}).finally(applyReady);
+          return;
+        }
+        cached?.addEventListener?.('load', applyReady, { once:true });
         return;
       }
       requestAnimationFrame(() => {
@@ -3035,15 +3434,13 @@
         bodies.forEach(pushBody);
       } else {
         state.visualDirtyIds?.forEach(id => pushBody(bodyById(id)));
-        for (const body of worldContentBodiesByIndex(state.trendIndex)) pushBody(body);
-        for (const body of worldContentBodiesByIndex(state.nextTrendIndex)) pushBody(body);
         state.visualPreviewIds?.forEach(id => pushBody(bodyById(id)));
         state.visualNextPreviewIds?.forEach(id => pushBody(bodyById(id)));
         state.visualGlowIds?.forEach(id => pushBody(bodyById(id)));
         for (const body of bodies) {
           const age = now - (body.spawnAt || 0);
-          const moving = !body.isSleeping || body.speed > 0.03 || Math.abs(body.velocity?.x || 0) > 0.03 || Math.abs(body.velocity?.y || 0) > 0.03 || Math.abs(body.angularVelocity || 0) > 0.015;
-          if (age < 380 || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
+          const moving = !body.isSleeping || body.speed > perfSettings.motionThreshold || Math.abs(body.velocity?.x || 0) > perfSettings.motionThreshold || Math.abs(body.velocity?.y || 0) > perfSettings.motionThreshold || Math.abs(body.angularVelocity || 0) > perfSettings.motionAngularThreshold;
+          if (age < perfSettings.newBodyVisualMs || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
         }
       }
 
@@ -3094,11 +3491,9 @@
         const drawX = clamp(body.position.x, safeRadius, boardW - safeRadius);
         const drawY = clamp(body.position.y, safeRadius, boardH - safeRadius);
         const scale = trendBody ? 1.06 : (forecastReady ? 1.03 : 1);
-        const transformValue = `translate3d(${Math.round((drawX - diameter / 2) * 10) / 10}px, ${Math.round((drawY - diameter / 2) * 10) / 10}px, 0) rotate(${Math.round((body.angle || 0) * 100) / 100}rad) scale(${scale})`;
-        if (node._transform !== transformValue) {
-          node._transform = transformValue;
-          node.style.transform = transformValue;
-        }
+        const nextDrawX = Math.round((drawX - diameter / 2) * 10) / 10;
+        const nextDrawY = Math.round((drawY - diameter / 2) * 10) / 10;
+        const nextAngle = Math.round((body.angle || 0) * 100) / 100;
 
         const className = [
           'item-chip',
@@ -3118,14 +3513,34 @@
         if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
         node.hidden = false;
         const zValue = String(100 + Math.round(body.position.y * 10) + (body.id % 10));
-        if (node._zIndex !== zValue) {
-          node._zIndex = zValue;
-          node.style.zIndex = zValue;
-        }
         const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
-        if (node._filter !== filterValue) {
-          node._filter = filterValue;
-          node.style.filter = filterValue;
+        const canSkipTransform = !!node._transform && !state.forceFullVisualSync
+          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < perfSettings.transformPositionThreshold
+          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < perfSettings.transformPositionThreshold
+          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < perfSettings.transformAngleThreshold
+          && (node._drawScale ?? scale) === scale
+          && node.className === className
+          && node._zIndex === zValue
+          && node._filter === filterValue
+          && body.isSleeping;
+        if (!canSkipTransform) {
+          const transformValue = `translate3d(${nextDrawX}px, ${nextDrawY}px, 0) rotate(${nextAngle}rad) scale(${scale})`;
+          if (node._transform !== transformValue) {
+            node._transform = transformValue;
+            node.style.transform = transformValue;
+          }
+          node._drawX = nextDrawX;
+          node._drawY = nextDrawY;
+          node._drawAngle = nextAngle;
+          node._drawScale = scale;
+          if (node._zIndex !== zValue) {
+            node._zIndex = zValue;
+            node.style.zIndex = zValue;
+          }
+          if (node._filter !== filterValue) {
+            node._filter = filterValue;
+            node.style.filter = filterValue;
+          }
         }
 
         body.plugin = body.plugin || {};
@@ -3147,9 +3562,13 @@
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
 
-    function applyAppHeight() {
+    function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
       const viewportHeight = Math.max(window.visualViewport?.height || 0, document.documentElement.clientHeight || 0, window.innerHeight || 0);
+      if (!force && Math.abs(viewportWidth - lastViewportWidth) < 1 && Math.abs(viewportHeight - lastViewportHeight) < 1) return;
+      const resized = force || Math.abs(viewportWidth - lastViewportWidth) >= 1 || Math.abs(viewportHeight - lastViewportHeight) >= 1;
+      lastViewportWidth = viewportWidth;
+      lastViewportHeight = viewportHeight;
       appHeight = viewportHeight;
       const fitScale = Math.min(viewportWidth / BASE_STAGE_W, viewportHeight / BASE_STAGE_H) || 1;
       const howtoScale = Math.min(1, viewportWidth / BASE_STAGE_W) || fitScale || 1;
@@ -3160,8 +3579,8 @@
       document.documentElement.style.setProperty('--howto-logical-h', `${howtoLogicalHeight}px`);
       document.documentElement.style.setProperty('--viewport-w', `${viewportWidth}px`);
       document.documentElement.style.setProperty('--viewport-h', `${viewportHeight}px`);
-      resizeCanvas();
-      alignTrendMainToGameCenter();
+      if (resized) resizeCanvas();
+      if (resized || force) alignTrendMainToGameCenter();
     }
 
     function alignTrendMainToGameCenter() {
@@ -3192,8 +3611,8 @@
 
 
     function voiceTextForPath(path) {
-      const file = String(path || '').split('/').pop();
-      return VOICE_TEXT_MAP[file] || '';
+      const file = normalizeAudioKey(path);
+      return VOICE_TEXT_MAP[`${file}.wav`] || VOICE_TEXT_MAP[`${file}.m4a`] || VOICE_TEXT_MAP[file] || '';
     }
 
     function applyVoiceSubtitle(path, hold = 3.8) {
@@ -3245,6 +3664,55 @@
       updateMuteButtons();
     }
 
+    function setupLoopVideo(video, preload = 'auto') {
+      if (!video) return null;
+      try {
+        video.defaultMuted = true;
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.preload = preload;
+        video.setAttribute('muted', '');
+        video.setAttribute('loop', '');
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        video.disablePictureInPicture = true;
+      } catch (_) {}
+      return video;
+    }
+
+    function playLoopVideo(video, opts = {}) {
+      if (!video) return;
+      setupLoopVideo(video, opts.preload || 'auto');
+      try { video.playbackRate = 1; } catch (_) {}
+      if (opts.reset) {
+        try { video.currentTime = 0; } catch (_) {}
+      }
+      try {
+        if (video.readyState < 2) video.load?.();
+      } catch (_) {}
+      try {
+        const playPromise = video.play?.();
+        if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(() => {});
+      } catch (_) {}
+    }
+
+    function stopLoopVideo(video, opts = {}) {
+      if (!video) return;
+      try { video.pause?.(); } catch (_) {}
+      if (opts.reset === true) {
+        try { video.currentTime = 0; } catch (_) {}
+      }
+    }
+
+    function primeBigBuzzVisuals() {
+      [dom.bgVideoHype, dom.boardBgVideoHype].forEach(video => {
+        if (!video) return;
+        applyElementSource(video, resolveVideoAsset(video), perfSettings.videoPreload);
+        setupLoopVideo(video, perfSettings.videoPreload);
+      });
+    }
+
     function ensureAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
@@ -3255,7 +3723,7 @@
     function playBgm() {
       persistPlayerName();
       ensureAudio();
-      dom.bgmNormal.volume = muted ? 0 : 0.34;
+      dom.bgmNormal.volume = muted ? 0 : perfSettings.bgmNormalVolume;
       dom.bgmHyper.volume = muted ? 0 : 0;
       dom.bgmNormal.currentTime = 0;
       dom.bgmHyper.currentTime = 0;
@@ -3265,7 +3733,7 @@
     }
 
     function setHyperMix(strength) {
-      const s = clamp(strength, 0, 1);
+      clamp(strength, 0, 1);
       const hyperActive = !!(state.active && state.clipTime > 0);
       if (hyperActive !== lastHyperBgmActive) {
         if (hyperActive) {
@@ -3278,80 +3746,80 @@
         }
       }
       lastHyperBgmActive = hyperActive;
-      dom.bgmNormal.volume = muted ? 0 : (hyperActive ? 0 : 0.34);
-      dom.bgmHyper.volume = muted ? 0 : (hyperActive ? 0.42 : 0);
-      updateBackgroundState(s);
+      dom.bgmNormal.volume = muted ? 0 : (hyperActive ? 0 : perfSettings.bgmNormalVolume);
+      dom.bgmHyper.volume = muted ? 0 : (hyperActive ? perfSettings.bgmHyperVolume : 0);
     }
 
 
 
-    function updateBackgroundState(strength = 0) {
-      const hype = !!(state.active && state.clipTime > 0);
-      dom.bgContainer?.classList.toggle('hype', false);
+    function currentBackgroundMode() {
+      if (titleBackgroundActive) return 'title';
+      if (state.active && state.clipTime > 0) return 'bigbuzz';
+      return 'gameplay';
+    }
+
+    function pauseBackgroundMedia(reset = false) {
+      [dom.bgVideo, dom.bgVideoHype, dom.boardBgVideoHype].forEach(video => stopLoopVideo(video, { reset }));
+    }
+
+    function updateBackgroundState(force = false) {
+      const mode = currentBackgroundMode();
+      const previousMode = lastBackgroundMode;
+      if (!force && mode === previousMode) return;
+      lastBackgroundMode = mode;
+      const hype = mode === 'bigbuzz';
+      dom.bgContainer?.classList.toggle('hype', hype);
       dom.gameScreen?.classList.toggle('bigbuzz', hype);
       dom.gameShell?.classList.toggle('bigbuzz', hype);
       if (dom.bgContainer) {
-        dom.bgContainer.style.setProperty('--bg-base-opacity', '0');
+        dom.bgContainer.style.setProperty('--bg-base-opacity', mode === 'title' ? '1' : '0');
         dom.bgContainer.style.setProperty('--bg-hype-opacity', '0');
+      }
+      if (dom.bgVideo) {
+        dom.bgVideo.style.opacity = mode === 'title' ? '1' : '0';
       }
       if (dom.bgVideoHype) {
         dom.bgVideoHype.style.opacity = '0';
-        try {
-          dom.bgVideoHype.pause?.();
-          dom.bgVideoHype.currentTime = 0;
-        } catch (_) {}
+        stopLoopVideo(dom.bgVideoHype, { reset:false });
       }
       if (dom.boardBgVideoHype) {
         dom.boardBgVideoHype.style.opacity = hype ? '1' : '0';
-        try {
-          if (hype) {
-            dom.boardBgVideoHype.currentTime = Math.max(0, dom.boardBgVideoHype.currentTime || 0);
-            dom.boardBgVideoHype.play?.();
-          } else {
-            dom.boardBgVideoHype.pause?.();
-            dom.boardBgVideoHype.currentTime = 0;
-          }
-        } catch (_) {}
       }
-      if (dom.bgVideo) {
-        dom.bgVideo.style.opacity = '0';
-        try {
-          dom.bgVideo.pause?.();
-          dom.bgVideo.currentTime = 0;
-        } catch (_) {}
+      if (mode === 'title') {
+        if (dom.boardBgVideoHype) stopLoopVideo(dom.boardBgVideoHype, { reset:false });
+        applyElementSource(dom.bgVideo, resolveVideoAsset(dom.bgVideo), perfSettings.videoPreload);
+        setupLoopVideo(dom.bgVideo, perfSettings.videoPreload);
+        playLoopVideo(dom.bgVideo, { preload:perfSettings.videoPreload });
+      } else if (mode === 'bigbuzz') {
+        if (dom.bgVideo) stopLoopVideo(dom.bgVideo, { reset:false });
+        primeBigBuzzVisuals();
+        applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), perfSettings.videoPreload);
+        setupLoopVideo(dom.boardBgVideoHype, perfSettings.videoPreload);
+        playLoopVideo(dom.boardBgVideoHype, { reset:previousMode !== 'bigbuzz', preload:perfSettings.videoPreload });
+      } else {
+        pauseBackgroundMedia(false);
+      }
+      state.backgroundWatchdogTimer = 0;
+      lastBigBuzzVisualActive = hype;
+    }
+
+    function backgroundWatchdog(dt = 0) {
+      state.backgroundWatchdogTimer = (state.backgroundWatchdogTimer || 0) + dt;
+      if (state.backgroundWatchdogTimer < perfSettings.backgroundWatchdogInterval) return;
+      state.backgroundWatchdogTimer = 0;
+      if (document.hidden || state.paused) return;
+      const mode = currentBackgroundMode();
+      if (mode === 'title' && dom.bgVideo?.paused) {
+        playLoopVideo(dom.bgVideo, { preload:perfSettings.videoPreload });
+      } else if (mode === 'bigbuzz' && dom.boardBgVideoHype?.paused) {
+        playLoopVideo(dom.boardBgVideoHype, { preload:perfSettings.videoPreload });
       }
     }
 
-
     function setTitleBackgroundActive(active = true) {
-      if (!dom.bgVideo) return;
-      if (dom.bgContainer) {
-        dom.bgContainer.style.setProperty('--bg-base-opacity', active ? '1' : '0');
-        dom.bgContainer.style.setProperty('--bg-hype-opacity', '0');
-      }
-      if (dom.bgVideoHype) {
-        dom.bgVideoHype.style.opacity = '0';
-        try {
-          dom.bgVideoHype.pause?.();
-          dom.bgVideoHype.currentTime = 0;
-        } catch (_) {}
-      }
-      if (active) {
-        dom.bgVideo.defaultMuted = true;
-        dom.bgVideo.muted = true;
-        dom.bgVideo.playsInline = true;
-        dom.bgVideo.style.opacity = '1';
-        try {
-          const playPromise = dom.bgVideo.play?.();
-          if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(() => {});
-        } catch (_) {}
-      } else {
-        dom.bgVideo.style.opacity = '0';
-        try {
-          dom.bgVideo.pause?.();
-          dom.bgVideo.currentTime = 0;
-        } catch (_) {}
-      }
+      titleBackgroundActive = !!active;
+      if (!active) primeBigBuzzVisuals();
+      updateBackgroundState(true);
     }
 
     function avatarMoodForVoiceKind(kind = 'calm') {
@@ -3380,8 +3848,10 @@
     function applyVoiceAvatar(kind = 'calm') {
       try {
         const mood = avatarMoodForVoiceKind(kind);
+        avatarLockMood = mood;
+        avatarLockUntil = performance.now() + 3200;
         requestAnimationFrame(() => {
-          try { setAvatarVisual(mood); } catch (_) {}
+          try { setAvatarVisual(mood, { force:true, cycle:true }); } catch (_) {}
         });
       } catch (_) {}
     }
@@ -3389,7 +3859,8 @@
     function getVoiceAudio(path) {
       if (!path) return null;
       if (!voiceCache.has(path)) {
-        const audio = new Audio(path);
+        const resolved = resolveAudioAsset(path);
+        const audio = new Audio(resolved);
         audio.preload = 'auto';
         audio.dataset.path = path;
         audio.addEventListener('error', () => {
@@ -3426,7 +3897,6 @@
       } catch (_) {}
       audio.volume = volume;
       audio.play().catch(() => {});
-      applyVoiceAvatar(kind);
       return true;
     }
 
@@ -3459,10 +3929,12 @@
       return played;
     }
 
-    function showBigBuzzBanner(text = '大バズり!!') {
+    function showBigBuzzBanner(text = '大バズリ!!', sub = 'ポイント×２') {
       if (!dom.bigBuzzBanner) return;
-      const core = dom.bigBuzzBanner.querySelector('.core');
-      if (core) core.textContent = text;
+      const title = dom.bigBuzzBanner.querySelector('.title');
+      const subtitle = dom.bigBuzzBanner.querySelector('.sub');
+      if (title) title.textContent = text;
+      if (subtitle) subtitle.textContent = sub;
       dom.bigBuzzBanner.classList.remove('show');
       void dom.bigBuzzBanner.offsetWidth;
       dom.bigBuzzBanner.classList.add('show');
@@ -3511,7 +3983,8 @@
     function getSfxAudio(path) {
       if (!path) return null;
       if (!sfxCache.has(path)) {
-        const audio = new Audio(path);
+        const resolved = resolveAudioAsset(path);
+        const audio = new Audio(resolved);
         audio.preload = 'auto';
         audio.addEventListener('error', () => { audio.dataset.failed = '1'; }, { once:true });
         sfxCache.set(path, audio);
@@ -3911,11 +4384,7 @@
         if (label && label.style.color !== accent) label.style.color = accent;
       });
       const selected = clamp(Math.floor(state.selectedDropIndex || 0), 0, CONTENTS.length - 1);
-      if (selected === lastDropSelectorIndex) return;
-      const prevBtn = dom.dropSelectorButtonMap?.get(lastDropSelectorIndex);
-      const nextBtn = dom.dropSelectorButtonMap?.get(selected);
-      if (prevBtn) prevBtn.classList.remove('active');
-      if (nextBtn) nextBtn.classList.add('active');
+      dom.dropSelectorButtons?.forEach(btn => btn.classList.toggle('active', Number(btn.dataset.dropIndex || 0) === selected));
       lastDropSelectorIndex = selected;
     }
 
@@ -4056,7 +4525,8 @@
     function spawnComment(forceTrend = false, forcedText = null, forcedClass = '', forcedIcon = null) {
       if (!dom.chatLane) return;
       const now = performance.now();
-      const cooldown = forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86);
+      const cooldown = (forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86)) * perfSettings.commentCooldownScale;
+      if (!forcedText && perfSettings.mobileLowPower && rand() < perfSettings.commentDropChance) return;
       if (now - lastCommentSpawnAt < cooldown * 1000) return;
       let text = forcedText || '';
       let cls = forcedClass || '';
@@ -4104,11 +4574,11 @@
       targetLane.appendChild(node);
       lastCommentSpawnAt = now;
       if (specialType) {
-        while (dom.chatLane.childNodes.length > 2) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > perfSettings.specialCommentLaneMax) dom.chatLane.firstChild.remove();
       } else if (dom.chatLaneBack) {
-        while (dom.chatLaneBack.childNodes.length > 3) dom.chatLaneBack.firstChild.remove();
+        while (dom.chatLaneBack.childNodes.length > perfSettings.commentLaneMax) dom.chatLaneBack.firstChild.remove();
       } else {
-        while (dom.chatLane.childNodes.length > 3) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > perfSettings.commentLaneMax) dom.chatLane.firstChild.remove();
       }
     }
 
@@ -4120,40 +4590,49 @@
     }
 
     function addParticles(x, y, color, count = 18, spread = 9) {
-      const budget = Math.max(0, LIGHT_MODE_PARTICLE_BUDGET - state.particles.length);
-      const safeCount = Math.max(0, Math.min(Math.round(count * LIGHT_MODE_PARTICLE_SCALE), budget));
+      const budget = Math.max(0, perfSettings.particleBudget - state.particles.length);
+      const safeCount = Math.max(0, Math.min(Math.round(count * perfSettings.particleScale), budget));
+      if (!safeCount) return;
+      state.fxNeedsClear = true;
       for (let i = 0; i < safeCount; i++) {
         state.particles.push({
           x, y,
           vx:(rand() - 0.5) * spread,
           vy:-2 - rand() * spread * 0.5,
-          life:1,
+          life:perfSettings.particleLife,
           color,
-          size:3 + rand() * 6
+          size:(3 + rand() * 6) * perfSettings.particleSizeScale
         });
       }
     }
 
     function addRing(x, y, color, radius = 24, speed = 180) {
+      const score = Number(radius || 0) + Number(speed || 0) * 0.03;
+      if (perfSettings.mobileLowPower) {
+        const bigMoment = state.clipTime > 0 || state.fireMode > 0 || state.chainCount >= 2;
+        if (!bigMoment && score < perfSettings.minorRingThreshold) return;
+        while (state.rings.length >= perfSettings.ringBudget) state.rings.shift();
+      }
+      state.fxNeedsClear = true;
       state.rings.push({ x, y, life:1, radius, speed, color });
     }
 
     function updateFx(dt) {
       if (!particleCtx || !fxCtx) return;
-      if (!state.particles.length && !state.rings.length) {
-        particleCtx.clearRect(0, 0, dom.particleCanvas.width, dom.particleCanvas.height);
-        fxCtx.clearRect(0, 0, dom.fxCanvas.width, dom.fxCanvas.height);
-        return;
-      }
+      if (!state.particles.length && !state.rings.length && !state.fxNeedsClear) return;
       particleCtx.clearRect(0, 0, dom.particleCanvas.width, dom.particleCanvas.height);
       fxCtx.clearRect(0, 0, dom.fxCanvas.width, dom.fxCanvas.height);
+      if (!state.particles.length && !state.rings.length) {
+        state.fxNeedsClear = false;
+        return;
+      }
 
       for (let i = state.particles.length - 1; i >= 0; i--) {
         const p = state.particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 18 * dt;
-        p.life -= dt * 1.6;
+        p.life -= dt * perfSettings.particleFadeRate;
         particleCtx.globalAlpha = Math.max(0, p.life);
         particleCtx.fillStyle = p.color;
         particleCtx.shadowBlur = 0;
@@ -4168,29 +4647,41 @@
 
       for (let i = state.rings.length - 1; i >= 0; i--) {
         const r = state.rings[i];
-        r.life -= dt * 1.6;
+        r.life -= dt * perfSettings.particleFadeRate;
         r.radius += r.speed * dt;
         fxCtx.globalAlpha = Math.max(0, r.life * 0.8);
         fxCtx.strokeStyle = r.color;
-        fxCtx.lineWidth = 3;
+        fxCtx.lineWidth = perfSettings.mobileLowPower ? 2 : 3;
         fxCtx.beginPath();
         fxCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         fxCtx.stroke();
         if (r.life <= 0) state.rings.splice(i, 1);
       }
       fxCtx.globalAlpha = 1;
+      state.fxNeedsClear = !!(state.particles.length || state.rings.length);
     }
 
     function popText(x, y, text, color, size = 26) {
+      const now = performance.now();
+      const important = /大バズり|大炎上|GAME OVER|TIME UP|1位|CHAIN|BOMB|爆弾|火消し/u.test(String(text || ''));
+      if (!important && perfSettings.mobileLowPower) {
+        if (activePopTextCount >= perfSettings.popTextMax) return;
+        if (now - lastPopTextAt < perfSettings.popTextMinGapMs) return;
+      }
+      lastPopTextAt = now;
+      activePopTextCount += 1;
       const el = document.createElement('div');
       el.className = 'pop-text';
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       el.style.color = color;
-      el.style.fontSize = `${size}px`;
+      el.style.fontSize = `${Math.round(size * perfSettings.popTextScale)}px`;
       el.textContent = text;
       dom.board.appendChild(el);
-      setTimeout(() => el.remove(), 1100);
+      setTimeout(() => {
+        activePopTextCount = Math.max(0, activePopTextCount - 1);
+        el.remove();
+      }, perfSettings.mobileLowPower ? 850 : 1100);
     }
 
     const SUPERCHAT_CHAIN_THEME = {
@@ -4204,8 +4695,10 @@
     };
     const SUPERCHAT_CHAIN_MESSAGES = ["ありがとう！","今のナイス！","そのままいこう！","見てて楽しい！","いい流れ！","すごく上手！","次も見たい！","がんばれ！"];
 
-    function showFireBanner() {
+    function showFireBanner(text = '大炎上!!') {
       if (!dom.fireBanner) return;
+      const title = dom.fireBanner.querySelector('.title');
+      if (title) title.textContent = text;
       dom.fireBanner.classList.remove('show');
       void dom.fireBanner.offsetWidth;
       dom.fireBanner.classList.add('show');
@@ -4215,32 +4708,39 @@
 
     function showSuperchatBanner(chainTier, gain, comboCount = 1) {
       if (!dom.superchatBanner) return;
+      const now = performance.now();
+      if (now - lastSuperchatBannerAt < perfSettings.superchatMinGapMs) return;
+      lastSuperchatBannerAt = now;
       const tier = clamp(Math.max(1, Math.floor(chainTier || 1)), 1, 7);
       const comboTier = clamp(Math.max(1, Math.floor(comboCount || 1)), 1, 10);
       const theme = SUPERCHAT_CHAIN_THEME[tier] || SUPERCHAT_CHAIN_THEME[1];
       const card = dom.superchatBanner.querySelector('.card');
       const amount = dom.superchatBanner.querySelector('.amount');
       const message = dom.superchatBanner.querySelector('.message');
-      const scale = 0.72 + Math.min(1.02, (tier - 1) * 0.13) + Math.min(0.26, (comboTier - 1) * 0.024);
+      const scaleBase = perfSettings.mobileLowPower ? 0.64 : 0.72;
+      const scale = scaleBase + Math.min(perfSettings.mobileLowPower ? 0.54 : 1.02, (tier - 1) * 0.13) + Math.min(perfSettings.mobileLowPower ? 0.12 : 0.26, (comboTier - 1) * 0.024);
       if (card) {
         card.style.borderColor = theme.border;
-        card.style.boxShadow = `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${26 + comboTier * 5}px ${theme.fill}`;
+        card.style.boxShadow = perfSettings.mobileLowPower
+          ? `0 0 0 1px ${theme.border}44, 0 10px 24px rgba(0,0,0,.28)`
+          : `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${26 + comboTier * 5}px ${theme.fill}`;
         card.style.transform = `scale(${scale})`;
       }
       if (amount) {
         amount.textContent = `+${fmt(Math.max(0, Math.round(gain || 0)))}`;
         amount.style.color = theme.border;
-        amount.style.fontSize = `${0.76 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)}rem`;
+        amount.style.fontSize = `${0.72 + Math.min(perfSettings.mobileLowPower ? 0.72 : 1.18, (tier - 1) * 0.16) + Math.min(perfSettings.mobileLowPower ? 0.12 : 0.28, (comboTier - 1) * 0.026)}rem`;
       }
       if (message) {
         message.textContent = choice(SUPERCHAT_CHAIN_MESSAGES);
-        message.style.fontSize = `${0.82 + Math.min(1.34, (tier - 1) * 0.18) + Math.min(0.28, (comboTier - 1) * 0.024)}rem`;
+        message.style.fontSize = `${0.82 + Math.min(perfSettings.mobileLowPower ? 0.62 : 1.34, (tier - 1) * 0.18) + Math.min(perfSettings.mobileLowPower ? 0.12 : 0.28, (comboTier - 1) * 0.024)}rem`;
       }
       dom.superchatBanner.classList.remove('show');
       void dom.superchatBanner.offsetWidth;
       dom.superchatBanner.classList.add('show');
       clearTimeout(state.superchatBannerTimer);
-      state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), 4000 + tier * 520 + comboTier * 150);
+      const ttl = perfSettings.mobileLowPower ? (2200 + tier * 260 + comboTier * 80) : (4000 + tier * 520 + comboTier * 150);
+      state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), ttl);
       sfx('ready', Math.min(2.2, 0.56 + tier * 0.2 + comboTier * 0.05));
     }
 
@@ -4355,7 +4855,7 @@
 
     function boardStats(force = false) {
       const now = performance.now();
-      if (!force && state.boardStatsCache && now - state.boardStatsCacheAt < LIGHT_MODE_BOARD_STATS_CACHE_MS) return state.boardStatsCache;
+      if (!force && state.boardStatsCache && now - state.boardStatsCacheAt < perfSettings.boardStatsCacheMs) return state.boardStatsCache;
       state.boardStatsCache = computeBoardStats();
       state.boardStatsCacheAt = now;
       return state.boardStatsCache;
@@ -4854,6 +5354,7 @@
       state.forceFullVisualSync = true;
       updateWorldBounds();
       runner = Runner.create();
+      configureRunnerPerformance();
       Runner.run(runner, engine);
     }
 
@@ -4948,6 +5449,8 @@
       state.uiTimer = 0;
       state.cleanupTimer = 0;
       state.rescueTimer = 0;
+      state.fxNeedsClear = false;
+      state.backgroundWatchdogTimer = 0;
       state.boardStatsCache = null;
       state.boardStatsCacheAt = 0;
       resetLiveBodyRegistry();
@@ -4964,6 +5467,9 @@
       state.finishing = false;
       state.paused = false;
       state.resultVoicePlayed = false;
+      avatarLockUntil = 0;
+      avatarLockMood = 'normal';
+      lastBigBuzzVisualActive = false;
       warningVoiceLatched = false;
       topVoiceLatched = false;
       focusVoiceCooldownUntil = 0;
@@ -4981,17 +5487,23 @@
       state.clipTime = Math.max(state.clipTime, fresh ? 15 : state.clipTime + 3.5);
       state.clipCooldown = 999;
       if (fresh) state.clipActivations += 1;
-      setCaption(reason === 'buzz_item' ? 'バズりが3つつながって大バズりスタート！しばらく点が2倍。' : '大バズり中！いまは点が2倍。', 2.6);
-      spawnComment(false, reason === 'buzz_item' ? 'バズり3こで大バズり！' : '大バズりつづき中！', 'super', '✨');
+      setCaption(reason === 'buzz_item' ? 'バズりが3つつながって大バズリスタート！しばらくポイントが2倍。' : '大バズリ中！いまはポイントが2倍。', 2.6);
+      spawnComment(false, reason === 'buzz_item' ? 'バズり3こで大バズリ！' : '大バズリつづき中！', 'super', '✨');
       triggerVoiceCue('hype', 2, { force:fresh });
       flashScreen('#ffe37a');
-      showBigBuzzBanner('大バズり!!');
+      showBigBuzzBanner('大バズリ!!', 'ポイント×２');
       setHyperMix(1);
-      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,216,76,.96)', 18, 7.6);
-      addParticles(dom.board.clientWidth / 2, dom.board.clientHeight * 0.42, 'rgba(255,47,146,.9)', 12, 6.8);
-      addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#fff4a3', 24, 260);
-      addRing(dom.board.clientWidth / 2, dom.board.clientHeight * 0.38, '#ff5ab1', 38, 320);
-      sfx('ready', 1.12);
+      updateBackgroundState(true);
+      const cx = dom.board.clientWidth / 2;
+      const cy = dom.board.clientHeight * 0.4;
+      addParticles(cx, cy, 'rgba(255,216,76,.98)', 26, 8.4);
+      addParticles(cx, cy, 'rgba(255,47,146,.96)', 20, 7.6);
+      addParticles(cx, cy, 'rgba(255,255,255,.94)', 12, 6.8);
+      addRing(cx, cy, '#fff4a3', 24, 260);
+      addRing(cx, cy, '#ff5ab1', 38, 320);
+      addRing(cx, cy, '#ffffff', 18, 200);
+      playAssetSfx('big', fresh ? 0.94 : 0.82);
+      sfx('big', fresh ? 1.2 : 0.96);
     }
 
 
@@ -5011,6 +5523,8 @@
       avatarVisualFile = 'char_normal.png';
       activeBoardCharacterLayer = 'front';
       pendingAvatarMood = 'normal';
+      avatarLockUntil = 0;
+      avatarLockMood = 'normal';
       if (dom.boardCharacter) dom.boardCharacter.dataset.file = 'char_normal.png';
       if (dom.avatar) dom.avatar.dataset.file = 'char_normal.png';
       if (dom.boardCharacter) dom.boardCharacter.dataset.file = 'char_normal.png';
@@ -5033,9 +5547,13 @@
       dom.pauseOverlay?.classList.toggle('hidden', !next);
       if (next) {
         try { if (runner) Runner.stop(runner); } catch(_) {}
+        pauseBackgroundMedia(false);
+        try { dom.bgmNormal.pause(); dom.bgmHyper.pause(); dom.gameoverFxVideo?.pause?.(); } catch(_) {}
         state.lastTs = 0;
       } else {
-        try { if (runner) Runner.run(runner, engine); } catch(_) {}
+        try { if (runner) { configureRunnerPerformance(); Runner.run(runner, engine); } } catch(_) {}
+        updateBackgroundState(true);
+        setHyperMix(state.clipTime > 0 ? 1 : 0);
         state.lastTs = 0;
       }
     }
@@ -5061,18 +5579,24 @@
       avatarVisualFile = 'char_normal.png';
       activeBoardCharacterLayer = 'front';
       pendingAvatarMood = 'normal';
+      avatarLockUntil = 0;
+      avatarLockMood = 'normal';
+      primeBigBuzzVisuals();
       state.avatarMood = 'normal';
       state.avatarVisualMood = 'normal';
-      updateBackgroundState();
+      updateBackgroundState(true);
       dom.gameShell.classList.remove('shake');
       dom.dangerFog.classList.remove('show');
       dom.topDangerLine.classList.remove('show');
       resetState();
+      updateBackgroundState(true);
       destroyEngine();
       resizeCanvas();
       initEngine();
+      dom.dropSelectorButtons?.forEach(btn => btn.classList.remove('active'));
       setTrend(state.trendIndex, false, null, { suppressSpeech:true, suppressVoice:true });
       setSelectedDropIndex(0, { silent:true });
+      updateDropSelectorUi();
       triggerVoiceCue('start', 1, { force:true });
       refreshQueue();
       updateUi();
@@ -5095,9 +5619,16 @@
       spawnComment(false, '炎が広がった！まずは立て直したい！', 'low', '🔥');
       triggerVoiceCue('fire');
       flashScreen('#ff5b73');
-      sfx('bad', 1);
+      const cx = dom.board.clientWidth / 2;
+      const cy = dom.board.clientHeight * 0.4;
+      addParticles(cx, cy, 'rgba(255,98,98,.98)', 28, 8.8);
+      addParticles(cx, cy, 'rgba(255,196,120,.96)', 18, 7.4);
+      addRing(cx, cy, '#ff6b7b', 28, 260);
+      addRing(cx, cy, '#ffd2c4', 18, 190);
+      playAssetSfx('burst', 0.98);
+      sfx('bad', 1.08);
       say('fire', 2.2);
-      showFireBanner();
+      showFireBanner('大炎上!!');
       setTimeout(() => dom.gameShell.classList.remove('shake'), 260);
     }
 
@@ -5279,7 +5810,8 @@
       dom.nextBlock?.classList.toggle('warning', false);
       if (dom.comboView) dom.comboView.textContent = `x${state.combo}`;
       if (dom.chainView) dom.chainView.textContent = `${state.chainCount || 0}連鎖`;
-      setAvatarVisual(pickAvatarMood());
+      const avatarMood = performance.now() < avatarLockUntil ? avatarLockMood : pickAvatarMood();
+      setAvatarVisual(avatarMood);
       dom.burstBtn.classList.remove('ready');
       setBurstButtonLabel('default');
       dom.topDangerLine.classList.toggle('show', state.topDangerTime > 0.45 || state.overfillTime > 0.35);
@@ -5388,6 +5920,7 @@
         const wasClipActive = state.clipTime > 0;
         state.clipTime = Math.max(0, state.clipTime - dt);
         if (wasClipActive && state.clipTime <= 0) {
+          updateBackgroundState(true);
           setHyperMix(0);
           setCaption('大バズりおわり。次のチャンスまで盤面を整えよう。', 1.8);
         }
@@ -5428,7 +5961,7 @@
         state.buzzItemTimer = 10.2 + rand() * 6.4;
       }
 
-      if (state.scanTimer >= LIGHT_MODE_SCAN_INTERVAL) {
+      if (state.scanTimer >= perfSettings.scanInterval) {
         state.scanTimer = 0;
         resolveGroups();
       }
@@ -5461,7 +5994,7 @@
       state.commentEventTimer = 0;
       state.commentEventType = '';
       state.commentEventText = '';
-      const chatInterval = state.clipTime > 0 ? 1.85 : 3.10;
+      const chatInterval = (state.clipTime > 0 ? 1.85 : 3.10) * perfSettings.commentIntervalScale;
       if (state.commentTimer >= chatInterval) {
         state.commentTimer = 0;
         spawnComment(false);
@@ -5493,21 +6026,22 @@
       state.uiTimer += dt;
       state.cleanupTimer += dt;
       state.rescueTimer += dt;
-      if (state.cleanupTimer >= LIGHT_MODE_CLEANUP_INTERVAL) {
+      if (state.cleanupTimer >= perfSettings.cleanupInterval) {
         state.cleanupTimer = 0;
         cleanupOffscreenBodies();
         purgeBrokenBodies();
       }
-      if (state.rescueTimer >= LIGHT_MODE_RESCUE_INTERVAL) {
+      if (state.rescueTimer >= perfSettings.rescueInterval) {
         state.rescueTimer = 0;
         rescueFloatingBodies();
       }
-      if (state.visualTimer >= LIGHT_MODE_VISUAL_INTERVAL) {
-        updateFx(state.visualTimer);
+      if (state.visualTimer >= perfSettings.visualInterval) {
+        if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(state.visualTimer);
         syncBodyVisuals();
         state.visualTimer = 0;
       }
-      if (state.uiTimer >= LIGHT_MODE_UI_INTERVAL) {
+      backgroundWatchdog(dt);
+      if (state.uiTimer >= perfSettings.uiInterval) {
         updateDynamicVoiceCues(ts);
         updateUi();
         state.uiTimer = 0;
@@ -5553,7 +6087,7 @@
         requestAnimationFrame(alignTrendMainToGameCenter);
         const winLike = crownTargetScore(state.seed) > 0 && Math.floor(state.score) >= crownTargetScore(state.seed);
         stopResultBgm();
-        resultStingerAudio = new Audio(winLike ? 'assets/audio/bgm_result_win.wav' : 'assets/audio/bgm_result_lose.wav');
+        resultStingerAudio = new Audio(resolveAudioAsset(winLike ? 'assets/audio/bgm_result_win.wav' : 'assets/audio/bgm_result_lose.wav'));
         resultStingerAudio.volume = muted ? 0 : 0.62;
         resultStingerAudio.muted = muted;
         resultStingerAudio.play().catch(() => {});
@@ -5681,11 +6215,31 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     dom.board.addEventListener('pointerleave', stopHoldDrop, { passive:true });
     window.addEventListener('pointerup', stopHoldDrop, { passive:true });
 
-    window.addEventListener('resize', applyAppHeight);
-    window.visualViewport?.addEventListener('resize', applyAppHeight);
-    window.visualViewport?.addEventListener('scroll', applyAppHeight);
-    window.addEventListener('orientationchange', () => setTimeout(applyAppHeight, 120));
-    document.addEventListener('visibilitychange', () => { if (document.hidden) { setHyperMix(0); stopResultBgm(); } });
+    const handleViewportRefresh = () => {
+      applyPerformanceProfile();
+      scheduleAppHeightRefresh(140);
+    };
+    window.addEventListener('resize', handleViewportRefresh);
+    window.visualViewport?.addEventListener('resize', handleViewportRefresh);
+    window.addEventListener('orientationchange', () => setTimeout(() => {
+      applyPerformanceProfile();
+      scheduleAppHeightRefresh(80);
+    }, 180));
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (state.active && !state.paused) pauseRequestedByVisibility = true;
+        if (state.active) togglePause(true);
+        setHyperMix(0);
+        stopResultBgm();
+      } else {
+        applyPerformanceProfile();
+        if (pauseRequestedByVisibility && state.active) {
+          pauseRequestedByVisibility = false;
+          togglePause(false);
+        }
+        updateBackgroundState(true);
+      }
+    });
 
     if (dom.handleInput) {
       dom.handleInput.value = save.playerName || 'ななしさん';
@@ -5713,11 +6267,13 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
         if (dom.boardCharacterBack.dataset.file !== 'char_normal.png') setAvatarVisual(state.avatarMood || 'normal');
       };
     }
+    applyPerformanceProfile();
     preloadAllAvatars();
+    primeBigBuzzVisuals();
     updateMuteButtons();
     document.body.classList.add('title-mode');
     setTitleBackgroundActive(true);
-    applyAppHeight();
+    applyAppHeight(true);
     installServiceWorker();
     state.seed = todaySeed();
     updateSeedLabels();
@@ -5730,6 +6286,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     renderPreview();
     dom.bestScore.textContent = fmt(save.bestScore || 0);
   })();
+  
   
   
   </script>
