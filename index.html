@@ -8,7 +8,6 @@
   <meta name="theme-color" content="#2a0a30">
   <meta property="og:title" content="限界メルトダウン（Limit Meltdown）">
   <meta property="og:description" content="今バズる話題をつなぎ、次の波を先読みして王冠ラインを超える。配信向けの物理演算トレンドパズル。">
-  <meta property="og:image" content="assets/img/ogp_image.png">
   <meta name="twitter:card" content="summary_large_image">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=M+PLUS+Rounded+1c:wght@700;900&display=swap" rel="stylesheet">
@@ -576,7 +575,7 @@
 
 
     /* --- exact 1206x2144 screen fitting / stage-safe tweaks --- */
-    .screen{will-change:transform}
+    .screen{will-change:transform;contain:layout paint style}
     #start-screen,#game-screen,#result-screen{overflow:hidden}
     #howto-screen{overflow:hidden}
     #howto-screen .panel{max-height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
@@ -844,7 +843,7 @@
     #start-screen .rank-row .rk{font-size:24px !important}
     #start-screen .rank-row .nm{font-size:24px !important}
     #start-screen .rank-row .sc{font-size:24px !important}
-    #item-layer .item-chip{will-change:transform;contain:layout paint style}
+    #item-layer .item-chip{will-change:transform;contain:layout paint style;content-visibility:auto}
     #item-layer .item-chip img{will-change:transform;transform:translateZ(0)}
 
 
@@ -1419,34 +1418,48 @@
       -webkit-backface-visibility:hidden;
     }
 
-    body.mobile-lowpower .panel,
-    body.mobile-lowpower .hud-chip,
-    body.mobile-lowpower #caption-box,
-    body.mobile-lowpower #speech-bubble,
-    body.mobile-lowpower .result-card,
-    body.mobile-lowpower .daily-board-wrap,
-    body.mobile-lowpower #pause-overlay .pause-card{
+    body.mobile-bg-lite .panel,
+    body.mobile-bg-lite .hud-chip,
+    body.mobile-bg-lite #caption-box,
+    body.mobile-bg-lite #speech-bubble,
+    body.mobile-bg-lite .result-card,
+    body.mobile-bg-lite .daily-board-wrap,
+    body.mobile-bg-lite #pause-overlay .pause-card{
       backdrop-filter:none !important;
       box-shadow:0 10px 24px rgba(0,0,0,.24), 0 0 0 1px rgba(255,255,255,.03) !important;
     }
-    body.mobile-lowpower #board-glass{
+    body.mobile-bg-lite #board-glass{
       background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)) !important;
       box-shadow:none !important;
     }
-    body.mobile-lowpower .board-character-layer,
-    body.mobile-lowpower #bg-video,
-    body.mobile-lowpower #bg-video-hype,
-    body.mobile-lowpower #board-bg-video-hype{
+    body.mobile-bg-lite .board-character-layer,
+    body.mobile-bg-lite #bg-video,
+    body.mobile-bg-lite #bg-video-hype,
+    body.mobile-bg-lite #board-bg-video-hype{
       filter:none !important;
     }
 
 
+    @media (max-width: 760px){
+      .item-chip{width:72px;height:72px}
+      .item-chip::after{width:26px;height:26px;font-size:12px}
+      .rising-chat{font-size:.68rem;max-width:min(82%,270px);padding:5px 7px}
+      #trend-shift-banner{top:124px;min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px}
+      #trend-shift-main{font-size:1.18rem}
+    }
+    @media (max-width: 430px){
+      .item-chip{width:72px;height:72px}
+      .item-chip::after{width:26px;height:26px;font-size:12px}
+      .rising-chat{font-size:.68rem;max-width:min(82%,270px);padding:5px 7px}
+      #trend-shift-banner{top:124px;min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px}
+      #trend-shift-main{font-size:1.18rem}
+    }
   </style>
 </head>
 <body>
   <div id="bg-container">
-    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" data-mobile-src="assets/bg/bg_cyber_mobile.mp4" muted loop playsinline autoplay preload="metadata"></video>
-    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" data-mobile-src="assets/bg/bg_bigbuzz_loop_mobile.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
+    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" muted loop playsinline autoplay preload="metadata"></video>
+    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
@@ -1490,7 +1503,7 @@
     <div id="game-shell">
       <div id="board-wrap">
         <div id="game-board">
-          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" data-mobile-src="assets/bg/bg_bigbuzz_loop_mobile.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
+          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
           <div id="board-grid"></div>
           <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
           <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
@@ -2434,6 +2447,8 @@
       lastContentClearAt:0,
       chainSuppressUntil:0,
       fxNeedsClear:false,
+      fxLogicalWidth:0,
+      fxLogicalHeight:0,
       backgroundWatchdogTimer:0,
       paused:false
     };
@@ -2675,77 +2690,45 @@
     const UNIFIED_BODY_RADIUS = Math.round(31 * BOARD_BODY_ITEM_SCALE);
     const PERF_PRESET_DEFAULT = Object.freeze({
       mobileLowPower:false,
-      physicsFps:60,
-      runnerMaxUpdates:2,
-      scanInterval:0.28,
-      visualInterval:1 / 45,
-      uiInterval:0.28,
-      cleanupInterval:0.82,
-      rescueInterval:0.92,
-      boardStatsCacheMs:520,
-      particleBudget:24,
-      particleScale:0.42,
-      particleFadeRate:1.45,
-      particleLife:1.12,
-      particleSizeScale:1.12,
-      ringBudget:20,
+      physicsFps:50,
+      runnerMaxUpdates:1,
+      logicFrameMs:22,
+      scanInterval:0.34,
+      visualInterval:1 / 30,
+      uiInterval:0.34,
+      cleanupInterval:1.04,
+      rescueInterval:1.12,
+      boardStatsCacheMs:900,
+      particleBudget:18,
+      particleScale:0.34,
+      particleFadeRate:1.7,
+      particleLife:0.96,
+      particleSizeScale:1.02,
+      ringBudget:14,
       minorRingThreshold:0,
-      majorRingThreshold:72,
-      popTextMax:8,
-      popTextMinGapMs:0,
-      popTextScale:1.12,
-      commentCooldownScale:1,
-      commentIntervalScale:1,
+      majorRingThreshold:84,
+      popTextMax:6,
+      popTextMinGapMs:90,
+      popTextScale:1.02,
+      commentCooldownScale:1.18,
+      commentIntervalScale:1.22,
       commentDropChance:0,
-      commentLaneMax:4,
-      specialCommentLaneMax:3,
-      superchatMinGapMs:0,
-      videoPreload:'auto',
-      transformPositionThreshold:0.18,
-      transformAngleThreshold:0.01,
-      motionThreshold:0.03,
-      motionAngularThreshold:0.015,
-      newBodyVisualMs:380,
-      backgroundWatchdogInterval:1.8,
-      bgmNormalVolume:0.34,
-      bgmHyperVolume:0.42
+      commentLaneMax:3,
+      specialCommentLaneMax:2,
+      superchatMinGapMs:420,
+      videoPreload:'metadata',
+      fxResolutionScale:0.82,
+      transformPositionThreshold:0.3,
+      transformAngleThreshold:0.018,
+      motionThreshold:0.05,
+      motionAngularThreshold:0.022,
+      newBodyVisualMs:300,
+      backgroundWatchdogInterval:2.4,
+      bgmNormalVolume:0.32,
+      bgmHyperVolume:0.40
     });
     const PERF_PRESET_MOBILE = Object.freeze({
-      mobileLowPower:true,
-      physicsFps:60,
-      runnerMaxUpdates:2,
-      scanInterval:0.28,
-      visualInterval:1 / 45,
-      uiInterval:0.28,
-      cleanupInterval:0.82,
-      rescueInterval:0.92,
-      boardStatsCacheMs:520,
-      particleBudget:24,
-      particleScale:0.42,
-      particleFadeRate:1.45,
-      particleLife:1.12,
-      particleSizeScale:1.12,
-      ringBudget:20,
-      minorRingThreshold:0,
-      majorRingThreshold:72,
-      popTextMax:8,
-      popTextMinGapMs:0,
-      popTextScale:1.12,
-      commentCooldownScale:1,
-      commentIntervalScale:1,
-      commentDropChance:0,
-      commentLaneMax:4,
-      specialCommentLaneMax:3,
-      superchatMinGapMs:0,
-      videoPreload:'metadata',
-      transformPositionThreshold:0.18,
-      transformAngleThreshold:0.01,
-      motionThreshold:0.03,
-      motionAngularThreshold:0.015,
-      newBodyVisualMs:380,
-      backgroundWatchdogInterval:2.0,
-      bgmNormalVolume:0.30,
-      bgmHyperVolume:0.38
+      ...PERF_PRESET_DEFAULT
     });
     let perfSettings = { ...PERF_PRESET_DEFAULT };
     let titleBackgroundActive = true;
@@ -2760,16 +2743,7 @@
     let pauseRequestedByVisibility = false;
 
     function detectPerformanceProfile() {
-      const viewportW = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
-      const viewportH = Math.max(window.visualViewport?.height || 0, document.documentElement.clientHeight || 0, window.innerHeight || 0);
-      const coarsePointer = !!window.matchMedia?.('(pointer: coarse)').matches;
-      const reducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      const ua = navigator.userAgent || '';
-      const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-      const hw = navigator.hardwareConcurrency || 4;
-      const smallViewport = Math.max(viewportW, viewportH) <= 1400 || Math.min(viewportW, viewportH) <= 860;
-      const mobileLowPower = reducedMotion || (coarsePointer && (mobileUa || smallViewport || hw <= 8));
-      return mobileLowPower ? { ...PERF_PRESET_MOBILE } : { ...PERF_PRESET_DEFAULT };
+      return { ...PERF_PRESET_DEFAULT };
     }
 
     function resolveAudioAsset(path) {
@@ -2782,9 +2756,7 @@
 
     function resolveVideoAsset(video) {
       if (!video) return '';
-      const base = video.dataset.src || video.getAttribute('src') || '';
-      const mobile = video.dataset.mobileSrc || base;
-      return perfSettings.mobileLowPower ? mobile : base;
+      return video.dataset.src || video.getAttribute('src') || '';
     }
 
     function applyElementSource(media, src, preload = 'metadata') {
@@ -2822,7 +2794,7 @@
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
       perfSettings = next;
-      document.body.classList.toggle('mobile-lowpower', !!perfSettings.mobileLowPower);
+      document.body.classList.remove('mobile-bg-lite');
       applyMediaProfile();
       configureRunnerPerformance();
       return changed;
@@ -3381,15 +3353,13 @@
         bodies.forEach(pushBody);
       } else {
         state.visualDirtyIds?.forEach(id => pushBody(bodyById(id)));
-        for (const body of worldContentBodiesByIndex(state.trendIndex)) pushBody(body);
-        for (const body of worldContentBodiesByIndex(state.nextTrendIndex)) pushBody(body);
         state.visualPreviewIds?.forEach(id => pushBody(bodyById(id)));
         state.visualNextPreviewIds?.forEach(id => pushBody(bodyById(id)));
         state.visualGlowIds?.forEach(id => pushBody(bodyById(id)));
         for (const body of bodies) {
           const age = now - (body.spawnAt || 0);
-          const moving = !body.isSleeping || body.speed > perfSettings.motionThreshold || Math.abs(body.velocity?.x || 0) > perfSettings.motionThreshold || Math.abs(body.velocity?.y || 0) > perfSettings.motionThreshold || Math.abs(body.angularVelocity || 0) > perfSettings.motionAngularThreshold;
-          if (age < perfSettings.newBodyVisualMs || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
+          const moving = !body.isSleeping || body.speed > 0.03 || Math.abs(body.velocity?.x || 0) > 0.03 || Math.abs(body.velocity?.y || 0) > 0.03 || Math.abs(body.angularVelocity || 0) > 0.015;
+          if (age < 380 || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
         }
       }
 
@@ -3440,9 +3410,11 @@
         const drawX = clamp(body.position.x, safeRadius, boardW - safeRadius);
         const drawY = clamp(body.position.y, safeRadius, boardH - safeRadius);
         const scale = trendBody ? 1.06 : (forecastReady ? 1.03 : 1);
-        const nextDrawX = Math.round((drawX - diameter / 2) * 10) / 10;
-        const nextDrawY = Math.round((drawY - diameter / 2) * 10) / 10;
-        const nextAngle = Math.round((body.angle || 0) * 100) / 100;
+        const transformValue = `translate3d(${Math.round((drawX - diameter / 2) * 10) / 10}px, ${Math.round((drawY - diameter / 2) * 10) / 10}px, 0) rotate(${Math.round((body.angle || 0) * 100) / 100}rad) scale(${scale})`;
+        if (node._transform !== transformValue) {
+          node._transform = transformValue;
+          node.style.transform = transformValue;
+        }
 
         const className = [
           'item-chip',
@@ -3462,34 +3434,14 @@
         if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
         node.hidden = false;
         const zValue = String(100 + Math.round(body.position.y * 10) + (body.id % 10));
+        if (node._zIndex !== zValue) {
+          node._zIndex = zValue;
+          node.style.zIndex = zValue;
+        }
         const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
-        const canSkipTransform = !!node._transform && !state.forceFullVisualSync
-          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < perfSettings.transformPositionThreshold
-          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < perfSettings.transformPositionThreshold
-          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < perfSettings.transformAngleThreshold
-          && (node._drawScale ?? scale) === scale
-          && node.className === className
-          && node._zIndex === zValue
-          && node._filter === filterValue
-          && body.isSleeping;
-        if (!canSkipTransform) {
-          const transformValue = `translate3d(${nextDrawX}px, ${nextDrawY}px, 0) rotate(${nextAngle}rad) scale(${scale})`;
-          if (node._transform !== transformValue) {
-            node._transform = transformValue;
-            node.style.transform = transformValue;
-          }
-          node._drawX = nextDrawX;
-          node._drawY = nextDrawY;
-          node._drawAngle = nextAngle;
-          node._drawScale = scale;
-          if (node._zIndex !== zValue) {
-            node._zIndex = zValue;
-            node.style.zIndex = zValue;
-          }
-          if (node._filter !== filterValue) {
-            node._filter = filterValue;
-            node.style.filter = filterValue;
-          }
+        if (node._filter !== filterValue) {
+          node._filter = filterValue;
+          node.style.filter = filterValue;
         }
 
         body.plugin = body.plugin || {};
@@ -3510,6 +3462,7 @@
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
+    const BUILD_ID = 'v73-mobile-syncfix';
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -3810,7 +3763,7 @@
       if (!voiceCache.has(path)) {
         const resolved = resolveAudioAsset(path);
         const audio = new Audio(resolved);
-        audio.preload = 'auto';
+        audio.preload = 'metadata';
         audio.dataset.path = path;
         audio.addEventListener('error', () => {
           audio.dataset.failed = '1';
@@ -3934,7 +3887,7 @@
       if (!sfxCache.has(path)) {
         const resolved = resolveAudioAsset(path);
         const audio = new Audio(resolved);
-        audio.preload = 'auto';
+        audio.preload = 'metadata';
         audio.addEventListener('error', () => { audio.dataset.failed = '1'; }, { once:true });
         sfxCache.set(path, audio);
       }
@@ -4009,15 +3962,26 @@
     function resizeCanvas() {
       if (!dom.board) return;
       const info = boardLogicalRect();
-      dom.particleCanvas.width = info.width;
-      dom.particleCanvas.height = info.height;
-      dom.fxCanvas.width = info.width;
-      dom.fxCanvas.height = info.height;
+      const fxScale = clamp(Number(perfSettings.fxResolutionScale) || 1, 0.6, 1);
+      const fxWidth = Math.max(1, Math.round(info.width * fxScale));
+      const fxHeight = Math.max(1, Math.round(info.height * fxScale));
+      state.fxLogicalWidth = info.width;
+      state.fxLogicalHeight = info.height;
+      dom.particleCanvas.width = fxWidth;
+      dom.particleCanvas.height = fxHeight;
+      dom.particleCanvas.style.width = `${info.width}px`;
+      dom.particleCanvas.style.height = `${info.height}px`;
+      dom.fxCanvas.width = fxWidth;
+      dom.fxCanvas.height = fxHeight;
+      dom.fxCanvas.style.width = `${info.width}px`;
+      dom.fxCanvas.style.height = `${info.height}px`;
       dom.mergeCanvas.width = info.width;
       dom.mergeCanvas.height = info.height;
-      particleCtx = dom.particleCanvas.getContext('2d');
-      fxCtx = dom.fxCanvas.getContext('2d');
-      mergeCtx = dom.mergeCanvas.getContext('2d');
+      particleCtx = dom.particleCanvas.getContext('2d', { alpha:true, desynchronized:true });
+      fxCtx = dom.fxCanvas.getContext('2d', { alpha:true, desynchronized:true });
+      mergeCtx = dom.mergeCanvas.getContext('2d', { alpha:true, desynchronized:true });
+      if (particleCtx) particleCtx.setTransform(fxScale, 0, 0, fxScale, 0, 0);
+      if (fxCtx) fxCtx.setTransform(fxScale, 0, 0, fxScale, 0, 0);
       if (render) {
         render.canvas.width = info.width;
         render.canvas.height = info.height;
@@ -4474,8 +4438,7 @@
     function spawnComment(forceTrend = false, forcedText = null, forcedClass = '', forcedIcon = null) {
       if (!dom.chatLane) return;
       const now = performance.now();
-      const cooldown = (forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86)) * perfSettings.commentCooldownScale;
-      if (!forcedText && perfSettings.mobileLowPower && rand() < perfSettings.commentDropChance) return;
+      const cooldown = forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86);
       if (now - lastCommentSpawnAt < cooldown * 1000) return;
       let text = forcedText || '';
       let cls = forcedClass || '';
@@ -4523,11 +4486,11 @@
       targetLane.appendChild(node);
       lastCommentSpawnAt = now;
       if (specialType) {
-        while (dom.chatLane.childNodes.length > perfSettings.specialCommentLaneMax) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > 2) dom.chatLane.firstChild.remove();
       } else if (dom.chatLaneBack) {
-        while (dom.chatLaneBack.childNodes.length > perfSettings.commentLaneMax) dom.chatLaneBack.firstChild.remove();
+        while (dom.chatLaneBack.childNodes.length > 3) dom.chatLaneBack.firstChild.remove();
       } else {
-        while (dom.chatLane.childNodes.length > perfSettings.commentLaneMax) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > 3) dom.chatLane.firstChild.remove();
       }
     }
 
@@ -4556,6 +4519,8 @@
     }
 
     function addRing(x, y, color, radius = 24, speed = 180) {
+      const budget = Math.max(0, perfSettings.ringBudget - state.rings.length);
+      if (!budget) return;
       state.fxNeedsClear = true;
       state.rings.push({ x, y, life:1, radius, speed, color });
     }
@@ -4563,8 +4528,8 @@
     function updateFx(dt) {
       if (!particleCtx || !fxCtx) return;
       if (!state.particles.length && !state.rings.length && !state.fxNeedsClear) return;
-      particleCtx.clearRect(0, 0, dom.particleCanvas.width, dom.particleCanvas.height);
-      fxCtx.clearRect(0, 0, dom.fxCanvas.width, dom.fxCanvas.height);
+      particleCtx.clearRect(0, 0, state.fxLogicalWidth || dom.board.clientWidth || 1, state.fxLogicalHeight || dom.board.clientHeight || 1);
+      fxCtx.clearRect(0, 0, state.fxLogicalWidth || dom.board.clientWidth || 1, state.fxLogicalHeight || dom.board.clientHeight || 1);
       if (!state.particles.length && !state.rings.length) {
         state.fxNeedsClear = false;
         return;
@@ -4610,7 +4575,10 @@
     }
 
     function popText(x, y, text, color, size = 26) {
-      lastPopTextAt = performance.now();
+      const now = performance.now();
+      if (activePopTextCount >= (perfSettings.popTextMax || 6)) return;
+      if (now - lastPopTextAt < (perfSettings.popTextMinGapMs || 0)) return;
+      lastPopTextAt = now;
       activePopTextCount += 1;
       const el = document.createElement('div');
       el.className = 'pop-text';
@@ -4650,6 +4618,9 @@
 
     function showSuperchatBanner(chainTier, gain, comboCount = 1) {
       if (!dom.superchatBanner) return;
+      const now = performance.now();
+      if (now - lastSuperchatBannerAt < (perfSettings.superchatMinGapMs || 0)) return;
+      lastSuperchatBannerAt = now;
       const tier = clamp(Math.max(1, Math.floor(chainTier || 1)), 1, 7);
       const comboTier = clamp(Math.max(1, Math.floor(comboCount || 1)), 1, 10);
       const theme = SUPERCHAT_CHAIN_THEME[tier] || SUPERCHAT_CHAIN_THEME[1];
@@ -5289,7 +5260,7 @@
     }
 
     function initEngine() {
-      engine = Engine.create({ enableSleeping:true, gravity:{ x:0, y:1.5 }, positionIterations:4, velocityIterations:3, constraintIterations:1 });
+      engine = Engine.create({ enableSleeping:true, gravity:{ x:0, y:1.5 }, positionIterations:3, velocityIterations:2, constraintIterations:1 });
       render = null;
       state.forceFullVisualSync = true;
       updateWorldBounds();
@@ -5841,6 +5812,7 @@
       rafId = requestAnimationFrame(requestLoop);
       if (!state.active || !engine || state.paused) return;
       state.frameStamp = ts;
+      if (state.lastTs && ts - state.lastTs < (perfSettings.logicFrameMs || 0)) return;
       if (!state.lastTs) state.lastTs = ts;
       const dt = clamp((ts - state.lastTs) / 1000, 0.001, 0.05);
       state.lastTs = ts;
@@ -6104,7 +6076,15 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     }
 
     function installServiceWorker() {
-      if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+      if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.getRegistrations()
+      .then(registrations => Promise.all(registrations.map(reg => reg.update?.())))
+      .catch(() => {});
+    navigator.serviceWorker.register(`./sw.js?build=${BUILD_ID}`, { updateViaCache:'none' }).catch(() => {});
+          navigator.serviceWorker.addEventListener('controllerchange', () => { setTimeout(() => location.reload(), 60); }, { once:true });
+  });
+}
     }
 
     dom.startBtn.addEventListener('click', startGame);
