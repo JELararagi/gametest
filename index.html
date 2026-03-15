@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#2a0a30">
   <meta property="og:title" content="限界メルトダウン（Limit Meltdown）">
   <meta property="og:description" content="今バズる話題をつなぎ、次の波を先読みして王冠ラインを超える。配信向けの物理演算トレンドパズル。">
+  <meta property="og:image" content="assets/img/ogp_image.png">
   <meta name="twitter:card" content="summary_large_image">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=M+PLUS+Rounded+1c:wght@700;900&display=swap" rel="stylesheet">
@@ -1418,24 +1419,24 @@
       -webkit-backface-visibility:hidden;
     }
 
-    body.mobile-bg-lite .panel,
-    body.mobile-bg-lite .hud-chip,
-    body.mobile-bg-lite #caption-box,
-    body.mobile-bg-lite #speech-bubble,
-    body.mobile-bg-lite .result-card,
-    body.mobile-bg-lite .daily-board-wrap,
-    body.mobile-bg-lite #pause-overlay .pause-card{
+    body.mobile-lowpower .panel,
+    body.mobile-lowpower .hud-chip,
+    body.mobile-lowpower #caption-box,
+    body.mobile-lowpower #speech-bubble,
+    body.mobile-lowpower .result-card,
+    body.mobile-lowpower .daily-board-wrap,
+    body.mobile-lowpower #pause-overlay .pause-card{
       backdrop-filter:none !important;
       box-shadow:0 10px 24px rgba(0,0,0,.24), 0 0 0 1px rgba(255,255,255,.03) !important;
     }
-    body.mobile-bg-lite #board-glass{
+    body.mobile-lowpower #board-glass{
       background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)) !important;
       box-shadow:none !important;
     }
-    body.mobile-bg-lite .board-character-layer,
-    body.mobile-bg-lite #bg-video,
-    body.mobile-bg-lite #bg-video-hype,
-    body.mobile-bg-lite #board-bg-video-hype{
+    body.mobile-lowpower .board-character-layer,
+    body.mobile-lowpower #bg-video,
+    body.mobile-lowpower #bg-video-hype,
+    body.mobile-lowpower #board-bg-video-hype{
       filter:none !important;
     }
 
@@ -2821,7 +2822,7 @@
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
       perfSettings = next;
-      document.body.classList.toggle('mobile-bg-lite', !!perfSettings.mobileLowPower);
+      document.body.classList.toggle('mobile-lowpower', !!perfSettings.mobileLowPower);
       applyMediaProfile();
       configureRunnerPerformance();
       return changed;
@@ -3387,8 +3388,8 @@
         state.visualGlowIds?.forEach(id => pushBody(bodyById(id)));
         for (const body of bodies) {
           const age = now - (body.spawnAt || 0);
-          const moving = !body.isSleeping || body.speed > 0.03 || Math.abs(body.velocity?.x || 0) > 0.03 || Math.abs(body.velocity?.y || 0) > 0.03 || Math.abs(body.angularVelocity || 0) > 0.015;
-          if (age < 380 || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
+          const moving = !body.isSleeping || body.speed > perfSettings.motionThreshold || Math.abs(body.velocity?.x || 0) > perfSettings.motionThreshold || Math.abs(body.velocity?.y || 0) > perfSettings.motionThreshold || Math.abs(body.angularVelocity || 0) > perfSettings.motionAngularThreshold;
+          if (age < perfSettings.newBodyVisualMs || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
         }
       }
 
@@ -3439,11 +3440,9 @@
         const drawX = clamp(body.position.x, safeRadius, boardW - safeRadius);
         const drawY = clamp(body.position.y, safeRadius, boardH - safeRadius);
         const scale = trendBody ? 1.06 : (forecastReady ? 1.03 : 1);
-        const transformValue = `translate3d(${Math.round((drawX - diameter / 2) * 10) / 10}px, ${Math.round((drawY - diameter / 2) * 10) / 10}px, 0) rotate(${Math.round((body.angle || 0) * 100) / 100}rad) scale(${scale})`;
-        if (node._transform !== transformValue) {
-          node._transform = transformValue;
-          node.style.transform = transformValue;
-        }
+        const nextDrawX = Math.round((drawX - diameter / 2) * 10) / 10;
+        const nextDrawY = Math.round((drawY - diameter / 2) * 10) / 10;
+        const nextAngle = Math.round((body.angle || 0) * 100) / 100;
 
         const className = [
           'item-chip',
@@ -3463,14 +3462,34 @@
         if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
         node.hidden = false;
         const zValue = String(100 + Math.round(body.position.y * 10) + (body.id % 10));
-        if (node._zIndex !== zValue) {
-          node._zIndex = zValue;
-          node.style.zIndex = zValue;
-        }
         const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
-        if (node._filter !== filterValue) {
-          node._filter = filterValue;
-          node.style.filter = filterValue;
+        const canSkipTransform = !!node._transform && !state.forceFullVisualSync
+          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < perfSettings.transformPositionThreshold
+          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < perfSettings.transformPositionThreshold
+          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < perfSettings.transformAngleThreshold
+          && (node._drawScale ?? scale) === scale
+          && node.className === className
+          && node._zIndex === zValue
+          && node._filter === filterValue
+          && body.isSleeping;
+        if (!canSkipTransform) {
+          const transformValue = `translate3d(${nextDrawX}px, ${nextDrawY}px, 0) rotate(${nextAngle}rad) scale(${scale})`;
+          if (node._transform !== transformValue) {
+            node._transform = transformValue;
+            node.style.transform = transformValue;
+          }
+          node._drawX = nextDrawX;
+          node._drawY = nextDrawY;
+          node._drawAngle = nextAngle;
+          node._drawScale = scale;
+          if (node._zIndex !== zValue) {
+            node._zIndex = zValue;
+            node.style.zIndex = zValue;
+          }
+          if (node._filter !== filterValue) {
+            node._filter = filterValue;
+            node.style.filter = filterValue;
+          }
         }
 
         body.plugin = body.plugin || {};
@@ -4455,7 +4474,8 @@
     function spawnComment(forceTrend = false, forcedText = null, forcedClass = '', forcedIcon = null) {
       if (!dom.chatLane) return;
       const now = performance.now();
-      const cooldown = forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86);
+      const cooldown = (forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86)) * perfSettings.commentCooldownScale;
+      if (!forcedText && perfSettings.mobileLowPower && rand() < perfSettings.commentDropChance) return;
       if (now - lastCommentSpawnAt < cooldown * 1000) return;
       let text = forcedText || '';
       let cls = forcedClass || '';
@@ -4503,11 +4523,11 @@
       targetLane.appendChild(node);
       lastCommentSpawnAt = now;
       if (specialType) {
-        while (dom.chatLane.childNodes.length > 2) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > perfSettings.specialCommentLaneMax) dom.chatLane.firstChild.remove();
       } else if (dom.chatLaneBack) {
-        while (dom.chatLaneBack.childNodes.length > 3) dom.chatLaneBack.firstChild.remove();
+        while (dom.chatLaneBack.childNodes.length > perfSettings.commentLaneMax) dom.chatLaneBack.firstChild.remove();
       } else {
-        while (dom.chatLane.childNodes.length > 3) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > perfSettings.commentLaneMax) dom.chatLane.firstChild.remove();
       }
     }
 
@@ -4519,43 +4539,46 @@
     }
 
     function addParticles(x, y, color, count = 18, spread = 9) {
-      const budget = Math.max(0, LIGHT_MODE_PARTICLE_BUDGET - state.particles.length);
-      const safeCount = Math.max(0, Math.min(Math.round(count * LIGHT_MODE_PARTICLE_SCALE), budget));
+      const budget = Math.max(0, perfSettings.particleBudget - state.particles.length);
+      const safeCount = Math.max(0, Math.min(Math.round(count * perfSettings.particleScale), budget));
+      if (!safeCount) return;
+      state.fxNeedsClear = true;
       for (let i = 0; i < safeCount; i++) {
         state.particles.push({
           x, y,
           vx:(rand() - 0.5) * spread,
           vy:-2 - rand() * spread * 0.5,
-          life:1,
+          life:perfSettings.particleLife,
           color,
-          size:3 + rand() * 6
+          size:(3 + rand() * 6) * perfSettings.particleSizeScale
         });
       }
     }
 
     function addRing(x, y, color, radius = 24, speed = 180) {
+      state.fxNeedsClear = true;
       state.rings.push({ x, y, life:1, radius, speed, color });
     }
 
     function updateFx(dt) {
       if (!particleCtx || !fxCtx) return;
-      if (!state.particles.length && !state.rings.length) {
-        particleCtx.clearRect(0, 0, dom.particleCanvas.width, dom.particleCanvas.height);
-        fxCtx.clearRect(0, 0, dom.fxCanvas.width, dom.fxCanvas.height);
-        return;
-      }
+      if (!state.particles.length && !state.rings.length && !state.fxNeedsClear) return;
       particleCtx.clearRect(0, 0, dom.particleCanvas.width, dom.particleCanvas.height);
       fxCtx.clearRect(0, 0, dom.fxCanvas.width, dom.fxCanvas.height);
+      if (!state.particles.length && !state.rings.length) {
+        state.fxNeedsClear = false;
+        return;
+      }
 
       for (let i = state.particles.length - 1; i >= 0; i--) {
         const p = state.particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 18 * dt;
-        p.life -= dt * 1.6;
+        p.life -= dt * perfSettings.particleFadeRate;
         particleCtx.globalAlpha = Math.max(0, p.life);
         particleCtx.fillStyle = p.color;
-        particleCtx.shadowBlur = 0;
+        particleCtx.shadowBlur = 12 * Math.max(0.18, p.life);
         particleCtx.shadowColor = p.color;
         particleCtx.beginPath();
         particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -4564,32 +4587,43 @@
       }
       particleCtx.globalAlpha = 1;
       particleCtx.shadowBlur = 0;
+      particleCtx.shadowColor = 'transparent';
 
       for (let i = state.rings.length - 1; i >= 0; i--) {
         const r = state.rings[i];
-        r.life -= dt * 1.6;
+        r.life -= dt * perfSettings.particleFadeRate;
         r.radius += r.speed * dt;
         fxCtx.globalAlpha = Math.max(0, r.life * 0.8);
         fxCtx.strokeStyle = r.color;
         fxCtx.lineWidth = 3;
+        fxCtx.shadowBlur = 16 * Math.max(0.18, r.life);
+        fxCtx.shadowColor = r.color;
         fxCtx.beginPath();
         fxCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         fxCtx.stroke();
         if (r.life <= 0) state.rings.splice(i, 1);
       }
       fxCtx.globalAlpha = 1;
+      fxCtx.shadowBlur = 0;
+      fxCtx.shadowColor = 'transparent';
+      state.fxNeedsClear = !!(state.particles.length || state.rings.length);
     }
 
     function popText(x, y, text, color, size = 26) {
+      lastPopTextAt = performance.now();
+      activePopTextCount += 1;
       const el = document.createElement('div');
       el.className = 'pop-text';
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       el.style.color = color;
-      el.style.fontSize = `${size}px`;
+      el.style.fontSize = `${Math.round(size * (perfSettings.popTextScale || 1))}px`;
       el.textContent = text;
       dom.board.appendChild(el);
-      setTimeout(() => el.remove(), 1100);
+      setTimeout(() => {
+        activePopTextCount = Math.max(0, activePopTextCount - 1);
+        el.remove();
+      }, 1100);
     }
 
     const SUPERCHAT_CHAIN_THEME = {
