@@ -1515,7 +1515,7 @@
       </div>
       <div class="howto-row">
         <div class="howto-icons"><img src="assets/img/hazard.png"><img src="assets/img/hazard.png"><img src="assets/img/hazard.png"></div>
-        <div><b>6. 爆弾を3こつなぐと「大炎上」</b><br><span style="color:#d8ccea;line-height:1.7">爆弾を3こつなげると、そのまとまりが消えて<b>+1200点</b>。そのあと炎アイテムが<b>5〜10こ</b>落ちてきて、盤面がちょっとたいへんになるよ。大バズり中なら爆弾3こ消しは<b>+2400点</b>になるよ。</span></div>
+        <div><b>6. 爆弾を3こつなぐと「大炎上」</b><br><span style="color:#d8ccea;line-height:1.7">爆弾を3こつなげると、そのまとまりが消えて<b>+1200点</b>。そのあと炎アイテムが<b>3〜5こ</b>落ちてきて、盤面がちょっとたいへんになるよ。大バズり中なら爆弾3こ消しは<b>+2400点</b>になるよ。</span></div>
       </div>
       <div class="howto-row">
         <div class="howto-icons"><img src="assets/img/fire.png"><span style="font-weight:900;color:#ff9bb1">＋</span><img src="assets/img/item_1.png"></div>
@@ -2267,23 +2267,6 @@
       state.currentChainDropSerial = -1;
     }
 
-    function suppressChainFromSpecial(seconds = 2.4) {
-      resetChainState();
-      state.lastContentClearAt = 0;
-      state.chainSuppressUntil = performance.now() + Math.max(0, seconds) * 1000;
-    }
-
-    function noteClearActivity() {
-      state.lastClearAt = performance.now();
-    }
-
-    function noteContentClearActivity() {
-      const now = performance.now();
-      state.lastClearAt = now;
-      state.lastContentClearAt = now;
-      state.chainSuppressUntil = 0;
-    }
-
     function createLiveTypeBuckets() {
       return { content:[], hazard:[], fire:[], buzz:[] };
     }
@@ -2358,13 +2341,15 @@
       }
       body.plugin._liveRegistered = true;
       body.plugin._liveRefs = {};
+      body.plugin._liveType = body.gameType;
+      body.plugin._liveContentIndex = Number.isInteger(body.contentIndex) ? body.contentIndex : null;
       state.liveBodyIds.add(body.id);
       state.liveBodyMap.set(body.id, body);
       liveRegistryPush(state.liveBodies, body, 'all');
-      const typeBucket = state.liveBodiesByType?.[body.gameType];
+      const typeBucket = state.liveBodiesByType?.[body.plugin._liveType];
       if (typeBucket) liveRegistryPush(typeBucket, body, 'type');
-      if (body.gameType === 'content' && Number.isInteger(body.contentIndex)) {
-        const indexBucket = state.liveContentBodiesByIndex?.[body.contentIndex];
+      if (body.plugin._liveType === 'content' && Number.isInteger(body.plugin._liveContentIndex)) {
+        const indexBucket = state.liveContentBodiesByIndex?.[body.plugin._liveContentIndex];
         if (indexBucket) liveRegistryPush(indexBucket, body, 'contentIndex');
       }
       invalidateWorldBodiesCache();
@@ -2375,11 +2360,13 @@
     function unregisterLiveBody(body) {
       if (!body?.plugin?._liveRegistered) return;
       const refs = body.plugin._liveRefs || {};
+      const liveType = body.plugin._liveType ?? body.gameType;
+      const liveContentIndex = Number.isInteger(body.plugin._liveContentIndex) ? body.plugin._liveContentIndex : body.contentIndex;
       liveRegistrySwapRemove(state.liveBodies, refs.all, 'all');
-      const typeBucket = state.liveBodiesByType?.[body.gameType];
+      const typeBucket = state.liveBodiesByType?.[liveType];
       if (typeBucket) liveRegistrySwapRemove(typeBucket, refs.type, 'type');
-      if (body.gameType === 'content' && Number.isInteger(body.contentIndex)) {
-        const indexBucket = state.liveContentBodiesByIndex?.[body.contentIndex];
+      if (liveType === 'content' && Number.isInteger(liveContentIndex)) {
+        const indexBucket = state.liveContentBodiesByIndex?.[liveContentIndex];
         if (indexBucket) liveRegistrySwapRemove(indexBucket, refs.contentIndex, 'contentIndex');
       }
       state.liveBodyIds.delete(body.id);
@@ -2387,6 +2374,8 @@
       state.visualDirtyIds?.delete(body.id);
       body.plugin._liveRegistered = false;
       body.plugin._liveRefs = null;
+      body.plugin._liveType = null;
+      body.plugin._liveContentIndex = null;
       invalidateWorldBodiesCache();
     }
 
@@ -2505,7 +2494,7 @@
     const CONTENT_BASE_WEIGHTS = [14, 14, 14, 14, 14, 14, 14];
     const CONTENT_SCORE_VALUES = [280, 330, 390, 460, 560, 700, 880];
 
-    const BOARD_BODY_ITEM_SCALE = 1.44;
+    const BOARD_BODY_ITEM_SCALE = 1.3248;
     const UNIFIED_BODY_RADIUS = Math.round(31 * BOARD_BODY_ITEM_SCALE);
     const LIGHT_MODE_SCAN_INTERVAL = 0.28;
     const LIGHT_MODE_VISUAL_INTERVAL = 1 / 45;
@@ -2540,7 +2529,7 @@
     function spriteScaleFor(index, radius, isHazard = false) {
       return 0.001;
     }
-    const BOARD_VISUAL_ITEM_SCALE = 1.0;
+    const BOARD_VISUAL_ITEM_SCALE = 0.9;
     function visualDiameter(radius, specialType = false) {
       const base = radius * 2.06;
       return Math.round(base * BOARD_VISUAL_ITEM_SCALE);
@@ -2583,7 +2572,7 @@
       const nowTopic = commentTopic(state.trendIndex, 'now');
       const nextTopic = commentTopic(state.nextTrendIndex, 'next');
       const nearTop = stats.nearTop || state.overfillTime > 0.18 || state.topDangerTime > 0.36;
-      const chainActive = state.chainCount >= 2 && state.chainDecay > 0 && performance.now() >= (state.chainSuppressUntil || 0);
+      const chainActive = state.chainCount >= 2 && state.chainDecay > 0;
       const comboActive = state.combo >= 3 && state.comboTimer > 0;
 
       if (state.clipTime > 0) {
@@ -2861,8 +2850,8 @@
         gameType: body.gameType
       }));
       list.forEach(body => {
-        disableBodyCollision(body);
         unregisterLiveBody(body);
+        disableBodyCollision(body);
         removeBodyVisualEntry(body);
       });
       list.forEach(body => {
@@ -4510,7 +4499,7 @@
 
     function buildTouchGroupsForIndex(targetIndex) {
       const now = performance.now();
-      const targetBodies = worldContentBodiesByIndex(targetIndex).filter(body => now - body.spawnAt > 220);
+      const targetBodies = worldContentBodiesByIndex(targetIndex).filter(body => state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval && now - body.spawnAt > 220);
       return buildTouchGroupsFromBodies(targetBodies, 0.5);
     }
 
@@ -4525,7 +4514,7 @@
     function buildTouchGroupsForType(gameType, contentIndex = null) {
       const now = performance.now();
       const sourceBodies = gameType === 'content' ? worldContentBodiesByIndex(contentIndex) : worldBodiesByType(gameType);
-      const targetBodies = sourceBodies.filter(body => now - body.spawnAt > 220);
+      const targetBodies = sourceBodies.filter(body => state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval && now - body.spawnAt > 220);
       const loosePad = gameType === 'hazard' ? 8 : (gameType === 'buzz' ? 6 : 0.5);
       return buildTouchGroupsFromBodies(targetBodies, loosePad);
     }
@@ -4619,7 +4608,7 @@
 
     function collectAdjacentFireBodies(seedBodies = []) {
       if (!seedBodies.length) return [];
-      const fireBodies = worldBodiesByType('fire');
+      const fireBodies = worldBodiesByType('fire').filter(body => state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval);
       if (!fireBodies.length) return [];
       return fireBodies.filter(fire => seedBodies.some(body => touching(fire, body)));
     }
@@ -4658,8 +4647,6 @@
       const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
       hardRemoveBodies(removed);
       state.boardStatsCache = null;
-      noteClearActivity();
-      suppressChainFromSpecial();
       state.clearCount += 1;
       state.heat = clamp(state.heat + 20, 0, 100);
       state.craving = clamp(state.craving + 10, 0, 100);
@@ -4689,7 +4676,7 @@
       if (adjacentFire.length) popText(center.x, center.y + 64, `炎まきこみ x${adjacentFire.length}`, '#ffb7c5', 18);
       spawnComment(false, `爆弾が${group.length}こつながって大炎上！`, 'low', '💣');
       triggerFire('bomb_chain');
-      const fireCount = 5 + Math.floor(rand() * 6);
+      const fireCount = 3 + Math.floor(rand() * 3);
       const dropped = spawnHazardBurst(fireCount, center.x);
       popText(dom.board.clientWidth / 2, dom.board.clientHeight * 0.34, '大炎上!!', '#fff0f0', 42);
       showFireBanner();
@@ -4711,8 +4698,6 @@
       const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
       hardRemoveBodies(removed);
       state.boardStatsCache = null;
-      noteClearActivity();
-      suppressChainFromSpecial();
       state.clearCount += 1;
       state.tension = clamp(state.tension + 14, 0, 100);
       state.craving = clamp(state.craving - 8, 0, 100);
@@ -4768,9 +4753,7 @@
       const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
       hardRemoveBodies(removed);
       state.boardStatsCache = null;
-      noteContentClearActivity();
-      const chainBlockedBySpecial = performance.now() < (state.chainSuppressUntil || 0);
-      const sameDropCascade = !chainBlockedBySpecial && state.currentChainDropSerial === state.dropSerial && state.chainDecay > 0;
+      const sameDropCascade = state.currentChainDropSerial === state.dropSerial && state.chainDecay > 0;
       state.chainCount = sameDropCascade ? state.chainCount + 1 : 1;
       state.currentChainDropSerial = state.dropSerial;
       state.chainDecay = 1.28;
@@ -5310,7 +5293,7 @@
       let eventMiniText = '';
       if (isFeverActive()) eventMiniText = `大バズり中 ${Math.max(1, Math.ceil(state.clipTime))}s`;
       else if (state.fireMode > 0) eventMiniText = '大炎上中';
-      else if (state.chainCount >= 2 && state.chainDecay > 0 && performance.now() >= (state.chainSuppressUntil || 0)) eventMiniText = `${state.chainCount}連鎖`; 
+      else if (state.chainCount >= 2 && state.chainDecay > 0) eventMiniText = `${state.chainCount}連鎖`; 
       else if (state.overfillTime > 0.2) eventMiniText = '満杯危険';
       else eventMiniText = state.crownHoldStreak > 0 ? `王冠キープ x${state.crownHoldStreak}` : 'チャンス待ち';
       const crownMini = topGap > 0 ? `1位まで ${fmt(topGap)}` : 'いま1位';
@@ -5329,7 +5312,7 @@
           else caption = `次は『${nextTrend().name}』、その次は『${futureTrend().name}』。`;
         } else if (state.overfillTime > 0.18) {
           caption = `満杯注意。いまは『${currentTrend().name}』を優先。`;
-        } else if (state.chainCount >= 2 && state.chainDecay > 0 && performance.now() >= (state.chainSuppressUntil || 0)) {
+        } else if (state.chainCount >= 2 && state.chainDecay > 0) {
           caption = `${state.chainCount}連鎖中。`;
         } else if (state.jackChain > 0) {
           caption = `先読み連勝 x${state.jackChain}`;
@@ -5419,12 +5402,6 @@
           resetChainState();
         }
       } else if (state.chainCount !== 0) {
-        resetChainState();
-      }
-      if (state.chainCount > 0 && state.lastContentClearAt > 0 && performance.now() - state.lastContentClearAt > 1400) {
-        resetChainState();
-      }
-      if ((state.chainSuppressUntil || 0) > 0 && performance.now() < state.chainSuppressUntil && (state.chainCount !== 0 || state.chainDecay !== 0)) {
         resetChainState();
       }
 
