@@ -1450,42 +1450,6 @@
       background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)) !important;
       box-shadow:none !important;
     }
-    body.mobile-lowpower .item-chip{
-      border-width:1px !important;
-      box-shadow:0 2px 7px rgba(0,0,0,.20) !important;
-      filter:none !important;
-    }
-    body.mobile-lowpower .item-chip img,
-    body.mobile-lowpower #preview-item,
-    body.mobile-lowpower .drop-pick-btn img,
-    body.mobile-lowpower #trend-thumb,
-    body.mobile-lowpower .tiny-stack img,
-    body.mobile-lowpower .future-stack img,
-    body.mobile-lowpower .trend-shift-badge img{
-      filter:none !important;
-    }
-    body.mobile-lowpower .item-chip.trend,
-    body.mobile-lowpower .item-chip.ready,
-    body.mobile-lowpower .item-chip.near,
-    body.mobile-lowpower .item-chip.forecast,
-    body.mobile-lowpower .item-chip.fire,
-    body.mobile-lowpower .item-chip.buzz,
-    body.mobile-lowpower .item-chip.shift-glow{
-      box-shadow:0 3px 9px rgba(0,0,0,.22) !important;
-    }
-    body.mobile-lowpower .item-chip.pending-clear{
-      animation:none !important;
-      filter:none !important;
-      box-shadow:0 3px 10px rgba(0,0,0,.22) !important;
-    }
-    body.mobile-lowpower #big-buzz-banner .core,
-    body.mobile-lowpower #fire-banner .core{
-      text-shadow:0 0 10px rgba(255,255,255,.40), 0 0 20px rgba(255,93,183,.32) !important;
-    }
-    body.mobile-lowpower #superchat-banner .card{
-      min-width:220px;
-      max-width:340px;
-    }
     body.mobile-lowpower .board-character-layer,
     body.mobile-lowpower #bg-video,
     body.mobile-lowpower #bg-video-hype,
@@ -2768,28 +2732,28 @@
       physicsFps:30,
       runnerMaxUpdates:1,
       scanInterval:0.33,
-      visualInterval:1 / 30,
+      visualInterval:1 / 45,
       uiInterval:0.36,
       cleanupInterval:1.0,
       rescueInterval:1.08,
       boardStatsCacheMs:780,
-      particleBudget:4,
-      particleScale:0.07,
-      particleFadeRate:2.15,
-      particleLife:0.72,
-      particleSizeScale:0.78,
-      ringBudget:5,
-      minorRingThreshold:34,
+      particleBudget:8,
+      particleScale:0.12,
+      particleFadeRate:1.6,
+      particleLife:1,
+      particleSizeScale:1,
+      ringBudget:14,
+      minorRingThreshold:0,
       majorRingThreshold:86,
-      popTextMax:3,
-      popTextMinGapMs:120,
-      popTextScale:0.9,
-      commentCooldownScale:1.45,
-      commentIntervalScale:1.28,
-      commentDropChance:0.28,
-      commentLaneMax:2,
-      specialCommentLaneMax:1,
-      superchatMinGapMs:5200,
+      popTextMax:6,
+      popTextMinGapMs:0,
+      popTextScale:1,
+      commentCooldownScale:1,
+      commentIntervalScale:1,
+      commentDropChance:0,
+      commentLaneMax:3,
+      specialCommentLaneMax:2,
+      superchatMinGapMs:1600,
       videoPreload:'metadata',
       transformPositionThreshold:0.52,
       transformAngleThreshold:0.03,
@@ -4607,12 +4571,6 @@
     }
 
     function addRing(x, y, color, radius = 24, speed = 180) {
-      const score = Number(radius || 0) + Number(speed || 0) * 0.03;
-      if (perfSettings.mobileLowPower) {
-        const bigMoment = state.clipTime > 0 || state.fireMode > 0 || state.chainCount >= 2;
-        if (!bigMoment && score < perfSettings.minorRingThreshold) return;
-        while (state.rings.length >= perfSettings.ringBudget) state.rings.shift();
-      }
       state.fxNeedsClear = true;
       state.rings.push({ x, y, life:1, radius, speed, color });
     }
@@ -4651,7 +4609,7 @@
         r.radius += r.speed * dt;
         fxCtx.globalAlpha = Math.max(0, r.life * 0.8);
         fxCtx.strokeStyle = r.color;
-        fxCtx.lineWidth = perfSettings.mobileLowPower ? 2 : 3;
+        fxCtx.lineWidth = 3;
         fxCtx.beginPath();
         fxCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         fxCtx.stroke();
@@ -4662,26 +4620,20 @@
     }
 
     function popText(x, y, text, color, size = 26) {
-      const now = performance.now();
-      const important = /大バズり|大炎上|GAME OVER|TIME UP|1位|CHAIN|BOMB|爆弾|火消し/u.test(String(text || ''));
-      if (!important && perfSettings.mobileLowPower) {
-        if (activePopTextCount >= perfSettings.popTextMax) return;
-        if (now - lastPopTextAt < perfSettings.popTextMinGapMs) return;
-      }
-      lastPopTextAt = now;
+      lastPopTextAt = performance.now();
       activePopTextCount += 1;
       const el = document.createElement('div');
       el.className = 'pop-text';
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       el.style.color = color;
-      el.style.fontSize = `${Math.round(size * perfSettings.popTextScale)}px`;
+      el.style.fontSize = `${size}px`;
       el.textContent = text;
       dom.board.appendChild(el);
       setTimeout(() => {
         activePopTextCount = Math.max(0, activePopTextCount - 1);
         el.remove();
-      }, perfSettings.mobileLowPower ? 850 : 1100);
+      }, 1100);
     }
 
     const SUPERCHAT_CHAIN_THEME = {
@@ -4717,29 +4669,27 @@
       const card = dom.superchatBanner.querySelector('.card');
       const amount = dom.superchatBanner.querySelector('.amount');
       const message = dom.superchatBanner.querySelector('.message');
-      const scaleBase = perfSettings.mobileLowPower ? 0.64 : 0.72;
-      const scale = scaleBase + Math.min(perfSettings.mobileLowPower ? 0.54 : 1.02, (tier - 1) * 0.13) + Math.min(perfSettings.mobileLowPower ? 0.12 : 0.26, (comboTier - 1) * 0.024);
+      const scaleBase = 0.72;
+      const scale = scaleBase + Math.min(1.02, (tier - 1) * 0.13) + Math.min(0.26, (comboTier - 1) * 0.024);
       if (card) {
         card.style.borderColor = theme.border;
-        card.style.boxShadow = perfSettings.mobileLowPower
-          ? `0 0 0 1px ${theme.border}44, 0 10px 24px rgba(0,0,0,.28)`
-          : `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${26 + comboTier * 5}px ${theme.fill}`;
+        card.style.boxShadow = `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${26 + comboTier * 5}px ${theme.fill}`;
         card.style.transform = `scale(${scale})`;
       }
       if (amount) {
         amount.textContent = `+${fmt(Math.max(0, Math.round(gain || 0)))}`;
         amount.style.color = theme.border;
-        amount.style.fontSize = `${0.72 + Math.min(perfSettings.mobileLowPower ? 0.72 : 1.18, (tier - 1) * 0.16) + Math.min(perfSettings.mobileLowPower ? 0.12 : 0.28, (comboTier - 1) * 0.026)}rem`;
+        amount.style.fontSize = `${0.72 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)}rem`;
       }
       if (message) {
         message.textContent = choice(SUPERCHAT_CHAIN_MESSAGES);
-        message.style.fontSize = `${0.82 + Math.min(perfSettings.mobileLowPower ? 0.62 : 1.34, (tier - 1) * 0.18) + Math.min(perfSettings.mobileLowPower ? 0.12 : 0.28, (comboTier - 1) * 0.024)}rem`;
+        message.style.fontSize = `${0.82 + Math.min(1.34, (tier - 1) * 0.18) + Math.min(0.28, (comboTier - 1) * 0.024)}rem`;
       }
       dom.superchatBanner.classList.remove('show');
       void dom.superchatBanner.offsetWidth;
       dom.superchatBanner.classList.add('show');
       clearTimeout(state.superchatBannerTimer);
-      const ttl = perfSettings.mobileLowPower ? (2200 + tier * 260 + comboTier * 80) : (4000 + tier * 520 + comboTier * 150);
+      const ttl = 4000 + tier * 520 + comboTier * 150;
       state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), ttl);
       sfx('ready', Math.min(2.2, 0.56 + tier * 0.2 + comboTier * 0.05));
     }
