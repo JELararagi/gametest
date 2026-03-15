@@ -1,9 +1,8 @@
-const CACHE_NAME = 'trendbuzz-v75-runtime';
+const CACHE_NAME = 'trendbuzz-v76-runtime';
 const PRECACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './assets/bg/bg_cyber.mp4',
   './assets/bg/bg_bigbuzz_loop.mp4',
   './assets/bg/overlay_gameover_glitch.mp4',
   './assets/audio/bgm_lofi.m4a',
