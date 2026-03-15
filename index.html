@@ -1440,26 +1440,12 @@
     }
 
 
-    @media (max-width: 760px){
-      .item-chip{width:72px;height:72px}
-      .item-chip::after{width:26px;height:26px;font-size:12px}
-      .rising-chat{font-size:.68rem;max-width:min(82%,270px);padding:5px 7px}
-      #trend-shift-banner{top:124px;min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px}
-      #trend-shift-main{font-size:1.18rem}
-    }
-    @media (max-width: 430px){
-      .item-chip{width:72px;height:72px}
-      .item-chip::after{width:26px;height:26px;font-size:12px}
-      .rising-chat{font-size:.68rem;max-width:min(82%,270px);padding:5px 7px}
-      #trend-shift-banner{top:124px;min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px}
-      #trend-shift-main{font-size:1.18rem}
-    }
   </style>
 </head>
 <body>
   <div id="bg-container">
-    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" muted loop playsinline autoplay preload="metadata"></video>
-    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
+    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" data-mobile-src="assets/bg/bg_cyber_mobile.mp4" muted loop playsinline autoplay preload="metadata"></video>
+    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" data-mobile-src="assets/bg/bg_bigbuzz_loop_mobile.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
@@ -1503,7 +1489,7 @@
     <div id="game-shell">
       <div id="board-wrap">
         <div id="game-board">
-          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
+          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" data-mobile-src="assets/bg/bg_bigbuzz_loop_mobile.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
           <div id="board-grid"></div>
           <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
           <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
@@ -2724,7 +2710,7 @@
       bgmHyperVolume:0.42
     });
     const PERF_PRESET_MOBILE = Object.freeze({
-      mobileLowPower:false,
+      mobileLowPower:true,
       physicsFps:60,
       runnerMaxUpdates:2,
       scanInterval:0.28,
@@ -2773,7 +2759,16 @@
     let pauseRequestedByVisibility = false;
 
     function detectPerformanceProfile() {
-      return { ...PERF_PRESET_DEFAULT };
+      const viewportW = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      const viewportH = Math.max(window.visualViewport?.height || 0, document.documentElement.clientHeight || 0, window.innerHeight || 0);
+      const coarsePointer = !!window.matchMedia?.('(pointer: coarse)').matches;
+      const reducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const ua = navigator.userAgent || '';
+      const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+      const hw = navigator.hardwareConcurrency || 4;
+      const smallViewport = Math.max(viewportW, viewportH) <= 1400 || Math.min(viewportW, viewportH) <= 860;
+      const mobileLowPower = reducedMotion || (coarsePointer && (mobileUa || smallViewport || hw <= 8));
+      return mobileLowPower ? { ...PERF_PRESET_MOBILE } : { ...PERF_PRESET_DEFAULT };
     }
 
     function resolveAudioAsset(path) {
@@ -2786,7 +2781,9 @@
 
     function resolveVideoAsset(video) {
       if (!video) return '';
-      return video.dataset.src || video.getAttribute('src') || '';
+      const base = video.dataset.src || video.getAttribute('src') || '';
+      const mobile = video.dataset.mobileSrc || base;
+      return perfSettings.mobileLowPower ? mobile : base;
     }
 
     function applyElementSource(media, src, preload = 'metadata') {
@@ -2824,7 +2821,7 @@
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
       perfSettings = next;
-      document.body.classList.remove('mobile-bg-lite');
+      document.body.classList.toggle('mobile-bg-lite', !!perfSettings.mobileLowPower);
       applyMediaProfile();
       configureRunnerPerformance();
       return changed;
@@ -3494,7 +3491,6 @@
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = 'v73-mobile-syncfix';
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4523,46 +4519,43 @@
     }
 
     function addParticles(x, y, color, count = 18, spread = 9) {
-      const budget = Math.max(0, perfSettings.particleBudget - state.particles.length);
-      const safeCount = Math.max(0, Math.min(Math.round(count * perfSettings.particleScale), budget));
-      if (!safeCount) return;
-      state.fxNeedsClear = true;
+      const budget = Math.max(0, LIGHT_MODE_PARTICLE_BUDGET - state.particles.length);
+      const safeCount = Math.max(0, Math.min(Math.round(count * LIGHT_MODE_PARTICLE_SCALE), budget));
       for (let i = 0; i < safeCount; i++) {
         state.particles.push({
           x, y,
           vx:(rand() - 0.5) * spread,
           vy:-2 - rand() * spread * 0.5,
-          life:perfSettings.particleLife,
+          life:1,
           color,
-          size:(3 + rand() * 6) * perfSettings.particleSizeScale
+          size:3 + rand() * 6
         });
       }
     }
 
     function addRing(x, y, color, radius = 24, speed = 180) {
-      state.fxNeedsClear = true;
       state.rings.push({ x, y, life:1, radius, speed, color });
     }
 
     function updateFx(dt) {
       if (!particleCtx || !fxCtx) return;
-      if (!state.particles.length && !state.rings.length && !state.fxNeedsClear) return;
-      particleCtx.clearRect(0, 0, dom.particleCanvas.width, dom.particleCanvas.height);
-      fxCtx.clearRect(0, 0, dom.fxCanvas.width, dom.fxCanvas.height);
       if (!state.particles.length && !state.rings.length) {
-        state.fxNeedsClear = false;
+        particleCtx.clearRect(0, 0, dom.particleCanvas.width, dom.particleCanvas.height);
+        fxCtx.clearRect(0, 0, dom.fxCanvas.width, dom.fxCanvas.height);
         return;
       }
+      particleCtx.clearRect(0, 0, dom.particleCanvas.width, dom.particleCanvas.height);
+      fxCtx.clearRect(0, 0, dom.fxCanvas.width, dom.fxCanvas.height);
 
       for (let i = state.particles.length - 1; i >= 0; i--) {
         const p = state.particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 18 * dt;
-        p.life -= dt * perfSettings.particleFadeRate;
+        p.life -= dt * 1.6;
         particleCtx.globalAlpha = Math.max(0, p.life);
         particleCtx.fillStyle = p.color;
-        particleCtx.shadowBlur = 12 * Math.max(0.18, p.life);
+        particleCtx.shadowBlur = 0;
         particleCtx.shadowColor = p.color;
         particleCtx.beginPath();
         particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -4571,43 +4564,32 @@
       }
       particleCtx.globalAlpha = 1;
       particleCtx.shadowBlur = 0;
-      particleCtx.shadowColor = 'transparent';
 
       for (let i = state.rings.length - 1; i >= 0; i--) {
         const r = state.rings[i];
-        r.life -= dt * perfSettings.particleFadeRate;
+        r.life -= dt * 1.6;
         r.radius += r.speed * dt;
         fxCtx.globalAlpha = Math.max(0, r.life * 0.8);
         fxCtx.strokeStyle = r.color;
         fxCtx.lineWidth = 3;
-        fxCtx.shadowBlur = 16 * Math.max(0.18, r.life);
-        fxCtx.shadowColor = r.color;
         fxCtx.beginPath();
         fxCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         fxCtx.stroke();
         if (r.life <= 0) state.rings.splice(i, 1);
       }
       fxCtx.globalAlpha = 1;
-      fxCtx.shadowBlur = 0;
-      fxCtx.shadowColor = 'transparent';
-      state.fxNeedsClear = !!(state.particles.length || state.rings.length);
     }
 
     function popText(x, y, text, color, size = 26) {
-      lastPopTextAt = performance.now();
-      activePopTextCount += 1;
       const el = document.createElement('div');
       el.className = 'pop-text';
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       el.style.color = color;
-      el.style.fontSize = `${Math.round(size * (perfSettings.popTextScale || 1))}px`;
+      el.style.fontSize = `${size}px`;
       el.textContent = text;
       dom.board.appendChild(el);
-      setTimeout(() => {
-        activePopTextCount = Math.max(0, activePopTextCount - 1);
-        el.remove();
-      }, 1100);
+      setTimeout(() => el.remove(), 1100);
     }
 
     const SUPERCHAT_CHAIN_THEME = {
@@ -6088,15 +6070,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     }
 
     function installServiceWorker() {
-      if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.getRegistrations()
-      .then(registrations => Promise.all(registrations.map(reg => reg.update?.())))
-      .catch(() => {});
-    navigator.serviceWorker.register(`./sw.js?build=${BUILD_ID}`, { updateViaCache:'none' }).catch(() => {});
-          navigator.serviceWorker.addEventListener('controllerchange', () => { setTimeout(() => location.reload(), 60); }, { once:true });
-  });
-}
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
     dom.startBtn.addEventListener('click', startGame);

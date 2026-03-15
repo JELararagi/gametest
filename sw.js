@@ -1,10 +1,12 @@
-const CACHE_NAME = 'meltdown-v73-mobile-syncfix';
-const PRECACHE = [
+const CACHE_NAME = 'trendbuzz-v69-mobile-fx-restored-bg-lite';
+const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
   './assets/bg/bg_cyber.mp4',
+  './assets/bg/bg_cyber_mobile.mp4',
   './assets/bg/bg_bigbuzz_loop.mp4',
+  './assets/bg/bg_bigbuzz_loop_mobile.mp4',
   './assets/bg/overlay_gameover_glitch.mp4',
   './assets/audio/bgm_lofi.m4a',
   './assets/audio/bgm_hyper.m4a',
@@ -39,66 +41,19 @@ const PRECACHE = [
   './assets/img/item_5.png',
   './assets/img/item_6.png',
   './assets/img/icon-192.png',
+  './assets/img/ogp_image.png'
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)).catch(() => {})
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS_TO_CACHE)));
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)));
-    await self.clients.claim();
-  })());
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+  );
 });
-
-self.addEventListener('message', event => {
-  if (event.data === 'SKIP_WAITING') self.skipWaiting();
-});
-
-async function networkFirst(request) {
-  const cache = await caches.open(CACHE_NAME);
-  try {
-    const response = await fetch(request, { cache: 'no-store' });
-    if (response && response.ok) cache.put(request, response.clone());
-    return response;
-  } catch (_) {
-    return (await cache.match(request, { ignoreSearch: true })) || fetch(request);
-  }
-}
-
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request, { ignoreSearch: true });
-  const networkPromise = fetch(request).then(response => {
-    if (response && response.ok) cache.put(request, response.clone());
-    return response;
-  }).catch(() => cached);
-  return cached || networkPromise;
-}
 
 self.addEventListener('fetch', event => {
-  const request = event.request;
-  if (request.method !== 'GET') return;
-
-  const url = new URL(request.url);
-  const isSameOrigin = url.origin === self.location.origin;
-  const isHtml = request.mode === 'navigate' ||
-    (request.headers.get('accept') || '').includes('text/html') ||
-    url.pathname.endsWith('/index.html') ||
-    url.pathname === '/' ||
-    url.pathname.endsWith('/');
-
-  if (isHtml) {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  if (isSameOrigin) {
-    event.respondWith(staleWhileRevalidate(request));
-  }
+  event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
 });
