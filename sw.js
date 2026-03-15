@@ -1,5 +1,5 @@
-const CACHE_NAME = 'meltdown-v72-runtime-clean-pc-eq';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'meltdown-v73-mobile-syncfix';
+const PRECACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
@@ -42,15 +42,63 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS_TO_CACHE)));
-});
-
-self.addEventListener('activate', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)).catch(() => {})
   );
 });
 
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const response = await fetch(request, { cache: 'no-store' });
+    if (response && response.ok) cache.put(request, response.clone());
+    return response;
+  } catch (_) {
+    return (await cache.match(request, { ignoreSearch: true })) || fetch(request);
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request, { ignoreSearch: true });
+  const networkPromise = fetch(request).then(response => {
+    if (response && response.ok) cache.put(request, response.clone());
+    return response;
+  }).catch(() => cached);
+  return cached || networkPromise;
+}
+
 self.addEventListener('fetch', event => {
-  event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isHtml = request.mode === 'navigate' ||
+    (request.headers.get('accept') || '').includes('text/html') ||
+    url.pathname.endsWith('/index.html') ||
+    url.pathname === '/' ||
+    url.pathname.endsWith('/');
+
+  if (isHtml) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  if (isSameOrigin) {
+    event.respondWith(staleWhileRevalidate(request));
+  }
 });

@@ -1440,6 +1440,20 @@
     }
 
 
+    @media (max-width: 760px){
+      .item-chip{width:72px;height:72px}
+      .item-chip::after{width:26px;height:26px;font-size:12px}
+      .rising-chat{font-size:.68rem;max-width:min(82%,270px);padding:5px 7px}
+      #trend-shift-banner{top:124px;min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px}
+      #trend-shift-main{font-size:1.18rem}
+    }
+    @media (max-width: 430px){
+      .item-chip{width:72px;height:72px}
+      .item-chip::after{width:26px;height:26px;font-size:12px}
+      .rising-chat{font-size:.68rem;max-width:min(82%,270px);padding:5px 7px}
+      #trend-shift-banner{top:124px;min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px}
+      #trend-shift-main{font-size:1.18rem}
+    }
   </style>
 </head>
 <body>
@@ -2710,7 +2724,7 @@
       bgmHyperVolume:0.42
     });
     const PERF_PRESET_MOBILE = Object.freeze({
-      mobileLowPower:true,
+      mobileLowPower:false,
       physicsFps:60,
       runnerMaxUpdates:2,
       scanInterval:0.28,
@@ -3480,6 +3494,7 @@
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
+    const BUILD_ID = 'v73-mobile-syncfix';
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -6073,7 +6088,15 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     }
 
     function installServiceWorker() {
-      if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+      if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.getRegistrations()
+      .then(registrations => Promise.all(registrations.map(reg => reg.update?.())))
+      .catch(() => {});
+    navigator.serviceWorker.register(`./sw.js?build=${BUILD_ID}`, { updateViaCache:'none' }).catch(() => {});
+          navigator.serviceWorker.addEventListener('controllerchange', () => { setTimeout(() => location.reload(), 60); }, { once:true });
+  });
+}
     }
 
     dom.startBtn.addEventListener('click', startGame);
