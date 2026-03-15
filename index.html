@@ -2699,25 +2699,25 @@
       cleanupInterval:1.04,
       rescueInterval:1.12,
       boardStatsCacheMs:900,
-      particleBudget:18,
-      particleScale:0.34,
-      particleFadeRate:1.7,
-      particleLife:0.96,
-      particleSizeScale:1.02,
-      ringBudget:14,
+      particleBudget:12,
+      particleScale:0.26,
+      particleFadeRate:2.35,
+      particleLife:0.76,
+      particleSizeScale:0.92,
+      ringBudget:7,
       minorRingThreshold:0,
-      majorRingThreshold:84,
-      popTextMax:6,
-      popTextMinGapMs:90,
-      popTextScale:1.02,
-      commentCooldownScale:1.18,
-      commentIntervalScale:1.22,
+      majorRingThreshold:120,
+      popTextMax:4,
+      popTextMinGapMs:180,
+      popTextScale:0.96,
+      commentCooldownScale:1.36,
+      commentIntervalScale:1.60,
       commentDropChance:0,
-      commentLaneMax:3,
-      specialCommentLaneMax:2,
-      superchatMinGapMs:420,
+      commentLaneMax:2,
+      specialCommentLaneMax:1,
+      superchatMinGapMs:1200,
       videoPreload:'metadata',
-      fxResolutionScale:0.82,
+      fxResolutionScale:0.66,
       transformPositionThreshold:0.3,
       transformAngleThreshold:0.018,
       motionThreshold:0.05,
@@ -4399,8 +4399,8 @@
         node.style.right = `${2 + rand() * 18}%`;
         node.style.left = 'auto';
       }
-      node.style.setProperty('--chat-drift', `${fromLeft ? (12 + rand() * 18) : (-12 - rand() * 18)}px`);
-      node.style.animationDuration = `${4.6 + rand() * 0.7}s`;
+      node.style.setProperty('--chat-drift', `${fromLeft ? (10 + rand() * 12) : (-10 - rand() * 12)}px`);
+      node.style.animationDuration = `${3.8 + rand() * 0.5}s`;
       node.style.setProperty('--rise-distance', `${Math.max(320, (dom.board?.clientHeight || dom.chatLane?.clientHeight || 420) + 96)}px`);
       node.style.zIndex = '18';
       node.style.transform = 'translateZ(0)';
@@ -4520,7 +4520,7 @@
 
     function addRing(x, y, color, radius = 24, speed = 180) {
       const budget = Math.max(0, perfSettings.ringBudget - state.rings.length);
-      if (!budget) return;
+      if (!budget || (radius < 28 && state.rings.length >= Math.max(3, Math.floor(perfSettings.ringBudget * 0.6)))) return;
       state.fxNeedsClear = true;
       state.rings.push({ x, y, life:1, radius, speed, color });
     }
@@ -4543,7 +4543,7 @@
         p.life -= dt * perfSettings.particleFadeRate;
         particleCtx.globalAlpha = Math.max(0, p.life);
         particleCtx.fillStyle = p.color;
-        particleCtx.shadowBlur = 12 * Math.max(0.18, p.life);
+        particleCtx.shadowBlur = 5 * Math.max(0.15, p.life);
         particleCtx.shadowColor = p.color;
         particleCtx.beginPath();
         particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -4560,8 +4560,8 @@
         r.radius += r.speed * dt;
         fxCtx.globalAlpha = Math.max(0, r.life * 0.8);
         fxCtx.strokeStyle = r.color;
-        fxCtx.lineWidth = 3;
-        fxCtx.shadowBlur = 16 * Math.max(0.18, r.life);
+        fxCtx.lineWidth = 2.4;
+        fxCtx.shadowBlur = 8 * Math.max(0.15, r.life);
         fxCtx.shadowColor = r.color;
         fxCtx.beginPath();
         fxCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
