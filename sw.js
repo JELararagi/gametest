@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trendbuzz-v69-mobile-fx-restored-bg-lite';
+const CACHE_NAME = 'meltdown-v71-runtime-clean-fxhybrid';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
