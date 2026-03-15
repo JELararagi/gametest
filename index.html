@@ -1231,6 +1231,47 @@
       background:linear-gradient(180deg, rgba(6,3,10,.10), rgba(6,3,10,.08)) !important;
     }
 
+
+
+    /* --- v55 title inner bg only / item visual-hitbox align patch --- */
+    body.title-mode #bg-vignette{
+      display:none !important;
+      opacity:0 !important;
+    }
+    body.title-mode #bg-container{
+      display:block !important;
+      position:fixed !important;
+      inset:auto !important;
+      top:50% !important;
+      left:50% !important;
+      width:var(--stage-w) !important;
+      height:var(--stage-h) !important;
+      transform:translate(-50%,-50%) scale(var(--stage-scale)) !important;
+      transform-origin:center center !important;
+      background:none !important;
+      overflow:hidden !important;
+    }
+    body.title-mode #bg-video,
+    body.title-mode #bg-video-hype{
+      position:absolute !important;
+      inset:0 !important;
+      top:auto !important;
+      left:auto !important;
+      width:100% !important;
+      height:100% !important;
+      transform:none !important;
+      filter:none !important;
+    }
+    body.title-mode #bg-video{
+      display:block !important;
+      opacity:1 !important;
+      object-fit:cover !important;
+    }
+    body.title-mode #bg-video-hype{
+      display:none !important;
+      opacity:0 !important;
+    }
+
   </style>
 </head>
 <body>
@@ -2494,7 +2535,7 @@
     function spriteScaleFor(index, radius, isHazard = false) {
       return 0.001;
     }
-    const BOARD_VISUAL_ITEM_SCALE = 1.5;
+    const BOARD_VISUAL_ITEM_SCALE = 1.0;
     function visualDiameter(radius, specialType = false) {
       const base = radius * ((specialType === true || specialType === 'hazard' || specialType === 'fire' || specialType === 'buzz') ? 2.06 : 2.02);
       return Math.round(base * BOARD_VISUAL_ITEM_SCALE);
