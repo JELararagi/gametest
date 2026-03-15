@@ -363,8 +363,8 @@
     #big-buzz-banner .core{max-width:min(94%, 500px);padding:18px 20px 20px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,216,76,.45), rgba(255,47,146,.28) 48%, rgba(8,4,14,0) 76%);display:grid;justify-items:center;gap:8px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff4a3;text-shadow:0 0 22px rgba(255,216,76,.95),0 0 58px rgba(255,47,146,.78),0 0 96px rgba(255,255,255,.3);transform:scale(.8) rotate(-1deg)}
     #big-buzz-banner .title{font-size:clamp(2.2rem,11vw,4.4rem);font-weight:900;letter-spacing:.01em;line-height:1;white-space:nowrap}
     #big-buzz-banner .sub{display:inline-flex;align-items:center;justify-content:center;min-width:150px;padding:8px 18px;border-radius:999px;background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));border:1px solid rgba(255,248,190,.45);font-size:clamp(.92rem,4vw,1.35rem);font-weight:900;letter-spacing:.08em;color:#fffef6;box-shadow:0 0 18px rgba(255,227,122,.32)}
-    #big-buzz-banner.show{animation:bigBuzzBurst .96s cubic-bezier(.19,.89,.24,1)}
-    #big-buzz-banner.show .core{animation:bigBuzzPulse .96s cubic-bezier(.19,.89,.24,1)}
+    #big-buzz-banner.show{animation:bigBuzzBurst 1.92s cubic-bezier(.19,.89,.24,1)}
+    #big-buzz-banner.show .core{animation:bigBuzzPulse 1.92s cubic-bezier(.19,.89,.24,1)}
     @keyframes bigBuzzBurst{0%{opacity:0}16%{opacity:1}72%{opacity:1}100%{opacity:0}}
     @keyframes bigBuzzPulse{0%{transform:scale(.58) rotate(-5deg);filter:blur(8px)}22%{transform:scale(1.12) rotate(1deg);filter:blur(0)}56%{transform:scale(1) rotate(0)}100%{transform:scale(.95) rotate(0);filter:blur(1px)}}
 
@@ -674,11 +674,11 @@
     #fire-banner,#superchat-banner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.88);pointer-events:none;z-index:34;opacity:0}
     #fire-banner .core{min-width:320px;padding:22px 28px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,210,210,.26), rgba(255,70,70,.38) 44%, rgba(255,24,90,.22) 66%, rgba(8,4,14,0) 80%);display:grid;justify-items:center;gap:6px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff0f0;text-shadow:0 0 18px rgba(255,255,255,.62),0 0 34px rgba(255,70,90,.9),0 0 72px rgba(255,44,44,.6)}
     #fire-banner .title{font-size:clamp(2.4rem,11vw,4.5rem);font-weight:900;letter-spacing:.02em;white-space:nowrap}
-    #fire-banner.show{animation:fireBurst 1.04s cubic-bezier(.19,.89,.24,1)}
+    #fire-banner.show{animation:fireBurst 2.08s cubic-bezier(.19,.89,.24,1)}
     #superchat-banner .card{min-width:240px;max-width:430px;padding:10px 14px;border-radius:22px;background:rgba(18,10,30,.42);border:3px solid rgba(142,248,255,.78);box-shadow:0 14px 34px rgba(0,0,0,.28);display:grid;gap:4px;justify-items:start;backdrop-filter:blur(3px)}
     #superchat-banner .amount{font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;letter-spacing:.02em;color:#fff}
     #superchat-banner .message{font-size:.96rem;font-weight:900;line-height:1.22;color:#fff}
-    #superchat-banner.show{animation:superchatBurst 3.6s cubic-bezier(.19,.89,.24,1)}
+    #superchat-banner.show{animation:superchatBurst 7.2s cubic-bezier(.19,.89,.24,1)}
     @keyframes fireBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.68)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
     @keyframes superchatBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}9%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}84%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
 
@@ -1439,7 +1439,6 @@
     body.mobile-lowpower .hud-chip,
     body.mobile-lowpower #caption-box,
     body.mobile-lowpower #speech-bubble,
-    body.mobile-lowpower #superchat-banner .card,
     body.mobile-lowpower .result-card,
     body.mobile-lowpower .daily-board-wrap,
     body.mobile-lowpower #pause-overlay .pause-card{
@@ -2716,7 +2715,7 @@
       commentDropChance:0,
       commentLaneMax:3,
       specialCommentLaneMax:2,
-      superchatMinGapMs:1600,
+      superchatMinGapMs:0,
       videoPreload:'auto',
       transformPositionThreshold:0.18,
       transformAngleThreshold:0.01,
@@ -2753,7 +2752,7 @@
       commentDropChance:0,
       commentLaneMax:3,
       specialCommentLaneMax:2,
-      superchatMinGapMs:1600,
+      superchatMinGapMs:0,
       videoPreload:'metadata',
       transformPositionThreshold:0.52,
       transformAngleThreshold:0.03,
@@ -3398,6 +3397,8 @@
         bodies.forEach(pushBody);
       } else {
         state.visualDirtyIds?.forEach(id => pushBody(bodyById(id)));
+        for (const body of worldContentBodiesByIndex(state.trendIndex)) pushBody(body);
+        for (const body of worldContentBodiesByIndex(state.nextTrendIndex)) pushBody(body);
         state.visualPreviewIds?.forEach(id => pushBody(bodyById(id)));
         state.visualNextPreviewIds?.forEach(id => pushBody(bodyById(id)));
         state.visualGlowIds?.forEach(id => pushBody(bodyById(id)));
@@ -3903,7 +3904,7 @@
       void dom.bigBuzzBanner.offsetWidth;
       dom.bigBuzzBanner.classList.add('show');
       clearTimeout(bigBuzzBannerTimer);
-      bigBuzzBannerTimer = setTimeout(() => dom.bigBuzzBanner?.classList.remove('show'), 980);
+      bigBuzzBannerTimer = setTimeout(() => dom.bigBuzzBanner?.classList.remove('show'), 1960);
     }
 
     function triggerVoiceCue(kind, tier = 1, opts = {}) {
@@ -4655,22 +4656,18 @@
       void dom.fireBanner.offsetWidth;
       dom.fireBanner.classList.add('show');
       clearTimeout(state.fireBannerTimer);
-      state.fireBannerTimer = setTimeout(() => dom.fireBanner?.classList.remove('show'), 1020);
+      state.fireBannerTimer = setTimeout(() => dom.fireBanner?.classList.remove('show'), 2040);
     }
 
     function showSuperchatBanner(chainTier, gain, comboCount = 1) {
       if (!dom.superchatBanner) return;
-      const now = performance.now();
-      if (now - lastSuperchatBannerAt < perfSettings.superchatMinGapMs) return;
-      lastSuperchatBannerAt = now;
       const tier = clamp(Math.max(1, Math.floor(chainTier || 1)), 1, 7);
       const comboTier = clamp(Math.max(1, Math.floor(comboCount || 1)), 1, 10);
       const theme = SUPERCHAT_CHAIN_THEME[tier] || SUPERCHAT_CHAIN_THEME[1];
       const card = dom.superchatBanner.querySelector('.card');
       const amount = dom.superchatBanner.querySelector('.amount');
       const message = dom.superchatBanner.querySelector('.message');
-      const scaleBase = 0.72;
-      const scale = scaleBase + Math.min(1.02, (tier - 1) * 0.13) + Math.min(0.26, (comboTier - 1) * 0.024);
+      const scale = 0.72 + Math.min(1.02, (tier - 1) * 0.13) + Math.min(0.26, (comboTier - 1) * 0.024);
       if (card) {
         card.style.borderColor = theme.border;
         card.style.boxShadow = `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${26 + comboTier * 5}px ${theme.fill}`;
@@ -4679,7 +4676,7 @@
       if (amount) {
         amount.textContent = `+${fmt(Math.max(0, Math.round(gain || 0)))}`;
         amount.style.color = theme.border;
-        amount.style.fontSize = `${0.72 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)}rem`;
+        amount.style.fontSize = `${0.76 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)}rem`;
       }
       if (message) {
         message.textContent = choice(SUPERCHAT_CHAIN_MESSAGES);
@@ -4689,8 +4686,7 @@
       void dom.superchatBanner.offsetWidth;
       dom.superchatBanner.classList.add('show');
       clearTimeout(state.superchatBannerTimer);
-      const ttl = 4000 + tier * 520 + comboTier * 150;
-      state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), ttl);
+      state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), (4000 + tier * 520 + comboTier * 150) * 2);
       sfx('ready', Math.min(2.2, 0.56 + tier * 0.2 + comboTier * 0.05));
     }
 
@@ -5058,6 +5054,11 @@
 
     function collectAdjacentFireBodies(seedBodies = []) {
       if (!seedBodies.length) return [];
+      const allowFireCascade = seedBodies.some(body => {
+        const type = body?.gameType || 'content';
+        return type !== 'hazard' && type !== 'buzz';
+      });
+      if (!allowFireCascade) return [];
       const fireBodies = worldBodiesByType('fire').filter(body => state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval);
       if (!fireBodies.length) return [];
       return fireBodies.filter(fire => seedBodies.some(body => touching(fire, body)));

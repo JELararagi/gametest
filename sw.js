@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trendbuzz-v65-effects-kept';
+const CACHE_NAME = 'trendbuzz-v66-fxrestored-longer';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
