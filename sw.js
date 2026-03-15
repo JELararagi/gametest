@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trendbuzz-v66-fxrestored-longer';
+const CACHE_NAME = 'trendbuzz-v68-fx-restore-mobile';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

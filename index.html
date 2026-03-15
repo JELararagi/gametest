@@ -363,8 +363,8 @@
     #big-buzz-banner .core{max-width:min(94%, 500px);padding:18px 20px 20px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,216,76,.45), rgba(255,47,146,.28) 48%, rgba(8,4,14,0) 76%);display:grid;justify-items:center;gap:8px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff4a3;text-shadow:0 0 22px rgba(255,216,76,.95),0 0 58px rgba(255,47,146,.78),0 0 96px rgba(255,255,255,.3);transform:scale(.8) rotate(-1deg)}
     #big-buzz-banner .title{font-size:clamp(2.2rem,11vw,4.4rem);font-weight:900;letter-spacing:.01em;line-height:1;white-space:nowrap}
     #big-buzz-banner .sub{display:inline-flex;align-items:center;justify-content:center;min-width:150px;padding:8px 18px;border-radius:999px;background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));border:1px solid rgba(255,248,190,.45);font-size:clamp(.92rem,4vw,1.35rem);font-weight:900;letter-spacing:.08em;color:#fffef6;box-shadow:0 0 18px rgba(255,227,122,.32)}
-    #big-buzz-banner.show{animation:bigBuzzBurst 1.92s cubic-bezier(.19,.89,.24,1)}
-    #big-buzz-banner.show .core{animation:bigBuzzPulse 1.92s cubic-bezier(.19,.89,.24,1)}
+    #big-buzz-banner.show{animation:bigBuzzBurst 3.84s cubic-bezier(.19,.89,.24,1)}
+    #big-buzz-banner.show .core{animation:bigBuzzPulse 3.84s cubic-bezier(.19,.89,.24,1)}
     @keyframes bigBuzzBurst{0%{opacity:0}16%{opacity:1}72%{opacity:1}100%{opacity:0}}
     @keyframes bigBuzzPulse{0%{transform:scale(.58) rotate(-5deg);filter:blur(8px)}22%{transform:scale(1.12) rotate(1deg);filter:blur(0)}56%{transform:scale(1) rotate(0)}100%{transform:scale(.95) rotate(0);filter:blur(1px)}}
 
@@ -674,7 +674,7 @@
     #fire-banner,#superchat-banner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.88);pointer-events:none;z-index:34;opacity:0}
     #fire-banner .core{min-width:320px;padding:22px 28px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,210,210,.26), rgba(255,70,70,.38) 44%, rgba(255,24,90,.22) 66%, rgba(8,4,14,0) 80%);display:grid;justify-items:center;gap:6px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff0f0;text-shadow:0 0 18px rgba(255,255,255,.62),0 0 34px rgba(255,70,90,.9),0 0 72px rgba(255,44,44,.6)}
     #fire-banner .title{font-size:clamp(2.4rem,11vw,4.5rem);font-weight:900;letter-spacing:.02em;white-space:nowrap}
-    #fire-banner.show{animation:fireBurst 2.08s cubic-bezier(.19,.89,.24,1)}
+    #fire-banner.show{animation:fireBurst 4.16s cubic-bezier(.19,.89,.24,1)}
     #superchat-banner .card{min-width:240px;max-width:430px;padding:10px 14px;border-radius:22px;background:rgba(18,10,30,.42);border:3px solid rgba(142,248,255,.78);box-shadow:0 14px 34px rgba(0,0,0,.28);display:grid;gap:4px;justify-items:start;backdrop-filter:blur(3px)}
     #superchat-banner .amount{font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;letter-spacing:.02em;color:#fff}
     #superchat-banner .message{font-size:.96rem;font-weight:900;line-height:1.22;color:#fff}
@@ -694,8 +694,8 @@
     #top-right .score-pill .big{font-size:1.3rem !important;line-height:1 !important}
     #game-screen.bigbuzz #game-board::before{opacity:.18 !important}
     #game-screen.bigbuzz #board-glass{background:linear-gradient(180deg, rgba(6,3,10,.14), rgba(6,3,10,.10)) !important}
-    #superchat-banner.show{animation:superchatBurst 4.8s cubic-bezier(.19,.89,.24,1)}
-    @keyframes superchatBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}8%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}91%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
+    #superchat-banner.show{animation:superchatBurst 9.6s cubic-bezier(.19,.89,.24,1)}
+    @keyframes superchatBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}7%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}94%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
 
 
     /* --- v22 user patch: no apology button / bigger item buttons / wider peak / board bigbuzz video --- */
@@ -1213,22 +1213,6 @@
       opacity:1 !important;
       filter:none !important;
       object-fit:cover !important;
-    }
-    body.gameplay-mode .item-chip{
-      transition:none !important;
-      border-width:1px !important;
-      box-shadow:0 4px 10px rgba(0,0,0,.20) !important;
-    }
-    body.gameplay-mode .item-chip img{filter:none !important}
-    body.gameplay-mode .item-chip.trend,
-    body.gameplay-mode .item-chip.fire,
-    body.gameplay-mode .item-chip.buzz{
-      box-shadow:0 4px 10px rgba(0,0,0,.22) !important;
-    }
-    body.gameplay-mode #caption-box,
-    body.gameplay-mode #speech-bubble,
-    body.gameplay-mode #superchat-banner .card{
-      backdrop-filter:none !important;
     }
     body.gameplay-mode #board-glass{
       background:linear-gradient(180deg, rgba(6,3,10,.10), rgba(6,3,10,.08)) !important;
@@ -2699,22 +2683,22 @@
       cleanupInterval:0.82,
       rescueInterval:0.92,
       boardStatsCacheMs:520,
-      particleBudget:8,
-      particleScale:0.12,
-      particleFadeRate:1.6,
-      particleLife:1,
-      particleSizeScale:1,
-      ringBudget:14,
+      particleBudget:24,
+      particleScale:0.42,
+      particleFadeRate:1.45,
+      particleLife:1.12,
+      particleSizeScale:1.12,
+      ringBudget:20,
       minorRingThreshold:0,
-      majorRingThreshold:86,
-      popTextMax:6,
+      majorRingThreshold:72,
+      popTextMax:8,
       popTextMinGapMs:0,
-      popTextScale:1,
+      popTextScale:1.12,
       commentCooldownScale:1,
       commentIntervalScale:1,
       commentDropChance:0,
-      commentLaneMax:3,
-      specialCommentLaneMax:2,
+      commentLaneMax:4,
+      specialCommentLaneMax:3,
       superchatMinGapMs:0,
       videoPreload:'auto',
       transformPositionThreshold:0.18,
@@ -2728,40 +2712,40 @@
     });
     const PERF_PRESET_MOBILE = Object.freeze({
       mobileLowPower:true,
-      physicsFps:30,
-      runnerMaxUpdates:1,
-      scanInterval:0.33,
+      physicsFps:60,
+      runnerMaxUpdates:2,
+      scanInterval:0.28,
       visualInterval:1 / 45,
-      uiInterval:0.36,
-      cleanupInterval:1.0,
-      rescueInterval:1.08,
-      boardStatsCacheMs:780,
-      particleBudget:8,
-      particleScale:0.12,
-      particleFadeRate:1.6,
-      particleLife:1,
-      particleSizeScale:1,
-      ringBudget:14,
+      uiInterval:0.28,
+      cleanupInterval:0.82,
+      rescueInterval:0.92,
+      boardStatsCacheMs:520,
+      particleBudget:24,
+      particleScale:0.42,
+      particleFadeRate:1.45,
+      particleLife:1.12,
+      particleSizeScale:1.12,
+      ringBudget:20,
       minorRingThreshold:0,
-      majorRingThreshold:86,
-      popTextMax:6,
+      majorRingThreshold:72,
+      popTextMax:8,
       popTextMinGapMs:0,
-      popTextScale:1,
+      popTextScale:1.12,
       commentCooldownScale:1,
       commentIntervalScale:1,
       commentDropChance:0,
-      commentLaneMax:3,
-      specialCommentLaneMax:2,
+      commentLaneMax:4,
+      specialCommentLaneMax:3,
       superchatMinGapMs:0,
       videoPreload:'metadata',
-      transformPositionThreshold:0.52,
-      transformAngleThreshold:0.03,
-      motionThreshold:0.06,
-      motionAngularThreshold:0.03,
-      newBodyVisualMs:280,
+      transformPositionThreshold:0.18,
+      transformAngleThreshold:0.01,
+      motionThreshold:0.03,
+      motionAngularThreshold:0.015,
+      newBodyVisualMs:380,
       backgroundWatchdogInterval:2.0,
-      bgmNormalVolume:0.28,
-      bgmHyperVolume:0.34
+      bgmNormalVolume:0.30,
+      bgmHyperVolume:0.38
     });
     let perfSettings = { ...PERF_PRESET_DEFAULT };
     let titleBackgroundActive = true;
@@ -3904,7 +3888,7 @@
       void dom.bigBuzzBanner.offsetWidth;
       dom.bigBuzzBanner.classList.add('show');
       clearTimeout(bigBuzzBannerTimer);
-      bigBuzzBannerTimer = setTimeout(() => dom.bigBuzzBanner?.classList.remove('show'), 1960);
+      bigBuzzBannerTimer = setTimeout(() => dom.bigBuzzBanner?.classList.remove('show'), 3920);
     }
 
     function triggerVoiceCue(kind, tier = 1, opts = {}) {
@@ -4594,7 +4578,7 @@
         p.life -= dt * perfSettings.particleFadeRate;
         particleCtx.globalAlpha = Math.max(0, p.life);
         particleCtx.fillStyle = p.color;
-        particleCtx.shadowBlur = 0;
+        particleCtx.shadowBlur = 12 * Math.max(0.18, p.life);
         particleCtx.shadowColor = p.color;
         particleCtx.beginPath();
         particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -4603,6 +4587,7 @@
       }
       particleCtx.globalAlpha = 1;
       particleCtx.shadowBlur = 0;
+      particleCtx.shadowColor = 'transparent';
 
       for (let i = state.rings.length - 1; i >= 0; i--) {
         const r = state.rings[i];
@@ -4611,12 +4596,16 @@
         fxCtx.globalAlpha = Math.max(0, r.life * 0.8);
         fxCtx.strokeStyle = r.color;
         fxCtx.lineWidth = 3;
+        fxCtx.shadowBlur = 16 * Math.max(0.18, r.life);
+        fxCtx.shadowColor = r.color;
         fxCtx.beginPath();
         fxCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         fxCtx.stroke();
         if (r.life <= 0) state.rings.splice(i, 1);
       }
       fxCtx.globalAlpha = 1;
+      fxCtx.shadowBlur = 0;
+      fxCtx.shadowColor = 'transparent';
       state.fxNeedsClear = !!(state.particles.length || state.rings.length);
     }
 
@@ -4628,7 +4617,7 @@
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       el.style.color = color;
-      el.style.fontSize = `${size}px`;
+      el.style.fontSize = `${Math.round(size * (perfSettings.popTextScale || 1))}px`;
       el.textContent = text;
       dom.board.appendChild(el);
       setTimeout(() => {
@@ -4656,7 +4645,7 @@
       void dom.fireBanner.offsetWidth;
       dom.fireBanner.classList.add('show');
       clearTimeout(state.fireBannerTimer);
-      state.fireBannerTimer = setTimeout(() => dom.fireBanner?.classList.remove('show'), 2040);
+      state.fireBannerTimer = setTimeout(() => dom.fireBanner?.classList.remove('show'), 4080);
     }
 
     function showSuperchatBanner(chainTier, gain, comboCount = 1) {
