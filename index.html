@@ -1444,8 +1444,8 @@
 </head>
 <body>
   <div id="bg-container">
-    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" data-mobile-src="assets/bg/bg_cyber_mobile.mp4" muted loop playsinline autoplay preload="metadata"></video>
-    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" data-mobile-src="assets/bg/bg_bigbuzz_loop_mobile.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
+    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" muted loop playsinline autoplay preload="metadata"></video>
+    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
@@ -1489,7 +1489,7 @@
     <div id="game-shell">
       <div id="board-wrap">
         <div id="game-board">
-          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" data-mobile-src="assets/bg/bg_bigbuzz_loop_mobile.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
+          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
           <div id="board-grid"></div>
           <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
           <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
@@ -2759,16 +2759,7 @@
     let pauseRequestedByVisibility = false;
 
     function detectPerformanceProfile() {
-      const viewportW = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
-      const viewportH = Math.max(window.visualViewport?.height || 0, document.documentElement.clientHeight || 0, window.innerHeight || 0);
-      const coarsePointer = !!window.matchMedia?.('(pointer: coarse)').matches;
-      const reducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      const ua = navigator.userAgent || '';
-      const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-      const hw = navigator.hardwareConcurrency || 4;
-      const smallViewport = Math.max(viewportW, viewportH) <= 1400 || Math.min(viewportW, viewportH) <= 860;
-      const mobileLowPower = reducedMotion || (coarsePointer && (mobileUa || smallViewport || hw <= 8));
-      return mobileLowPower ? { ...PERF_PRESET_MOBILE } : { ...PERF_PRESET_DEFAULT };
+      return { ...PERF_PRESET_DEFAULT };
     }
 
     function resolveAudioAsset(path) {
@@ -2781,9 +2772,7 @@
 
     function resolveVideoAsset(video) {
       if (!video) return '';
-      const base = video.dataset.src || video.getAttribute('src') || '';
-      const mobile = video.dataset.mobileSrc || base;
-      return perfSettings.mobileLowPower ? mobile : base;
+      return video.dataset.src || video.getAttribute('src') || '';
     }
 
     function applyElementSource(media, src, preload = 'metadata') {
@@ -2821,7 +2810,7 @@
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
       perfSettings = next;
-      document.body.classList.toggle('mobile-bg-lite', !!perfSettings.mobileLowPower);
+      document.body.classList.remove('mobile-bg-lite');
       applyMediaProfile();
       configureRunnerPerformance();
       return changed;
@@ -3387,8 +3376,8 @@
         state.visualGlowIds?.forEach(id => pushBody(bodyById(id)));
         for (const body of bodies) {
           const age = now - (body.spawnAt || 0);
-          const moving = !body.isSleeping || body.speed > perfSettings.motionThreshold || Math.abs(body.velocity?.x || 0) > perfSettings.motionThreshold || Math.abs(body.velocity?.y || 0) > perfSettings.motionThreshold || Math.abs(body.angularVelocity || 0) > perfSettings.motionAngularThreshold;
-          if (age < perfSettings.newBodyVisualMs || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
+          const moving = !body.isSleeping || body.speed > 0.03 || Math.abs(body.velocity?.x || 0) > 0.03 || Math.abs(body.velocity?.y || 0) > 0.03 || Math.abs(body.angularVelocity || 0) > 0.015;
+          if (age < 380 || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
         }
       }
 
@@ -3439,9 +3428,11 @@
         const drawX = clamp(body.position.x, safeRadius, boardW - safeRadius);
         const drawY = clamp(body.position.y, safeRadius, boardH - safeRadius);
         const scale = trendBody ? 1.06 : (forecastReady ? 1.03 : 1);
-        const nextDrawX = Math.round((drawX - diameter / 2) * 10) / 10;
-        const nextDrawY = Math.round((drawY - diameter / 2) * 10) / 10;
-        const nextAngle = Math.round((body.angle || 0) * 100) / 100;
+        const transformValue = `translate3d(${Math.round((drawX - diameter / 2) * 10) / 10}px, ${Math.round((drawY - diameter / 2) * 10) / 10}px, 0) rotate(${Math.round((body.angle || 0) * 100) / 100}rad) scale(${scale})`;
+        if (node._transform !== transformValue) {
+          node._transform = transformValue;
+          node.style.transform = transformValue;
+        }
 
         const className = [
           'item-chip',
@@ -3461,34 +3452,14 @@
         if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
         node.hidden = false;
         const zValue = String(100 + Math.round(body.position.y * 10) + (body.id % 10));
+        if (node._zIndex !== zValue) {
+          node._zIndex = zValue;
+          node.style.zIndex = zValue;
+        }
         const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
-        const canSkipTransform = !!node._transform && !state.forceFullVisualSync
-          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < perfSettings.transformPositionThreshold
-          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < perfSettings.transformPositionThreshold
-          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < perfSettings.transformAngleThreshold
-          && (node._drawScale ?? scale) === scale
-          && node.className === className
-          && node._zIndex === zValue
-          && node._filter === filterValue
-          && body.isSleeping;
-        if (!canSkipTransform) {
-          const transformValue = `translate3d(${nextDrawX}px, ${nextDrawY}px, 0) rotate(${nextAngle}rad) scale(${scale})`;
-          if (node._transform !== transformValue) {
-            node._transform = transformValue;
-            node.style.transform = transformValue;
-          }
-          node._drawX = nextDrawX;
-          node._drawY = nextDrawY;
-          node._drawAngle = nextAngle;
-          node._drawScale = scale;
-          if (node._zIndex !== zValue) {
-            node._zIndex = zValue;
-            node.style.zIndex = zValue;
-          }
-          if (node._filter !== filterValue) {
-            node._filter = filterValue;
-            node.style.filter = filterValue;
-          }
+        if (node._filter !== filterValue) {
+          node._filter = filterValue;
+          node.style.filter = filterValue;
         }
 
         body.plugin = body.plugin || {};
@@ -4473,8 +4444,7 @@
     function spawnComment(forceTrend = false, forcedText = null, forcedClass = '', forcedIcon = null) {
       if (!dom.chatLane) return;
       const now = performance.now();
-      const cooldown = (forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86)) * perfSettings.commentCooldownScale;
-      if (!forcedText && perfSettings.mobileLowPower && rand() < perfSettings.commentDropChance) return;
+      const cooldown = forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86);
       if (now - lastCommentSpawnAt < cooldown * 1000) return;
       let text = forcedText || '';
       let cls = forcedClass || '';
@@ -4522,11 +4492,11 @@
       targetLane.appendChild(node);
       lastCommentSpawnAt = now;
       if (specialType) {
-        while (dom.chatLane.childNodes.length > perfSettings.specialCommentLaneMax) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > 2) dom.chatLane.firstChild.remove();
       } else if (dom.chatLaneBack) {
-        while (dom.chatLaneBack.childNodes.length > perfSettings.commentLaneMax) dom.chatLaneBack.firstChild.remove();
+        while (dom.chatLaneBack.childNodes.length > 3) dom.chatLaneBack.firstChild.remove();
       } else {
-        while (dom.chatLane.childNodes.length > perfSettings.commentLaneMax) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > 3) dom.chatLane.firstChild.remove();
       }
     }
 

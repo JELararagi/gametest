@@ -1,12 +1,10 @@
-const CACHE_NAME = 'meltdown-v71-runtime-clean-fxhybrid';
+const CACHE_NAME = 'meltdown-v72-runtime-clean-pc-eq';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
   './assets/bg/bg_cyber.mp4',
-  './assets/bg/bg_cyber_mobile.mp4',
   './assets/bg/bg_bigbuzz_loop.mp4',
-  './assets/bg/bg_bigbuzz_loop_mobile.mp4',
   './assets/bg/overlay_gameover_glitch.mp4',
   './assets/audio/bgm_lofi.m4a',
   './assets/audio/bgm_hyper.m4a',
@@ -41,7 +39,6 @@ const ASSETS_TO_CACHE = [
   './assets/img/item_5.png',
   './assets/img/item_6.png',
   './assets/img/icon-192.png',
-  './assets/img/ogp_image.png'
 ];
 
 self.addEventListener('install', event => {
