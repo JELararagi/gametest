@@ -2375,6 +2375,11 @@
       previewGroups:[],
       nextPreviewGroups:[],
       lastTs:0,
+      lastFrameTs:0,
+      lastLogicTs:0,
+      physicsAccumulator:0,
+      fixedDeltaMs:1000 / 36,
+      maxPhysicsSteps:2,
       topDangerTime:0,
       overfillTime:0,
       moodTimer:0,
@@ -2427,6 +2432,11 @@
       liveBodyIds:new Set(),
       liveBodiesByType:{ content:[], hazard:[], fire:[], buzz:[] },
       liveContentBodiesByIndex:Array.from({ length:CONTENTS.length }, () => []),
+      activeBodies:[],
+      activeBodyIds:new Set(),
+      repairQueueIds:new Set(),
+      groupScanDirtyIds:new Set(),
+      lastFullGroupScanAt:0,
       visualDirtyIds:new Set(),
       forceFullVisualSync:true,
       visualPreviewIds:[],
@@ -2473,6 +2483,11 @@
       state.liveBodyIds = new Set();
       state.liveBodiesByType = createLiveTypeBuckets();
       state.liveContentBodiesByIndex = createLiveIndexBuckets();
+      state.activeBodies = [];
+      state.activeBodyIds = new Set();
+      state.repairQueueIds = new Set();
+      state.groupScanDirtyIds = new Set();
+      state.lastFullGroupScanAt = 0;
       state.visualDirtyIds = new Set();
       state.forceFullVisualSync = true;
       state.visualPreviewIds = [];
@@ -2482,6 +2497,64 @@
       state.visualNextTrendIndex = -1;
       invalidateWorldBodiesCache();
     }
+
+
+function markGroupScanDirty(bodyOrId) {
+  const id = typeof bodyOrId === 'object' ? bodyOrId?.id : bodyOrId;
+  if (id == null) return;
+  if (!(state.groupScanDirtyIds instanceof Set)) state.groupScanDirtyIds = new Set();
+  state.groupScanDirtyIds.add(id);
+}
+
+function queueBodyRepair(bodyOrId) {
+  const id = typeof bodyOrId === 'object' ? bodyOrId?.id : bodyOrId;
+  if (id == null) return;
+  if (!(state.repairQueueIds instanceof Set)) state.repairQueueIds = new Set();
+  state.repairQueueIds.add(id);
+  markBodyVisualDirty(id);
+  markGroupScanDirty(id);
+}
+
+function refreshActiveBodies(now = performance.now()) {
+  const nextBodies = [];
+  const nextIds = new Set();
+  const liveBodies = state.liveBodies || [];
+  for (let i = 0; i < liveBodies.length; i += 1) {
+    const body = liveBodies[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    body.plugin = body.plugin || {};
+    const moving = !body.isSleeping
+      || body.speed > 0.04
+      || Math.abs(body.velocity?.x || 0) > 0.04
+      || Math.abs(body.velocity?.y || 0) > 0.04
+      || Math.abs(body.angularVelocity || 0) > 0.02;
+    if (moving) body.plugin.lastActiveAt = now;
+    const recentlyActive = moving || (body.plugin.lastActiveAt && now - body.plugin.lastActiveAt < 320);
+    if (!recentlyActive) continue;
+    nextBodies.push(body);
+    nextIds.add(body.id);
+    if (moving) markGroupScanDirty(body);
+  }
+  state.activeBodies = nextBodies;
+  state.activeBodyIds = nextIds;
+  return nextBodies;
+}
+
+function getActiveBodies() {
+  return state.activeBodies || [];
+}
+
+function collectRepairCandidates() {
+  const map = new Map();
+  getActiveBodies().forEach(body => {
+    if (body && state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval) map.set(body.id, body);
+  });
+  state.repairQueueIds?.forEach(id => {
+    const body = bodyById(id);
+    if (body && !body.plugin?.pendingRemoval) map.set(body.id, body);
+  });
+  return Array.from(map.values());
+}
 
     function markBodyVisualDirty(bodyOrId) {
       const id = typeof bodyOrId === 'object' ? bodyOrId?.id : bodyOrId;
@@ -2524,17 +2597,20 @@
       arr.pop();
     }
 
-    function registerLiveBody(body) {
+    
+function registerLiveBody(body) {
       if (!body || body.isStatic) return body;
       body.plugin = body.plugin || {};
       if (body.plugin._liveRegistered) {
         markBodyVisualDirty(body);
+        markGroupScanDirty(body);
         return body;
       }
       body.plugin._liveRegistered = true;
       body.plugin._liveRefs = {};
       body.plugin._liveType = body.gameType;
       body.plugin._liveContentIndex = Number.isInteger(body.contentIndex) ? body.contentIndex : null;
+      body.plugin.lastActiveAt = performance.now();
       state.liveBodyIds.add(body.id);
       state.liveBodyMap.set(body.id, body);
       liveRegistryPush(state.liveBodies, body, 'all');
@@ -2544,12 +2620,17 @@
         const indexBucket = state.liveContentBodiesByIndex?.[body.plugin._liveContentIndex];
         if (indexBucket) liveRegistryPush(indexBucket, body, 'contentIndex');
       }
+      state.activeBodyIds?.add(body.id);
+      state.activeBodies?.push(body);
       invalidateWorldBodiesCache();
       markBodyVisualDirty(body);
+      markGroupScanDirty(body);
       return body;
     }
 
-    function unregisterLiveBody(body) {
+
+    
+function unregisterLiveBody(body) {
       if (!body?.plugin?._liveRegistered) return;
       const refs = body.plugin._liveRefs || {};
       const liveType = body.plugin._liveType ?? body.gameType;
@@ -2563,13 +2644,18 @@
       }
       state.liveBodyIds.delete(body.id);
       state.liveBodyMap.delete(body.id);
+      state.activeBodyIds?.delete(body.id);
+      if (Array.isArray(state.activeBodies)) state.activeBodies = state.activeBodies.filter(item => item?.id !== body.id);
       state.visualDirtyIds?.delete(body.id);
+      state.groupScanDirtyIds?.delete(body.id);
+      state.repairQueueIds?.delete(body.id);
       body.plugin._liveRegistered = false;
       body.plugin._liveRefs = null;
       body.plugin._liveType = null;
       body.plugin._liveContentIndex = null;
       invalidateWorldBodiesCache();
     }
+
 
     function updateVisualDirtyContext(previewMap, nextPreviewMap, glowSet) {
       const currentTrendIndex = Number.isInteger(state.trendIndex) ? state.trendIndex : -1;
@@ -2688,45 +2774,47 @@
 
     const BOARD_BODY_ITEM_SCALE = 1.3248;
     const UNIFIED_BODY_RADIUS = Math.round(31 * BOARD_BODY_ITEM_SCALE);
-    const PERF_PRESET_DEFAULT = Object.freeze({
+    
+const PERF_PRESET_DEFAULT = Object.freeze({
       mobileLowPower:false,
-      physicsFps:30,
-      runnerMaxUpdates:1,
-      logicFrameMs:40,
-      scanInterval:0.62,
-      visualInterval:1 / 18,
-      uiInterval:0.58,
-      cleanupInterval:1.65,
-      rescueInterval:1.82,
-      boardStatsCacheMs:1800,
-      particleBudget:3,
-      particleScale:0.08,
-      particleFadeRate:3.4,
-      particleLife:0.44,
-      particleSizeScale:0.72,
-      ringBudget:2,
+      physicsFps:36,
+      runnerMaxUpdates:2,
+      logicFrameMs:33,
+      scanInterval:0.42,
+      visualInterval:1 / 22,
+      uiInterval:0.42,
+      cleanupInterval:1.18,
+      rescueInterval:1.24,
+      boardStatsCacheMs:950,
+      particleBudget:10,
+      particleScale:0.18,
+      particleFadeRate:2.35,
+      particleLife:0.72,
+      particleSizeScale:0.92,
+      ringBudget:7,
       minorRingThreshold:0,
-      majorRingThreshold:180,
-      popTextMax:2,
-      popTextMinGapMs:420,
-      popTextScale:0.82,
-      commentCooldownScale:2.35,
-      commentIntervalScale:3.2,
-      commentDropChance:0.45,
-      commentLaneMax:1,
-      specialCommentLaneMax:1,
-      superchatMinGapMs:4800,
-      videoPreload:'none',
-      fxResolutionScale:0.32,
-      transformPositionThreshold:0.95,
-      transformAngleThreshold:0.055,
-      motionThreshold:0.12,
-      motionAngularThreshold:0.055,
-      newBodyVisualMs:160,
+      majorRingThreshold:120,
+      popTextMax:4,
+      popTextMinGapMs:120,
+      popTextScale:0.96,
+      commentCooldownScale:1.45,
+      commentIntervalScale:1.8,
+      commentDropChance:0.12,
+      commentLaneMax:2,
+      specialCommentLaneMax:2,
+      superchatMinGapMs:2400,
+      videoPreload:'metadata',
+      fxResolutionScale:0.46,
+      transformPositionThreshold:0.55,
+      transformAngleThreshold:0.03,
+      motionThreshold:0.07,
+      motionAngularThreshold:0.03,
+      newBodyVisualMs:260,
       backgroundWatchdogInterval:1.2,
       bgmNormalVolume:0.28,
       bgmHyperVolume:0.34
     });
+
     const PERF_PRESET_MOBILE = Object.freeze({
       ...PERF_PRESET_DEFAULT
     });
@@ -2780,15 +2868,15 @@
       });
     }
 
-    function configureRunnerPerformance() {
-      if (!runner) return;
-      try {
-        runner.delta = 1000 / clamp(perfSettings.physicsFps || 60, 18, 60);
-        runner.maxUpdates = perfSettings.runnerMaxUpdates || 1;
-      } catch (_) {}
+    
+function configureRunnerPerformance() {
+      state.fixedDeltaMs = 1000 / clamp(perfSettings.physicsFps || 60, 18, 60);
+      state.maxPhysicsSteps = Math.max(1, perfSettings.runnerMaxUpdates || 1);
     }
 
-    function applyPerformanceProfile() {
+
+    
+function applyPerformanceProfile() {
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
       perfSettings = next;
@@ -2797,6 +2885,7 @@
       configureRunnerPerformance();
       return changed;
     }
+
 
     function scheduleAppHeightRefresh(delay = 140) {
       clearTimeout(viewportResizeTimer);
@@ -3110,30 +3199,33 @@
       Sleeping.set(body, false);
     }
 
-    function wakeBodiesNearRemoval(removedBodies) {
-      if (!engine || !removedBodies?.length || !dom.board) return;
-      const survivors = worldBodies();
-      if (!survivors.length) return;
-      const spots = removedBodies.map(body => ({
-        x: body.position.x,
-        y: body.position.y,
-        r: body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType)
-      }));
-      for (const body of survivors) {
-        for (const spot of spots) {
-          const dx = Math.abs(body.position.x - spot.x);
-          const dy = body.position.y - spot.y;
-          const reachX = (body.circleRadius || 0) + spot.r + 18;
-          const reachY = (body.circleRadius || 0) + spot.r + 74;
-          if (dx > reachX || dy < -reachY || dy > reachY * 2.4) continue;
+    
+function wakeBodiesNearRemoval(removedBodies) {
+      if (!engine || !removedBodies?.length) return;
+      const sleepers = worldBodies().filter(body => body.isSleeping && !body.plugin?.pendingRemoval);
+      if (!sleepers.length) return;
+      const hash = buildSpatialHash(sleepers);
+      const now = performance.now();
+      for (const spot of removedBodies) {
+        const seed = { position: spot.position, circleRadius: spot.circleRadius || 0 };
+        visitNearbyFromHash(hash, seed, 1, body => {
+          const dx = Math.abs(body.position.x - spot.position.x);
+          const dy = body.position.y - spot.position.y;
+          const reachX = (body.circleRadius || 0) + (spot.circleRadius || 0) + 14;
+          const reachUp = Math.max(24, (body.circleRadius || 0) + 10);
+          const reachDown = (body.circleRadius || 0) + (spot.circleRadius || 0) + 46;
+          if (dx > reachX || dy < -reachUp || dy > reachDown) return false;
           Sleeping.set(body, false);
-          Body.setVelocity(body, { x: body.velocity.x * 0.96, y: Math.max(body.velocity.y, 0.88) });
-          Body.setAngularVelocity(body, body.angularVelocity * 0.92);
           body.floatStartAt = 0;
-          break;
-        }
+          body.plugin = body.plugin || {};
+          body.plugin.lastActiveAt = now;
+          markBodyVisualDirty(body);
+          markGroupScanDirty(body);
+          return false;
+        });
       }
     }
+
 
     function hardRemoveBodies(bodies) {
       if (!engine) return 0;
@@ -3326,7 +3418,8 @@
       return node;
     }
 
-    function syncBodyVisuals() {
+    
+function syncBodyVisuals() {
       if (!engine || !dom.itemLayer) return;
       const bodies = worldBodies();
       const previewMap = new Map();
@@ -3356,8 +3449,8 @@
         state.visualGlowIds?.forEach(id => pushBody(bodyById(id)));
         for (const body of bodies) {
           const age = now - (body.spawnAt || 0);
-          const moving = !body.isSleeping || body.speed > 0.03 || Math.abs(body.velocity?.x || 0) > 0.03 || Math.abs(body.velocity?.y || 0) > 0.03 || Math.abs(body.angularVelocity || 0) > 0.015;
-          if (age < 380 || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
+          const moving = !body.isSleeping || body.speed > perfSettings.motionThreshold || Math.abs(body.velocity?.x || 0) > perfSettings.motionThreshold || Math.abs(body.velocity?.y || 0) > perfSettings.motionThreshold || Math.abs(body.angularVelocity || 0) > perfSettings.motionAngularThreshold;
+          if (age < perfSettings.newBodyVisualMs || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
         }
       }
 
@@ -3396,23 +3489,21 @@
         const nextPreviewLen = nextPreviewMap.get(body.id) || 0;
         const forecastReady = body.gameType === 'content' && body.contentIndex === state.nextTrendIndex && nextPreviewLen >= 2;
         const safeRadius = Math.max(8, radius);
+        const rawX = Number.isFinite(body.position.x) ? body.position.x : boardW / 2;
+        const rawY = Number.isFinite(body.position.y) ? body.position.y : boardH * 0.5;
+        const rawAngle = Number.isFinite(body.angle) ? body.angle : 0;
         if (!Number.isFinite(body.position.x) || !Number.isFinite(body.position.y) || !Number.isFinite(body.angle)) {
-          Body.setPosition(body, { x: clamp(body.position.x || boardW / 2, safeRadius + 6, boardW - safeRadius - 6), y: clamp(body.position.y || boardH * 0.5, safeRadius + 6, boardH - safeRadius - 6) });
-          Body.setVelocity(body, { x:0, y:0 });
-          Body.setAngularVelocity(body, 0);
-          markBodyVisualDirty(body);
+          queueBodyRepair(body);
         }
         const bodyAge = now - (body.spawnAt || 0);
-        const outsideSoftBounds = bodyAge > 120 && (body.position.x < safeRadius + 2 || body.position.x > boardW - safeRadius - 2 || body.position.y < safeRadius + 2 || body.position.y > boardH - safeRadius - 2);
-        if (outsideSoftBounds) repairBodyPosition(body, boardW, boardH, 'sync-soft-bounds');
-        const drawX = clamp(body.position.x, safeRadius, boardW - safeRadius);
-        const drawY = clamp(body.position.y, safeRadius, boardH - safeRadius);
+        const outsideSoftBounds = bodyAge > 120 && (rawX < safeRadius + 2 || rawX > boardW - safeRadius - 2 || rawY < safeRadius + 2 || rawY > boardH - safeRadius - 2);
+        if (outsideSoftBounds) queueBodyRepair(body);
+        const drawX = clamp(rawX, safeRadius, boardW - safeRadius);
+        const drawY = clamp(rawY, safeRadius, boardH - safeRadius);
         const scale = trendBody ? 1.06 : (forecastReady ? 1.03 : 1);
-        const transformValue = `translate3d(${Math.round((drawX - diameter / 2) * 10) / 10}px, ${Math.round((drawY - diameter / 2) * 10) / 10}px, 0) rotate(${Math.round((body.angle || 0) * 100) / 100}rad) scale(${scale})`;
-        if (node._transform !== transformValue) {
-          node._transform = transformValue;
-          node.style.transform = transformValue;
-        }
+        const nextDrawX = Math.round((drawX - diameter / 2) * 10) / 10;
+        const nextDrawY = Math.round((drawY - diameter / 2) * 10) / 10;
+        const nextAngle = Math.round(rawAngle * 100) / 100;
 
         const className = [
           'item-chip',
@@ -3423,40 +3514,52 @@
           previewLen === 2 ? 'near' : '',
           previewLen >= 3 ? 'ready' : '',
           forecastReady ? 'forecast' : '',
-          glowSet && glowSet.has(body.id) ? 'shift-glow' : ''
+          glowSet?.has(body.id) ? 'shift-glow' : '',
+          body.plugin?.pendingClear ? 'pending-clear' : ''
         ].filter(Boolean).join(' ');
-        if (node.className !== className) node.className = className;
 
-        if (node.style.opacity !== '1') node.style.opacity = '1';
-        if (node.style.display !== 'grid') node.style.display = 'grid';
+        if (node.className !== className) node.className = className;
         if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
         node.hidden = false;
-        const zValue = String(100 + Math.round(body.position.y * 10) + (body.id % 10));
-        if (node._zIndex !== zValue) {
-          node._zIndex = zValue;
-          node.style.zIndex = zValue;
-        }
-        const filterValue = 'none';
-        if (node._filter !== filterValue) {
-          node._filter = filterValue;
-          node.style.filter = filterValue;
+        const zValue = String(100 + Math.round(rawY * 10) + (body.id % 10));
+        const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
+        const canSkipTransform = !!node._transform && !state.forceFullVisualSync
+          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < perfSettings.transformPositionThreshold
+          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < perfSettings.transformPositionThreshold
+          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < perfSettings.transformAngleThreshold
+          && Math.abs((node._drawScale ?? scale) - scale) < 0.001
+          && node.className === className
+          && node._zIndex === zValue
+          && node._filter === filterValue
+          && body.isSleeping;
+        if (!canSkipTransform) {
+          const transformValue = `translate3d(${nextDrawX}px, ${nextDrawY}px, 0) rotate(${nextAngle}rad) scale(${scale})`;
+          if (node._transform !== transformValue) {
+            node._transform = transformValue;
+            node.style.transform = transformValue;
+          }
+          node._drawX = nextDrawX;
+          node._drawY = nextDrawY;
+          node._drawAngle = nextAngle;
+          node._drawScale = scale;
+          if (node._zIndex !== zValue) {
+            node._zIndex = zValue;
+            node.style.zIndex = zValue;
+          }
+          if (node._filter !== filterValue) {
+            node._filter = filterValue;
+            node.style.filter = filterValue;
+          }
         }
 
         body.plugin = body.plugin || {};
-        body.plugin._visualStamp = now;
-        state.visualDirtyIds?.delete(body.id);
+        body.plugin.pendingClear = false;
       }
 
-      bodyVisuals.forEach((node, id) => {
-        if (!state.liveBodyIds?.has(id)) {
-          node.remove();
-          bodyVisuals.delete(id);
-          state.visualDirtyIds?.delete(id);
-        }
-      });
       state.forceFullVisualSync = false;
-      renderMergeLinks();
+      state.visualDirtyIds?.clear();
     }
+
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
@@ -4662,7 +4765,8 @@
       sfx('ready', Math.min(2.2, 0.56 + tier * 0.2 + comboTier * 0.05));
     }
 
-    function makeBody(x, y, index, specialType = false) {
+    
+function makeBody(x, y, index, specialType = false) {
       const isBomb = specialType === true || specialType === 'hazard';
       const isFire = specialType === 'fire';
       const isBuzz = specialType === 'buzz';
@@ -4687,6 +4791,7 @@
       body.contentIndex = index;
       body.spawnAt = performance.now();
       body.displayScale = scale;
+      body.sleepThreshold = isBomb ? 26 : (isFire ? 24 : (isBuzz ? 22 : 18));
       Composite.add(engine.world, body);
       registerLiveBody(body);
       const node = ensureBodyVisual(body);
@@ -4698,8 +4803,10 @@
         node.style.transform = `translate(${Math.round((x - diameter / 2) * 10) / 10}px, ${Math.round((y - diameter / 2) * 10) / 10}px)`;
         node.style.opacity = '1';
       }
+      markGroupScanDirty(body);
       return body;
     }
+
 
     function invalidateWorldBodiesCache() {
       state.worldBodiesCache = null;
@@ -4779,18 +4886,26 @@
       return state.boardStatsCache;
     }
 
-    function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
+    
+function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
       if (!body) return;
       const radius = body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType);
       const safeX = clamp(Number.isFinite(body.position.x) ? body.position.x : boardW / 2, radius + 2, boardW - radius - 2);
       const safeY = clamp(Number.isFinite(body.position.y) ? body.position.y : radius + 10, radius + 10, boardH - radius - 2);
       Sleeping.set(body, false);
       Body.setPosition(body, { x:safeX, y:safeY });
-      Body.setVelocity(body, { x: clamp(Number.isFinite(body.velocity.x) ? body.velocity.x : 0, -3.2, 3.2) * 0.32, y: Math.max(0.7, Math.min(4.2, (Number.isFinite(body.velocity.y) ? body.velocity.y : 0) + 0.45)) });
-      Body.setAngularVelocity(body, clamp(Number.isFinite(body.angularVelocity) ? body.angularVelocity : 0, -0.22, 0.22));
+      Body.setVelocity(body, {
+        x: clamp(Number.isFinite(body.velocity.x) ? body.velocity.x : 0, -2.4, 2.4) * 0.18,
+        y: Math.max(0.38, Math.min(2.6, (Number.isFinite(body.velocity.y) ? body.velocity.y : 0) + 0.22))
+      });
+      Body.setAngularVelocity(body, clamp(Number.isFinite(body.angularVelocity) ? body.angularVelocity : 0, -0.14, 0.14) * 0.6);
+      body.plugin = body.plugin || {};
+      body.plugin.lastActiveAt = performance.now();
       markBodyVisualDirty(body);
+      markGroupScanDirty(body);
       body.floatStartAt = 0;
       body.outOfRangeSince = 0;
+      state.repairQueueIds?.delete(body.id);
       const node = ensureBodyVisual(body);
       if (node) {
         node.style.opacity = '1';
@@ -4798,6 +4913,7 @@
         node.style.display = 'grid';
       }
     }
+
 
     function cleanupOffscreenBodies() {
       const bodies = worldBodies();
@@ -4813,13 +4929,14 @@
       }
     }
 
-    function rescueFloatingBodies() {
-      const bodies = worldBodies();
+    
+function rescueFloatingBodies() {
+      const bodies = collectRepairCandidates();
       if (!bodies.length || !dom.board) return;
       const boardHeight = dom.board.clientHeight || 0;
       const boardWidth = dom.board.clientWidth || 0;
       const now = performance.now();
-      const hash = buildSpatialHash(bodies);
+      const hash = buildSpatialHash(worldBodies());
       for (const body of bodies) {
         const age = now - (body.spawnAt || 0);
         if (age < 420) continue;
@@ -4831,7 +4948,7 @@
         }
         let hasSupportBelow = false;
         visitNearbyFromHash(hash, body, 1, other => {
-          if (other.id === body.id) return false;
+          if (other.id === body.id || other.plugin?.pendingRemoval) return false;
           const dx = Math.abs(other.position.x - body.position.x);
           const dy = other.position.y - body.position.y;
           const supportDx = body.circleRadius + other.circleRadius - 6;
@@ -4844,21 +4961,20 @@
         });
         if (hasSupportBelow) {
           body.floatStartAt = 0;
+          state.repairQueueIds?.delete(body.id);
           continue;
         }
         if (!body.floatStartAt) body.floatStartAt = now;
-        if (now - body.floatStartAt < 90) continue;
-        Sleeping.set(body, false);
-        Body.setPosition(body, { x: clamp(body.position.x, body.circleRadius + 6, boardWidth - body.circleRadius - 6), y: Math.min(boardHeight - body.circleRadius - 10, body.position.y + 12) });
-        Body.setVelocity(body, { x: body.velocity.x * 0.2, y: Math.max(1.45, body.velocity.y + 0.7) });
-        Body.setAngularVelocity(body, body.angularVelocity * 0.28);
-        markBodyVisualDirty(body);
+        if (now - body.floatStartAt < 110) continue;
+        repairBodyPosition(body, boardWidth, boardHeight, 'floating-rescue');
         body.floatStartAt = now;
       }
     }
 
-    function purgeBrokenBodies() {
-      const bodies = worldBodies();
+
+    
+function purgeBrokenBodies() {
+      const bodies = collectRepairCandidates();
       if (!bodies.length || !dom.board) return;
       const width = dom.board.clientWidth || 0;
       const height = dom.board.clientHeight || 0;
@@ -4878,10 +4994,12 @@
           if (farOutside || now - body.outOfRangeSince > 70) repairBodyPosition(body, width, height, 'broken');
         } else {
           body.outOfRangeSince = 0;
+          state.repairQueueIds?.delete(body.id);
         }
       }
       if (broken.length) hardRemoveBodies(broken);
     }
+
 
 
     function updateWorldBounds() {
@@ -4915,11 +5033,46 @@
       return dx * dx + dy * dy <= rr * rr;
     }
 
-    function buildTouchGroupsForIndex(targetIndex) {
+
+function buildTouchGroupsNearSeeds(sourceBodies, seedBodies, pad = 0.5) {
+  if (!sourceBodies.length || !seedBodies.length) return [];
+  const sourceMap = new Map(sourceBodies.map(body => [body.id, body]));
+  const hash = buildSpatialHash(sourceBodies);
+  const emitted = new Set();
+  const groups = [];
+  for (let i = 0; i < seedBodies.length; i += 1) {
+    const root = sourceMap.get(seedBodies[i]?.id);
+    if (!root || emitted.has(root.id)) continue;
+    const stack = [root];
+    const localVisited = new Set([root.id]);
+    const group = [];
+    while (stack.length) {
+      const current = stack.pop();
+      group.push(current);
+      emitted.add(current.id);
+      visitNearbyFromHash(hash, current, 1, other => {
+        if (other.id === current.id || localVisited.has(other.id)) return false;
+        if (!touchingWithPad(current, other, pad)) return false;
+        localVisited.add(other.id);
+        stack.push(other);
+        return false;
+      });
+    }
+    groups.push(group);
+  }
+  return groups;
+}
+
+    
+function buildTouchGroupsForIndex(targetIndex, seedBodies = null) {
       const now = performance.now();
       const targetBodies = worldContentBodiesByIndex(targetIndex).filter(body => state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval && now - body.spawnAt > 220);
-      return buildTouchGroupsFromBodies(targetBodies, 0.5);
+      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, 0.5);
+      const relevantSeeds = seedBodies.filter(body => body?.gameType === 'content' && body.contentIndex === targetIndex && state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval && now - body.spawnAt > 120);
+      if (!relevantSeeds.length) return [];
+      return buildTouchGroupsNearSeeds(targetBodies, relevantSeeds, 0.5);
     }
+
 
     function scanGroups() {
       const groups = buildTouchGroupsForIndex(state.trendIndex);
@@ -4929,24 +5082,59 @@
       return groups.filter(g => g.length >= 3 && g.every(body => body.speed < 4.2));
     }
 
-    function buildTouchGroupsForType(gameType, contentIndex = null) {
+    
+function buildTouchGroupsForType(gameType, contentIndex = null, seedBodies = null) {
       const now = performance.now();
       const sourceBodies = gameType === 'content' ? worldContentBodiesByIndex(contentIndex) : worldBodiesByType(gameType);
       const targetBodies = sourceBodies.filter(body => state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval && now - body.spawnAt > 220);
       const loosePad = gameType === 'hazard' ? 8 : (gameType === 'buzz' ? 6 : 0.5);
-      return buildTouchGroupsFromBodies(targetBodies, loosePad);
+      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, loosePad);
+      const relevantSeeds = seedBodies.filter(body => body?.gameType === gameType && state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval && now - body.spawnAt > 120);
+      if (!relevantSeeds.length) return [];
+      return buildTouchGroupsNearSeeds(targetBodies, relevantSeeds, loosePad);
     }
 
-    function scanAllClearableGroups() {
+
+    
+
+function scanAllClearableGroups() {
+      const now = performance.now();
+      const dirtyIds = state.groupScanDirtyIds instanceof Set ? Array.from(state.groupScanDirtyIds) : [];
+      const active = getActiveBodies();
+      const seedMap = new Map();
+      for (let i = 0; i < dirtyIds.length; i += 1) {
+        const body = bodyById(dirtyIds[i]);
+        if (body && !body.plugin?.pendingRemoval) seedMap.set(body.id, body);
+      }
+      for (let i = 0; i < active.length; i += 1) {
+        const body = active[i];
+        if (body && !body.plugin?.pendingRemoval) seedMap.set(body.id, body);
+      }
+      const seedBodies = Array.from(seedMap.values());
+      const periodicFullScan = now - (state.lastFullGroupScanAt || 0) > 2.4 * 1000;
+      const tooManySeeds = seedBodies.length >= Math.max(12, (state.liveBodies?.length || 0) * 0.45);
       const groups = [];
-      groups.push(...buildTouchGroupsForIndex(state.trendIndex));
-      groups.push(...buildTouchGroupsForType('hazard'));
-      groups.push(...buildTouchGroupsForType('buzz'));
+      if (!seedBodies.length && !periodicFullScan) {
+        return groups;
+      }
+      if (!seedBodies.length || periodicFullScan || tooManySeeds) {
+        groups.push(...buildTouchGroupsForIndex(state.trendIndex));
+        groups.push(...buildTouchGroupsForType('hazard'));
+        groups.push(...buildTouchGroupsForType('buzz'));
+        state.lastFullGroupScanAt = now;
+      } else {
+        groups.push(...buildTouchGroupsForIndex(state.trendIndex, seedBodies));
+        groups.push(...buildTouchGroupsForType('hazard', null, seedBodies));
+        groups.push(...buildTouchGroupsForType('buzz', null, seedBodies));
+      }
+      state.groupScanDirtyIds?.clear();
       return groups.filter(g => {
         const special = g[0]?.gameType === 'hazard' || g[0]?.gameType === 'buzz';
         return g.length >= 3 && g.every(body => body.speed < (special ? 6.4 : 4.8));
       });
     }
+
+
 
     function biggestPreviewLen() {
       return state.previewGroups.reduce((m, group) => Math.max(m, group.len || 0), 0);
@@ -5248,7 +5436,8 @@
       }
     }
 
-    function destroyEngine() {
+    
+function destroyEngine() {
 
       if (rafId) cancelAnimationFrame(rafId);
       if (render) {
@@ -5256,7 +5445,6 @@
         render.canvas.remove();
         render.textures = {};
       }
-      if (runner) Runner.stop(runner);
       if (engine) Composite.clear(engine.world, false);
       render = null;
       runner = null;
@@ -5266,20 +5454,27 @@
       state.rings = [];
       state.previewGroups = [];
       state.nextPreviewGroups = [];
+      state.lastFrameTs = 0;
+      state.lastLogicTs = 0;
+      state.physicsAccumulator = 0;
       resetLiveBodyRegistry();
       clearVisuals();
       dom.chatLane.innerHTML = '';
     }
 
-    function initEngine() {
+
+    
+function initEngine() {
       engine = Engine.create({ enableSleeping:true, gravity:{ x:0, y:1.5 }, positionIterations:2, velocityIterations:1, constraintIterations:1 });
       render = null;
       state.forceFullVisualSync = true;
+      state.lastFrameTs = 0;
+      state.lastLogicTs = 0;
+      state.physicsAccumulator = 0;
       updateWorldBounds();
-      runner = Runner.create();
       configureRunnerPerformance();
-      Runner.run(runner, engine);
     }
+
 
     function resetState() {
       state.active = true;
@@ -5332,6 +5527,9 @@
       state.previewGroups = [];
       state.nextPreviewGroups = [];
       state.lastTs = 0;
+      state.lastFrameTs = 0;
+      state.lastLogicTs = 0;
+      state.physicsAccumulator = 0;
       state.topDangerTime = 0;
       state.overfillTime = 0;
       state.moodTimer = 0;
@@ -5376,6 +5574,7 @@
       state.backgroundWatchdogTimer = 0;
       state.boardStatsCache = null;
       state.boardStatsCacheAt = 0;
+      state.lastFullGroupScanAt = 0;
       resetLiveBodyRegistry();
       lastTrendForecastSignature = '';
       lastQueueSignature = '';
@@ -5434,7 +5633,6 @@
       stopResultBgm();
       state.active = false;
       state.paused = false;
-      try { if (runner) Runner.stop(runner); } catch(_) {}
       destroyEngine();
       dom.pauseOverlay?.classList.add('hidden');
       dom.gameScreen.classList.add('hidden');
@@ -5469,15 +5667,19 @@
       state.paused = next;
       dom.pauseOverlay?.classList.toggle('hidden', !next);
       if (next) {
-        try { if (runner) Runner.stop(runner); } catch(_) {}
         pauseBackgroundMedia(false);
         try { dom.bgmNormal.pause(); dom.bgmHyper.pause(); dom.gameoverFxVideo?.pause?.(); } catch(_) {}
         state.lastTs = 0;
+        state.lastFrameTs = 0;
+        state.lastLogicTs = 0;
+        state.physicsAccumulator = 0;
       } else {
-        try { if (runner) { configureRunnerPerformance(); Runner.run(runner, engine); } } catch(_) {}
         updateBackgroundState(true);
         setHyperMix(state.clipTime > 0 ? 1 : 0);
         state.lastTs = 0;
+        state.lastFrameTs = 0;
+        state.lastLogicTs = 0;
+        state.physicsAccumulator = 0;
       }
     }
 
@@ -5820,14 +6022,40 @@
       }
     }
 
-    function requestLoop(ts) {
+
+function stepPhysics(frameDt) {
+  if (!engine) return;
+  const fixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
+  const maxSteps = Math.max(1, state.maxPhysicsSteps || 1);
+  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.5));
+  let steps = 0;
+  while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
+    Engine.update(engine, fixedDeltaMs);
+    state.physicsAccumulator -= fixedDeltaMs;
+    steps += 1;
+  }
+  if (steps > 0) {
+    state.boardStatsCache = null;
+    refreshActiveBodies();
+  }
+}
+
+    
+function requestLoop(ts) {
       rafId = requestAnimationFrame(requestLoop);
       if (!state.active || !engine || state.paused) return;
       state.frameStamp = ts;
-      if (state.lastTs && ts - state.lastTs < (perfSettings.logicFrameMs || 0)) return;
-      if (!state.lastTs) state.lastTs = ts;
-      const dt = clamp((ts - state.lastTs) / 1000, 0.001, 0.05);
-      state.lastTs = ts;
+      if (!state.lastFrameTs) {
+        state.lastFrameTs = ts;
+        state.lastLogicTs = ts;
+        return;
+      }
+      const frameDt = clamp((ts - state.lastFrameTs) / 1000, 0.001, 0.05);
+      state.lastFrameTs = ts;
+      stepPhysics(frameDt);
+      if (state.lastLogicTs && ts - state.lastLogicTs < (perfSettings.logicFrameMs || 0)) return;
+      const dt = clamp((ts - state.lastLogicTs) / 1000, 0.001, 0.08);
+      state.lastLogicTs = ts;
       state.idle += dt;
       state.runTime += dt;
       state.scanTimer += dt;
@@ -5914,7 +6142,7 @@
       if (state.pinTimer <= 0) {
         rollPinnedComment(state.clipTime > 0 ? 'clip' : 'normal');
       }
-      
+
       state.commentEventTimer = 0;
       state.commentEventType = '';
       state.commentEventText = '';
@@ -5977,6 +6205,7 @@
         finishGame();
       }
     }
+
 
     function finishGame() {
       if (!state.active || state.finishing) return;
