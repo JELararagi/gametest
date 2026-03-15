@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trendbuzz-v76-runtime';
+const CACHE_NAME = 'trendbuzz-v77-runtime';
 const PRECACHE = [
   './',
   './index.html',

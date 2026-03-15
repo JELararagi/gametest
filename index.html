@@ -124,14 +124,14 @@
     .item-chip{position:absolute;left:0;top:0;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);border:2px solid rgba(255,255,255,.34);box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,255,255,.28);transition:box-shadow .14s,border-color .14s;will-change:transform;overflow:hidden;transform-origin:center center;contain:layout paint style;backface-visibility:hidden;-webkit-backface-visibility:hidden}
     .item-chip::after{display:none !important;content:''}
     .item-chip img{display:block;width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.26));opacity:1;transform:translateZ(0);pointer-events:none;user-select:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-    .item-chip.trend{border-color:rgba(255,216,76,.92);box-shadow:0 0 0 2px rgba(255,216,76,.18), 0 0 22px rgba(255,216,76,.28), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.near{box-shadow:0 0 0 2px rgba(0,236,255,.18), 0 0 20px rgba(0,236,255,.18), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.ready{box-shadow:0 0 0 2px rgba(255,244,163,.22), 0 0 24px rgba(255,216,76,.36), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.forecast{border-color:rgba(134,241,255,.78);box-shadow:0 0 0 3px rgba(134,241,255,.24), 0 0 28px rgba(134,241,255,.28), inset 0 0 18px rgba(255,255,255,.08)}
-    .item-chip.shift-glow{border-color:rgba(255,244,163,.96);box-shadow:0 0 0 3px rgba(255,244,163,.28),0 0 34px rgba(255,216,76,.42),0 0 56px rgba(0,236,255,.24),inset 0 0 20px rgba(255,255,255,.14)}
+    .item-chip.trend{border-color:rgba(255,216,76,.88);box-shadow:0 0 0 1px rgba(255,216,76,.14), 0 0 10px rgba(255,216,76,.18), inset 0 0 10px rgba(255,255,255,.06)}
+    .item-chip.near{box-shadow:0 0 0 1px rgba(0,236,255,.14), 0 0 10px rgba(0,236,255,.14), inset 0 0 10px rgba(255,255,255,.06)}
+    .item-chip.ready{box-shadow:0 0 0 1px rgba(255,244,163,.16), 0 0 12px rgba(255,216,76,.22), inset 0 0 10px rgba(255,255,255,.06)}
+    .item-chip.forecast{border-color:rgba(134,241,255,.72);box-shadow:0 0 0 1px rgba(134,241,255,.18), 0 0 12px rgba(134,241,255,.18), inset 0 0 10px rgba(255,255,255,.06)}
+    .item-chip.shift-glow{border-color:rgba(255,244,163,.90);box-shadow:0 0 0 1px rgba(255,244,163,.18),0 0 16px rgba(255,216,76,.22),0 0 24px rgba(0,236,255,.14),inset 0 0 12px rgba(255,255,255,.08)}
     .item-chip.hazard{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%);border-color:rgba(255,91,115,.92)}
     .item-chip.hazard::after{content:'🚨'}
-    .item-chip.pending-clear{box-shadow:0 0 0 2px rgba(255,255,255,.26), 0 0 22px rgba(255,216,76,.34), 0 0 36px rgba(255,91,181,.18), inset 0 0 18px rgba(255,255,255,.14);filter:brightness(1.08);animation:pendingClearPulse .2s ease-in-out infinite alternate}
+    .item-chip.pending-clear{box-shadow:0 0 0 1px rgba(255,255,255,.18), 0 0 10px rgba(255,216,76,.18), 0 0 14px rgba(255,91,181,.10), inset 0 0 10px rgba(255,255,255,.08);filter:brightness(1.04);animation:pendingClearPulse .34s ease-in-out infinite alternate}
     @keyframes pendingClearPulse{0%{opacity:.94;box-shadow:0 0 0 2px rgba(255,255,255,.24), 0 0 18px rgba(255,216,76,.24), 0 0 28px rgba(255,91,181,.12), inset 0 0 14px rgba(255,255,255,.12)}100%{opacity:1;box-shadow:0 0 0 2px rgba(255,255,255,.34), 0 0 28px rgba(255,216,76,.42), 0 0 42px rgba(255,91,181,.24), inset 0 0 20px rgba(255,255,255,.18)}}
     #danger-fog{position:absolute;inset:0;pointer-events:none;z-index:10;opacity:0;background:linear-gradient(180deg, rgba(255,59,91,.04), rgba(255,59,91,.18));transition:opacity .3s}
     #danger-fog.show{opacity:1}
@@ -155,8 +155,8 @@
     @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
     #drop-guide{position:absolute;top:0;bottom:0;width:2px;left:50%;transform:translateX(-1px);z-index:13;pointer-events:none;background:linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.08));opacity:.55;filter:drop-shadow(0 0 8px rgba(255,255,255,.8))}
-    #preview-item{position:static;width:74%;height:74%;transform:none;object-fit:contain;object-position:center center;z-index:14;pointer-events:none;filter:drop-shadow(0 0 14px rgba(255,255,255,.7));opacity:1}
-    #preview-ring{position:absolute;top:calc(var(--gameover-line-y) - 86px);left:50%;width:74px;height:74px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(255,255,255,.3);box-shadow:0 0 18px rgba(255,255,255,.12);z-index:14;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);isolation:isolate}
+    #preview-item{position:static;width:74%;height:74%;transform:none;object-fit:contain;object-position:center center;z-index:14;pointer-events:none;filter:none;opacity:1}
+    #preview-ring{position:absolute;top:calc(var(--gameover-line-y) - 86px);left:50%;width:74px;height:74px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(255,255,255,.24);box-shadow:0 0 10px rgba(255,255,255,.08);z-index:14;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%);isolation:isolate}
 
     .hud-chip{
       position:absolute;z-index:20;display:flex;align-items:center;gap:10px;pointer-events:auto;background:rgba(10,6,16,.94);border:1px solid rgba(255,255,255,.09);
@@ -272,7 +272,7 @@
     .rising-chat.super{border-color:rgba(255,139,0,.48);background:rgba(34,18,10,.82)}
     #chat-lane-back .rising-chat{background:rgba(9,6,16,.42);border-color:rgba(255,255,255,.10)}
     #chat-lane-back .rising-chat .topic{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
-    #chat-lane .rising-chat.event-anti,#chat-lane .rising-chat.event-superchat{font-size:.8rem;line-height:1.32;padding:7px 10px;max-width:min(86%, 300px);border-width:2px;box-shadow:0 0 22px rgba(0,0,0,.24), 0 10px 28px rgba(0,0,0,.18)}
+    #chat-lane .rising-chat.event-anti,#chat-lane .rising-chat.event-superchat{font-size:.76rem;line-height:1.28;padding:6px 9px;max-width:min(84%, 288px);border-width:2px;box-shadow:0 0 10px rgba(0,0,0,.16), 0 6px 14px rgba(0,0,0,.12)}
     #chat-lane .rising-chat.event-anti{background:rgba(58,12,22,.96);border-color:rgba(255,94,126,.88);color:#ffe3ea}
     #chat-lane .rising-chat.event-superchat{background:rgba(58,32,10,.96);border-color:rgba(255,190,78,.9);color:#fff3c6}
     #chat-lane .rising-chat.event-anti .badge,#chat-lane .rising-chat.event-superchat .badge{width:24px;height:24px;flex:0 0 24px;font-size:.86rem}
@@ -289,7 +289,7 @@
     #trend-shift-main .arrow{color:#8ef8ff}
     #trend-shift-sub{font-size:.74rem;color:#d9caeb;line-height:1.35;text-align:center}
 
-    .pop-text{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:30;font-weight:900;text-shadow:0 0 15px rgba(0,0,0,.66);animation:popText 1.05s ease forwards}
+    .pop-text{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:30;font-weight:900;text-shadow:0 0 15px rgba(0,0,0,.66);animation:popText .82s ease forwards}
     @keyframes popText{0%{opacity:0;transform:translate(-50%,-10%) scale(.6)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.18)}100%{opacity:0;transform:translate(-50%,-200%) scale(.9)}}
 
     #caption-box{position:absolute;left:50%;top:calc(var(--gameover-line-y) + 12px);transform:translateX(-50%);z-index:8;width:min(86%, 320px);background:rgba(10,6,14,.82);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:8px 14px;box-shadow:0 10px 22px rgba(0,0,0,.22);pointer-events:none;display:flex;align-items:center;justify-content:center;min-height:38px}
@@ -666,15 +666,15 @@
     .play-mini-btn{min-height:calc(var(--bottom-controls-h) - 2px) !important;border-radius:14px !important;font-size:.76rem !important;padding:0 8px !important}
     .item-chip.hazard{background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%) !important;border-color:rgba(255,255,255,.34) !important}
     .item-chip.hazard::after{display:none !important}
-    .item-chip.fire{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%) !important;border-color:rgba(255,91,115,.92) !important;box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 22px rgba(255,212,212,.16), 0 0 18px rgba(255,91,115,.22) !important}
+    .item-chip.fire{background:radial-gradient(circle at 30% 25%, rgba(255,188,196,.92), rgba(255,92,120,.84) 32%, rgba(255,46,84,.66) 56%, rgba(34,6,12,.98) 80%) !important;border-color:rgba(255,91,115,.88) !important;box-shadow:0 4px 10px rgba(0,0,0,.24), inset 0 0 10px rgba(255,212,212,.10), 0 0 10px rgba(255,91,115,.14) !important}
     .item-chip.fire::after{content:'🔥' !important;background:rgba(255,91,115,.22) !important}
-    .item-chip.buzz{background:radial-gradient(circle at 32% 24%, rgba(255,249,210,.98), rgba(255,232,112,.94) 24%, rgba(255,197,38,.88) 50%, rgba(116,74,0,.98) 82%) !important;border-color:rgba(255,223,110,.94) !important;box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 0 24px rgba(255,255,255,.18), 0 0 22px rgba(255,210,72,.34) !important}
+    .item-chip.buzz{background:radial-gradient(circle at 32% 24%, rgba(255,249,210,.98), rgba(255,232,112,.94) 24%, rgba(255,197,38,.88) 50%, rgba(116,74,0,.98) 82%) !important;border-color:rgba(255,223,110,.90) !important;box-shadow:0 4px 10px rgba(0,0,0,.24), inset 0 0 10px rgba(255,255,255,.12), 0 0 12px rgba(255,210,72,.18) !important}
     .item-chip.buzz::after{content:'✨' !important;background:rgba(255,215,90,.24) !important}
     #fire-banner,#superchat-banner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.88);pointer-events:none;z-index:34;opacity:0}
-    #fire-banner .core{min-width:320px;padding:22px 28px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,210,210,.26), rgba(255,70,70,.38) 44%, rgba(255,24,90,.22) 66%, rgba(8,4,14,0) 80%);display:grid;justify-items:center;gap:6px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff0f0;text-shadow:0 0 18px rgba(255,255,255,.62),0 0 34px rgba(255,70,90,.9),0 0 72px rgba(255,44,44,.6)}
+    #fire-banner .core{min-width:300px;padding:18px 24px;border-radius:30px;background:radial-gradient(circle at center, rgba(255,210,210,.20), rgba(255,70,70,.28) 44%, rgba(255,24,90,.16) 66%, rgba(8,4,14,0) 80%);display:grid;justify-items:center;gap:5px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff0f0;text-shadow:0 0 10px rgba(255,255,255,.42),0 0 18px rgba(255,70,90,.52),0 0 28px rgba(255,44,44,.30)}
     #fire-banner .title{font-size:clamp(2.4rem,11vw,4.5rem);font-weight:900;letter-spacing:.02em;white-space:nowrap}
     #fire-banner.show{animation:fireBurst 4.16s cubic-bezier(.19,.89,.24,1)}
-    #superchat-banner .card{min-width:240px;max-width:430px;padding:10px 14px;border-radius:22px;background:rgba(18,10,30,.42);border:3px solid rgba(142,248,255,.78);box-shadow:0 14px 34px rgba(0,0,0,.28);display:grid;gap:4px;justify-items:start;backdrop-filter:blur(3px)}
+    #superchat-banner .card{min-width:220px;max-width:390px;padding:9px 12px;border-radius:20px;background:rgba(18,10,30,.40);border:2px solid rgba(142,248,255,.72);box-shadow:0 8px 16px rgba(0,0,0,.20);display:grid;gap:3px;justify-items:start;backdrop-filter:none}
     #superchat-banner .amount{font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;letter-spacing:.02em;color:#fff}
     #superchat-banner .message{font-size:.96rem;font-weight:900;line-height:1.22;color:#fff}
     #superchat-banner.show{animation:superchatBurst 7.2s cubic-bezier(.19,.89,.24,1)}
@@ -1458,14 +1458,14 @@
 </head>
 <body>
   <div id="bg-container">
-    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" muted loop playsinline autoplay preload="metadata"></video>
-    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline autoplay preload="auto"></video>
+    <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" muted loop playsinline autoplay preload="none"></video>
+    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="none"></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
 
-  <audio id="audio-bgm-lofi" src="assets/audio/bgm_lofi.m4a" loop preload="metadata"></audio>
-  <audio id="audio-bgm-hyper" src="assets/audio/bgm_hyper.m4a" loop preload="metadata"></audio>
+  <audio id="audio-bgm-lofi" src="assets/audio/bgm_lofi.m4a" loop preload="none"></audio>
+  <audio id="audio-bgm-hyper" src="assets/audio/bgm_hyper.m4a" loop preload="none"></audio>
   <audio id="audio-merge" src="assets/audio/se_clear_small_01.m4a" preload="metadata"></audio>
   <audio id="voice-start" src="assets/audio/voice_mc_start_01.m4a" preload="metadata"></audio>
   <audio id="voice-alert" src="assets/audio/voice_mc_fire_01.m4a" preload="metadata"></audio>
@@ -1503,7 +1503,7 @@
     <div id="game-shell">
       <div id="board-wrap">
         <div id="game-board">
-          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline autoplay preload="auto"></video>
+          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="none"></video>
           <div id="board-grid"></div>
           <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
           <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
@@ -1525,7 +1525,7 @@
           <div id="big-buzz-banner" aria-hidden="true"><div class="core"><div class="title">大バズリ!!</div><div class="sub">ポイント×２</div></div></div>
           <div id="fire-banner" aria-hidden="true"><div class="core"><div class="title">大炎上!!</div></div></div>
           <div id="superchat-banner" aria-hidden="true"><div class="card"><div class="amount">+0</div><div class="message">スパチャありがとうございます！</div></div></div>
-          <video id="gameover-fx-video" src="assets/bg/overlay_gameover_glitch.mp4" playsinline muted preload="metadata"></video>
+          <video id="gameover-fx-video" src="assets/bg/overlay_gameover_glitch.mp4" playsinline muted preload="none"></video>
         </div>
       </div>
 
@@ -2690,42 +2690,42 @@
     const UNIFIED_BODY_RADIUS = Math.round(31 * BOARD_BODY_ITEM_SCALE);
     const PERF_PRESET_DEFAULT = Object.freeze({
       mobileLowPower:false,
-      physicsFps:42,
+      physicsFps:30,
       runnerMaxUpdates:1,
-      logicFrameMs:28,
-      scanInterval:0.42,
-      visualInterval:1 / 24,
-      uiInterval:0.42,
-      cleanupInterval:1.28,
-      rescueInterval:1.36,
-      boardStatsCacheMs:1200,
-      particleBudget:8,
-      particleScale:0.18,
-      particleFadeRate:2.8,
-      particleLife:0.62,
-      particleSizeScale:0.86,
-      ringBudget:4,
+      logicFrameMs:40,
+      scanInterval:0.62,
+      visualInterval:1 / 18,
+      uiInterval:0.58,
+      cleanupInterval:1.65,
+      rescueInterval:1.82,
+      boardStatsCacheMs:1800,
+      particleBudget:3,
+      particleScale:0.08,
+      particleFadeRate:3.4,
+      particleLife:0.44,
+      particleSizeScale:0.72,
+      ringBudget:2,
       minorRingThreshold:0,
-      majorRingThreshold:120,
-      popTextMax:3,
-      popTextMinGapMs:260,
-      popTextScale:0.92,
-      commentCooldownScale:1.7,
-      commentIntervalScale:2.1,
-      commentDropChance:0,
+      majorRingThreshold:180,
+      popTextMax:2,
+      popTextMinGapMs:420,
+      popTextScale:0.82,
+      commentCooldownScale:2.35,
+      commentIntervalScale:3.2,
+      commentDropChance:0.45,
       commentLaneMax:1,
       specialCommentLaneMax:1,
-      superchatMinGapMs:2200,
-      videoPreload:'metadata',
-      fxResolutionScale:0.5,
-      transformPositionThreshold:0.55,
-      transformAngleThreshold:0.03,
-      motionThreshold:0.07,
-      motionAngularThreshold:0.03,
-      newBodyVisualMs:220,
-      backgroundWatchdogInterval:0.8,
-      bgmNormalVolume:0.32,
-      bgmHyperVolume:0.40
+      superchatMinGapMs:4800,
+      videoPreload:'none',
+      fxResolutionScale:0.32,
+      transformPositionThreshold:0.95,
+      transformAngleThreshold:0.055,
+      motionThreshold:0.12,
+      motionAngularThreshold:0.055,
+      newBodyVisualMs:160,
+      backgroundWatchdogInterval:1.2,
+      bgmNormalVolume:0.28,
+      bgmHyperVolume:0.34
     });
     const PERF_PRESET_MOBILE = Object.freeze({
       ...PERF_PRESET_DEFAULT
@@ -2783,7 +2783,7 @@
     function configureRunnerPerformance() {
       if (!runner) return;
       try {
-        runner.delta = 1000 / Math.max(24, perfSettings.physicsFps || 60);
+        runner.delta = 1000 / clamp(perfSettings.physicsFps || 60, 18, 60);
         runner.maxUpdates = perfSettings.runnerMaxUpdates || 1;
       } catch (_) {}
     }
@@ -3436,7 +3436,7 @@
           node._zIndex = zValue;
           node.style.zIndex = zValue;
         }
-        const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
+        const filterValue = 'none';
         if (node._filter !== filterValue) {
           node._filter = filterValue;
           node.style.filter = filterValue;
@@ -3732,7 +3732,7 @@
 
     function setTitleBackgroundActive(active = true) {
       titleBackgroundActive = !!active;
-      if (!active) primeBigBuzzVisuals();
+      if (!active) { /* delayed bigbuzz video setup */ }
       updateBackgroundState(true);
     }
 
@@ -3974,7 +3974,7 @@
     function resizeCanvas() {
       if (!dom.board) return;
       const info = boardLogicalRect();
-      const fxScale = clamp(Number(perfSettings.fxResolutionScale) || 1, 0.6, 1);
+      const fxScale = clamp(Number(perfSettings.fxResolutionScale) || 1, 0.28, 1);
       const fxWidth = Math.max(1, Math.round(info.width * fxScale));
       const fxHeight = Math.max(1, Math.round(info.height * fxScale));
       state.fxLogicalWidth = info.width;
@@ -4555,8 +4555,8 @@
         p.life -= dt * perfSettings.particleFadeRate;
         particleCtx.globalAlpha = Math.max(0, p.life);
         particleCtx.fillStyle = p.color;
-        particleCtx.shadowBlur = 3 * Math.max(0.12, p.life);
-        particleCtx.shadowColor = p.color;
+        particleCtx.shadowBlur = 0;
+        particleCtx.shadowColor = 'transparent';
         particleCtx.beginPath();
         particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         particleCtx.fill();
@@ -4572,9 +4572,9 @@
         r.radius += r.speed * dt;
         fxCtx.globalAlpha = Math.max(0, r.life * 0.8);
         fxCtx.strokeStyle = r.color;
-        fxCtx.lineWidth = 2.4;
-        fxCtx.shadowBlur = 8 * Math.max(0.15, r.life);
-        fxCtx.shadowColor = r.color;
+        fxCtx.lineWidth = 1.6;
+        fxCtx.shadowBlur = 0;
+        fxCtx.shadowColor = 'transparent';
         fxCtx.beginPath();
         fxCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         fxCtx.stroke();
@@ -4603,7 +4603,7 @@
       setTimeout(() => {
         activePopTextCount = Math.max(0, activePopTextCount - 1);
         el.remove();
-      }, 1100);
+      }, 850);
     }
 
     const SUPERCHAT_CHAIN_THEME = {
@@ -5272,7 +5272,7 @@
     }
 
     function initEngine() {
-      engine = Engine.create({ enableSleeping:true, gravity:{ x:0, y:1.5 }, positionIterations:3, velocityIterations:2, constraintIterations:1 });
+      engine = Engine.create({ enableSleeping:true, gravity:{ x:0, y:1.5 }, positionIterations:2, velocityIterations:1, constraintIterations:1 });
       render = null;
       state.forceFullVisualSync = true;
       updateWorldBounds();
@@ -6201,7 +6201,6 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     }
     applyPerformanceProfile();
     preloadAllAvatars();
-    primeBigBuzzVisuals();
     updateMuteButtons();
     document.body.classList.add('title-mode');
     setTitleBackgroundActive(true);
