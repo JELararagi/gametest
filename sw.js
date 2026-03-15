@@ -1,10 +1,8 @@
-const CACHE_NAME = 'trendbuzz-v78-physics-opt';
+const CACHE_NAME = 'trendbuzz-v79-thermal-safe';
 const PRECACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './assets/bg/bg_bigbuzz_loop.mp4',
-  './assets/bg/overlay_gameover_glitch.mp4',
   './assets/audio/bgm_lofi.m4a',
   './assets/audio/bgm_hyper.m4a',
   './assets/audio/bgm_result_win.m4a',
@@ -19,7 +17,6 @@ const PRECACHE = [
   './assets/audio/voice_mc_win_01.m4a',
   './assets/audio/voice_mc_lose_01.m4a',
   './assets/img/title_logo.png',
-  './assets/img/bg_cyber_loop_frame.png',
   './assets/img/char_normal.png',
   './assets/img/char_focus.png',
   './assets/img/char_hype.png',

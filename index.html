@@ -1454,6 +1454,47 @@
       #trend-shift-banner{top:124px;min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px}
       #trend-shift-main{font-size:1.18rem}
     }
+
+    body.thermal-safe .panel,
+    body.thermal-safe .hud-chip,
+    body.thermal-safe #caption-box,
+    body.thermal-safe #speech-bubble,
+    body.thermal-safe .chat-msg,
+    body.thermal-safe #superchat-banner .card,
+    body.thermal-safe #fire-banner .core,
+    body.thermal-safe #big-buzz-banner .core,
+    body.thermal-safe .result-card,
+    body.thermal-safe .daily-board-wrap,
+    body.thermal-safe #pause-overlay .pause-card{
+      backdrop-filter:none !important;
+      box-shadow:0 6px 16px rgba(0,0,0,.22) !important;
+      text-shadow:none !important;
+    }
+    body.thermal-safe .item-chip,
+    body.thermal-safe .item-chip.trend,
+    body.thermal-safe .item-chip.ready,
+    body.thermal-safe .item-chip.near,
+    body.thermal-safe .item-chip.forecast,
+    body.thermal-safe .item-chip.shift-glow,
+    body.thermal-safe .item-chip.fire,
+    body.thermal-safe .item-chip.buzz,
+    body.thermal-safe .item-chip.pending-clear{
+      box-shadow:0 4px 10px rgba(0,0,0,.22), inset 0 0 8px rgba(255,255,255,.12) !important;
+      filter:none !important;
+      animation:none !important;
+    }
+    body.thermal-safe .item-chip img,
+    body.thermal-safe .board-character-layer,
+    body.thermal-safe #danger-fog,
+    body.thermal-safe #global-flash{
+      filter:none !important;
+    }
+    body.thermal-safe #danger-fog,
+    body.thermal-safe #global-flash{
+      opacity:0 !important;
+    }
+    body.thermal-safe .chat-msg{transform:none !important;}
+
   </style>
 </head>
 <body>
@@ -2777,46 +2818,82 @@ function unregisterLiveBody(body) {
     
 const PERF_PRESET_DEFAULT = Object.freeze({
       mobileLowPower:false,
-      physicsFps:36,
-      runnerMaxUpdates:2,
-      logicFrameMs:33,
-      scanInterval:0.42,
-      visualInterval:1 / 22,
-      uiInterval:0.42,
-      cleanupInterval:1.18,
-      rescueInterval:1.24,
-      boardStatsCacheMs:950,
-      particleBudget:10,
-      particleScale:0.18,
-      particleFadeRate:2.35,
-      particleLife:0.72,
-      particleSizeScale:0.92,
-      ringBudget:7,
+      physicsFps:32,
+      runnerMaxUpdates:1,
+      logicFrameMs:40,
+      scanInterval:0.56,
+      visualInterval:1 / 16,
+      uiInterval:0.56,
+      cleanupInterval:1.45,
+      rescueInterval:1.58,
+      boardStatsCacheMs:1400,
+      particleBudget:6,
+      particleScale:0.12,
+      particleFadeRate:2.65,
+      particleLife:0.58,
+      particleSizeScale:0.82,
+      ringBudget:4,
       minorRingThreshold:0,
-      majorRingThreshold:120,
-      popTextMax:4,
-      popTextMinGapMs:120,
-      popTextScale:0.96,
-      commentCooldownScale:1.45,
-      commentIntervalScale:1.8,
-      commentDropChance:0.12,
+      majorRingThreshold:140,
+      popTextMax:3,
+      popTextMinGapMs:180,
+      popTextScale:0.9,
+      commentCooldownScale:1.8,
+      commentIntervalScale:2.1,
+      commentDropChance:0.28,
       commentLaneMax:2,
-      specialCommentLaneMax:2,
-      superchatMinGapMs:2400,
+      specialCommentLaneMax:1,
+      superchatMinGapMs:3600,
       videoPreload:'metadata',
-      fxResolutionScale:0.46,
-      transformPositionThreshold:0.55,
-      transformAngleThreshold:0.03,
-      motionThreshold:0.07,
-      motionAngularThreshold:0.03,
-      newBodyVisualMs:260,
-      backgroundWatchdogInterval:1.2,
-      bgmNormalVolume:0.28,
-      bgmHyperVolume:0.34
+      fxResolutionScale:0.34,
+      transformPositionThreshold:0.8,
+      transformAngleThreshold:0.04,
+      motionThreshold:0.09,
+      motionAngularThreshold:0.04,
+      newBodyVisualMs:220,
+      backgroundWatchdogInterval:1.8,
+      bgmNormalVolume:0.24,
+      bgmHyperVolume:0.3
     });
 
     const PERF_PRESET_MOBILE = Object.freeze({
-      ...PERF_PRESET_DEFAULT
+      ...PERF_PRESET_DEFAULT,
+      mobileLowPower:true,
+      physicsFps:24,
+      runnerMaxUpdates:1,
+      logicFrameMs:52,
+      scanInterval:0.78,
+      visualInterval:1 / 10,
+      uiInterval:0.72,
+      cleanupInterval:1.95,
+      rescueInterval:2.25,
+      boardStatsCacheMs:2200,
+      particleBudget:3,
+      particleScale:0.08,
+      particleFadeRate:3.0,
+      particleLife:0.42,
+      particleSizeScale:0.7,
+      ringBudget:2,
+      majorRingThreshold:180,
+      popTextMax:2,
+      popTextMinGapMs:300,
+      popTextScale:0.82,
+      commentCooldownScale:2.6,
+      commentIntervalScale:3.0,
+      commentDropChance:0.62,
+      commentLaneMax:1,
+      specialCommentLaneMax:1,
+      superchatMinGapMs:6400,
+      videoPreload:'none',
+      fxResolutionScale:0.2,
+      transformPositionThreshold:1.35,
+      transformAngleThreshold:0.07,
+      motionThreshold:0.14,
+      motionAngularThreshold:0.06,
+      newBodyVisualMs:180,
+      backgroundWatchdogInterval:2.6,
+      bgmNormalVolume:0.2,
+      bgmHyperVolume:0.24
     });
     let perfSettings = { ...PERF_PRESET_DEFAULT };
     let titleBackgroundActive = true;
@@ -2831,7 +2908,14 @@ const PERF_PRESET_DEFAULT = Object.freeze({
     let pauseRequestedByVisibility = false;
 
     function detectPerformanceProfile() {
-      return { ...PERF_PRESET_DEFAULT };
+      const viewportW = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      const viewportH = Math.max(window.visualViewport?.height || 0, document.documentElement.clientHeight || 0, window.innerHeight || 0);
+      const coarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches || false;
+      const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false;
+      const ua = navigator.userAgent || '';
+      const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+      const smallViewport = Math.max(viewportW, viewportH) <= 1400 || Math.min(viewportW, viewportH) <= 900;
+      return (reducedMotion || (coarsePointer && (mobileUa || smallViewport))) ? { ...PERF_PRESET_MOBILE } : { ...PERF_PRESET_DEFAULT };
     }
 
     function resolveAudioAsset(path) {
@@ -2860,11 +2944,16 @@ const PERF_PRESET_DEFAULT = Object.freeze({
     }
 
     function applyMediaProfile() {
-      applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'metadata');
-      [dom.bgmNormal, dom.bgmHyper, dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(audio => {
+      applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), perfSettings.videoPreload || 'metadata');
+      [dom.bgmNormal, dom.bgmHyper].forEach(audio => {
         if (!audio) return;
         const desired = resolveAudioAsset(audio.getAttribute('src') || audio.dataset.assignedSrc || '');
         if (desired) applyElementSource(audio, desired, 'metadata');
+      });
+      [dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(audio => {
+        if (!audio) return;
+        const desired = resolveAudioAsset(audio.getAttribute('src') || audio.dataset.assignedSrc || '');
+        if (desired) applyElementSource(audio, desired, perfSettings.mobileLowPower ? 'none' : 'metadata');
       });
     }
 
@@ -2880,6 +2969,7 @@ function applyPerformanceProfile() {
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
       perfSettings = next;
+      document.body.classList.toggle('thermal-safe', !!next.mobileLowPower);
       document.body.classList.remove('mobile-bg-lite');
       applyMediaProfile();
       configureRunnerPerformance();
@@ -4077,7 +4167,7 @@ function syncBodyVisuals() {
     function resizeCanvas() {
       if (!dom.board) return;
       const info = boardLogicalRect();
-      const fxScale = clamp(Number(perfSettings.fxResolutionScale) || 1, 0.28, 1);
+      const fxScale = clamp(Number(perfSettings.fxResolutionScale) || 1, 0.16, 1);
       const fxWidth = Math.max(1, Math.round(info.width * fxScale));
       const fxHeight = Math.max(1, Math.round(info.height * fxScale));
       state.fxLogicalWidth = info.width;
@@ -4553,7 +4643,8 @@ function syncBodyVisuals() {
     function spawnComment(forceTrend = false, forcedText = null, forcedClass = '', forcedIcon = null) {
       if (!dom.chatLane) return;
       const now = performance.now();
-      const cooldown = forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86);
+      const cooldown = (forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86)) * (perfSettings.commentCooldownScale || 1);
+      if (!forcedText && Math.random() < (perfSettings.commentDropChance || 0)) return;
       if (now - lastCommentSpawnAt < cooldown * 1000) return;
       let text = forcedText || '';
       let cls = forcedClass || '';
@@ -4601,11 +4692,11 @@ function syncBodyVisuals() {
       targetLane.appendChild(node);
       lastCommentSpawnAt = now;
       if (specialType) {
-        while (dom.chatLane.childNodes.length > 2) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > (perfSettings.specialCommentLaneMax || 1)) dom.chatLane.firstChild.remove();
       } else if (dom.chatLaneBack) {
-        while (dom.chatLaneBack.childNodes.length > 3) dom.chatLaneBack.firstChild.remove();
+        while (dom.chatLaneBack.childNodes.length > (perfSettings.commentLaneMax || 2)) dom.chatLaneBack.firstChild.remove();
       } else {
-        while (dom.chatLane.childNodes.length > 3) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > (perfSettings.commentLaneMax || 2)) dom.chatLane.firstChild.remove();
       }
     }
 
@@ -4936,7 +5027,7 @@ function rescueFloatingBodies() {
       const boardHeight = dom.board.clientHeight || 0;
       const boardWidth = dom.board.clientWidth || 0;
       const now = performance.now();
-      const hash = buildSpatialHash(worldBodies());
+      const hash = buildSpatialHash(getActiveBodies().length ? getActiveBodies() : worldBodies());
       for (const body of bodies) {
         const age = now - (body.spawnAt || 0);
         if (age < 420) continue;
@@ -6050,11 +6141,11 @@ function requestLoop(ts) {
         state.lastLogicTs = ts;
         return;
       }
-      const frameDt = clamp((ts - state.lastFrameTs) / 1000, 0.001, 0.05);
+      const frameDt = clamp((ts - state.lastFrameTs) / 1000, 0.001, 0.04);
       state.lastFrameTs = ts;
       stepPhysics(frameDt);
       if (state.lastLogicTs && ts - state.lastLogicTs < (perfSettings.logicFrameMs || 0)) return;
-      const dt = clamp((ts - state.lastLogicTs) / 1000, 0.001, 0.08);
+      const dt = clamp((ts - state.lastLogicTs) / 1000, 0.001, 0.06);
       state.lastLogicTs = ts;
       state.idle += dt;
       state.runTime += dt;
