@@ -1454,53 +1454,12 @@
       #trend-shift-banner{top:124px;min-width:min(84vw,420px);max-width:min(90vw,460px);padding:12px 16px}
       #trend-shift-main{font-size:1.18rem}
     }
-
-    body.thermal-safe .panel,
-    body.thermal-safe .hud-chip,
-    body.thermal-safe #caption-box,
-    body.thermal-safe #speech-bubble,
-    body.thermal-safe .chat-msg,
-    body.thermal-safe #superchat-banner .card,
-    body.thermal-safe #fire-banner .core,
-    body.thermal-safe #big-buzz-banner .core,
-    body.thermal-safe .result-card,
-    body.thermal-safe .daily-board-wrap,
-    body.thermal-safe #pause-overlay .pause-card{
-      backdrop-filter:none !important;
-      box-shadow:0 6px 16px rgba(0,0,0,.22) !important;
-      text-shadow:none !important;
-    }
-    body.thermal-safe .item-chip,
-    body.thermal-safe .item-chip.trend,
-    body.thermal-safe .item-chip.ready,
-    body.thermal-safe .item-chip.near,
-    body.thermal-safe .item-chip.forecast,
-    body.thermal-safe .item-chip.shift-glow,
-    body.thermal-safe .item-chip.fire,
-    body.thermal-safe .item-chip.buzz,
-    body.thermal-safe .item-chip.pending-clear{
-      box-shadow:0 4px 10px rgba(0,0,0,.22), inset 0 0 8px rgba(255,255,255,.12) !important;
-      filter:none !important;
-      animation:none !important;
-    }
-    body.thermal-safe .item-chip img,
-    body.thermal-safe .board-character-layer,
-    body.thermal-safe #danger-fog,
-    body.thermal-safe #global-flash{
-      filter:none !important;
-    }
-    body.thermal-safe #danger-fog,
-    body.thermal-safe #global-flash{
-      opacity:0 !important;
-    }
-    body.thermal-safe .chat-msg{transform:none !important;}
-
   </style>
 </head>
 <body>
   <div id="bg-container">
     <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" muted loop playsinline autoplay preload="none"></video>
-    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="none"></video>
+    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
@@ -1544,7 +1503,7 @@
     <div id="game-shell">
       <div id="board-wrap">
         <div id="game-board">
-          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="none"></video>
+          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
           <div id="board-grid"></div>
           <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
           <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
@@ -2556,6 +2515,66 @@ function queueBodyRepair(bodyOrId) {
   markGroupScanDirty(id);
 }
 
+function requestHighPrecisionPhysics(durationMs = 420) {
+  const until = performance.now() + Math.max(120, durationMs || 0);
+  state.physicsHighPrecisionUntil = Math.max(state.physicsHighPrecisionUntil || 0, until);
+}
+
+function needsHighPrecisionPhysics(now = performance.now()) {
+  if ((state.physicsHighPrecisionUntil || 0) > now) return true;
+  const activeBodies = getActiveBodies();
+  for (let i = 0; i < activeBodies.length; i += 1) {
+    const body = activeBodies[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    const recentSpawn = body.spawnAt && now - body.spawnAt < 720;
+    const flagged = body.plugin?.highPrecisionUntil && body.plugin.highPrecisionUntil > now;
+    const fast = body.speed > 2.25
+      || Math.abs(body.velocity?.x || 0) > 2.0
+      || Math.abs(body.velocity?.y || 0) > 2.3
+      || Math.abs(body.angularVelocity || 0) > 0.18;
+    if (recentSpawn || flagged || fast) return true;
+  }
+  return false;
+}
+
+function applyPhysicsQuality(highPrecision = false) {
+  if (!engine) return;
+  engine.positionIterations = highPrecision ? 4 : 2;
+  engine.velocityIterations = highPrecision ? 2 : 1;
+  engine.constraintIterations = 1;
+}
+
+function stabilizeActiveBodies(now = performance.now()) {
+  const activeBodies = getActiveBodies();
+  const boardW = boardWidth;
+  const boardH = boardHeight;
+  for (let i = 0; i < activeBodies.length; i += 1) {
+    const body = activeBodies[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    const vx = body.velocity?.x || 0;
+    const vy = body.velocity?.y || 0;
+    const av = body.angularVelocity || 0;
+    const maxVx = 10.5;
+    const maxVy = 13.5;
+    const maxAv = 0.48;
+    if (Math.abs(vx) > maxVx || Math.abs(vy) > maxVy) {
+      Body.setVelocity(body, {
+        x: clamp(vx, -maxVx, maxVx),
+        y: clamp(vy, -maxVy, maxVy)
+      });
+      body.plugin = body.plugin || {};
+      body.plugin.lastActiveAt = now;
+    }
+    if (Math.abs(av) > maxAv) {
+      Body.setAngularVelocity(body, clamp(av, -maxAv, maxAv));
+      body.plugin = body.plugin || {};
+      body.plugin.lastActiveAt = now;
+    }
+    if (!Number.isFinite(body.position?.x) || !Number.isFinite(body.position?.y)) queueBodyRepair(body);
+    else if (body.position.x < -96 || body.position.x > boardW + 96 || body.position.y > boardH + 180) queueBodyRepair(body);
+  }
+}
+
 function refreshActiveBodies(now = performance.now()) {
   const nextBodies = [];
   const nextIds = new Set();
@@ -2818,82 +2837,46 @@ function unregisterLiveBody(body) {
     
 const PERF_PRESET_DEFAULT = Object.freeze({
       mobileLowPower:false,
-      physicsFps:32,
-      runnerMaxUpdates:1,
-      logicFrameMs:40,
-      scanInterval:0.56,
-      visualInterval:1 / 16,
-      uiInterval:0.56,
-      cleanupInterval:1.45,
-      rescueInterval:1.58,
-      boardStatsCacheMs:1400,
-      particleBudget:6,
-      particleScale:0.12,
-      particleFadeRate:2.65,
-      particleLife:0.58,
-      particleSizeScale:0.82,
-      ringBudget:4,
+      physicsFps:40,
+      runnerMaxUpdates:2,
+      logicFrameMs:24,
+      scanInterval:0.62,
+      visualInterval:1 / 45,
+      uiInterval:0.58,
+      cleanupInterval:1.55,
+      rescueInterval:1.72,
+      boardStatsCacheMs:1450,
+      particleBudget:16,
+      particleScale:0.32,
+      particleFadeRate:1.85,
+      particleLife:0.96,
+      particleSizeScale:1.04,
+      ringBudget:12,
       minorRingThreshold:0,
-      majorRingThreshold:140,
-      popTextMax:3,
-      popTextMinGapMs:180,
-      popTextScale:0.9,
-      commentCooldownScale:1.8,
-      commentIntervalScale:2.1,
-      commentDropChance:0.28,
-      commentLaneMax:2,
-      specialCommentLaneMax:1,
-      superchatMinGapMs:3600,
+      majorRingThreshold:92,
+      popTextMax:6,
+      popTextMinGapMs:40,
+      popTextScale:1.06,
+      commentCooldownScale:1.08,
+      commentIntervalScale:1.18,
+      commentDropChance:0.02,
+      commentLaneMax:3,
+      specialCommentLaneMax:3,
+      superchatMinGapMs:900,
       videoPreload:'metadata',
-      fxResolutionScale:0.34,
-      transformPositionThreshold:0.8,
+      fxResolutionScale:0.44,
+      transformPositionThreshold:0.68,
       transformAngleThreshold:0.04,
-      motionThreshold:0.09,
-      motionAngularThreshold:0.04,
+      motionThreshold:0.07,
+      motionAngularThreshold:0.03,
       newBodyVisualMs:220,
-      backgroundWatchdogInterval:1.8,
-      bgmNormalVolume:0.24,
-      bgmHyperVolume:0.3
+      backgroundWatchdogInterval:1.6,
+      bgmNormalVolume:0.28,
+      bgmHyperVolume:0.34
     });
 
     const PERF_PRESET_MOBILE = Object.freeze({
-      ...PERF_PRESET_DEFAULT,
-      mobileLowPower:true,
-      physicsFps:24,
-      runnerMaxUpdates:1,
-      logicFrameMs:52,
-      scanInterval:0.78,
-      visualInterval:1 / 10,
-      uiInterval:0.72,
-      cleanupInterval:1.95,
-      rescueInterval:2.25,
-      boardStatsCacheMs:2200,
-      particleBudget:3,
-      particleScale:0.08,
-      particleFadeRate:3.0,
-      particleLife:0.42,
-      particleSizeScale:0.7,
-      ringBudget:2,
-      majorRingThreshold:180,
-      popTextMax:2,
-      popTextMinGapMs:300,
-      popTextScale:0.82,
-      commentCooldownScale:2.6,
-      commentIntervalScale:3.0,
-      commentDropChance:0.62,
-      commentLaneMax:1,
-      specialCommentLaneMax:1,
-      superchatMinGapMs:6400,
-      videoPreload:'none',
-      fxResolutionScale:0.2,
-      transformPositionThreshold:1.35,
-      transformAngleThreshold:0.07,
-      motionThreshold:0.14,
-      motionAngularThreshold:0.06,
-      newBodyVisualMs:180,
-      backgroundWatchdogInterval:2.6,
-      bgmNormalVolume:0.2,
-      bgmHyperVolume:0.24
+      ...PERF_PRESET_DEFAULT
     });
     let perfSettings = { ...PERF_PRESET_DEFAULT };
     let titleBackgroundActive = true;
@@ -2908,14 +2891,7 @@ const PERF_PRESET_DEFAULT = Object.freeze({
     let pauseRequestedByVisibility = false;
 
     function detectPerformanceProfile() {
-      const viewportW = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
-      const viewportH = Math.max(window.visualViewport?.height || 0, document.documentElement.clientHeight || 0, window.innerHeight || 0);
-      const coarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches || false;
-      const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false;
-      const ua = navigator.userAgent || '';
-      const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-      const smallViewport = Math.max(viewportW, viewportH) <= 1400 || Math.min(viewportW, viewportH) <= 900;
-      return (reducedMotion || (coarsePointer && (mobileUa || smallViewport))) ? { ...PERF_PRESET_MOBILE } : { ...PERF_PRESET_DEFAULT };
+      return { ...PERF_PRESET_DEFAULT };
     }
 
     function resolveAudioAsset(path) {
@@ -2944,16 +2920,12 @@ const PERF_PRESET_DEFAULT = Object.freeze({
     }
 
     function applyMediaProfile() {
-      applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), perfSettings.videoPreload || 'metadata');
-      [dom.bgmNormal, dom.bgmHyper].forEach(audio => {
+      applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'auto');
+      applyElementSource(dom.bgVideoHype, resolveVideoAsset(dom.bgVideoHype), 'metadata');
+      [dom.bgmNormal, dom.bgmHyper, dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(audio => {
         if (!audio) return;
         const desired = resolveAudioAsset(audio.getAttribute('src') || audio.dataset.assignedSrc || '');
         if (desired) applyElementSource(audio, desired, 'metadata');
-      });
-      [dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(audio => {
-        if (!audio) return;
-        const desired = resolveAudioAsset(audio.getAttribute('src') || audio.dataset.assignedSrc || '');
-        if (desired) applyElementSource(audio, desired, perfSettings.mobileLowPower ? 'none' : 'metadata');
       });
     }
 
@@ -2969,7 +2941,6 @@ function applyPerformanceProfile() {
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
       perfSettings = next;
-      document.body.classList.toggle('thermal-safe', !!next.mobileLowPower);
       document.body.classList.remove('mobile-bg-lite');
       applyMediaProfile();
       configureRunnerPerformance();
@@ -3296,6 +3267,7 @@ function wakeBodiesNearRemoval(removedBodies) {
       if (!sleepers.length) return;
       const hash = buildSpatialHash(sleepers);
       const now = performance.now();
+      requestHighPrecisionPhysics(320);
       for (const spot of removedBodies) {
         const seed = { position: spot.position, circleRadius: spot.circleRadius || 0 };
         visitNearbyFromHash(hash, seed, 1, body => {
@@ -3309,6 +3281,7 @@ function wakeBodiesNearRemoval(removedBodies) {
           body.floatStartAt = 0;
           body.plugin = body.plugin || {};
           body.plugin.lastActiveAt = now;
+          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 380);
           markBodyVisualDirty(body);
           markGroupScanDirty(body);
           return false;
@@ -3509,6 +3482,14 @@ function wakeBodiesNearRemoval(removedBodies) {
     }
 
     
+function hasPendingVisualWork() {
+      if (state.forceFullVisualSync) return true;
+      if (state.fxNeedsClear || state.particles.length || state.rings.length) return true;
+      if (state.shiftGlowTimer > 0) return true;
+      if (state.visualDirtyIds?.size || state.visualPreviewIds?.size || state.visualNextPreviewIds?.size || state.visualGlowIds?.size) return true;
+      return !!(state.activeBodies && state.activeBodies.length);
+    }
+
 function syncBodyVisuals() {
       if (!engine || !dom.itemLayer) return;
       const bodies = worldBodies();
@@ -3537,7 +3518,8 @@ function syncBodyVisuals() {
         state.visualPreviewIds?.forEach(id => pushBody(bodyById(id)));
         state.visualNextPreviewIds?.forEach(id => pushBody(bodyById(id)));
         state.visualGlowIds?.forEach(id => pushBody(bodyById(id)));
-        for (const body of bodies) {
+        const activeBodies = state.activeBodies || [];
+        for (const body of activeBodies) {
           const age = now - (body.spawnAt || 0);
           const moving = !body.isSleeping || body.speed > perfSettings.motionThreshold || Math.abs(body.velocity?.x || 0) > perfSettings.motionThreshold || Math.abs(body.velocity?.y || 0) > perfSettings.motionThreshold || Math.abs(body.angularVelocity || 0) > perfSettings.motionAngularThreshold;
           if (age < perfSettings.newBodyVisualMs || moving || body.outOfRangeSince || body.floatStartAt) pushBody(body);
@@ -3653,7 +3635,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = 'v76-bigbuzzplay-ultralite';
+    const BUILD_ID = 'v84-cool-visual-lock';
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -3815,9 +3797,11 @@ function syncBodyVisuals() {
       clearTimeout(video._retryPlayT1);
       clearTimeout(video._retryPlayT2);
       clearTimeout(video._retryPlayT3);
+      clearTimeout(video._retryPlayT4);
       video._retryPlayT1 = setTimeout(attemptPlay, 60);
       video._retryPlayT2 = setTimeout(attemptPlay, 180);
       video._retryPlayT3 = setTimeout(attemptPlay, 420);
+      video._retryPlayT4 = setTimeout(attemptPlay, 900);
     }
 
     function stopLoopVideo(video, opts = {}) {
@@ -3826,6 +3810,7 @@ function syncBodyVisuals() {
       clearTimeout(video._retryPlayT1);
       clearTimeout(video._retryPlayT2);
       clearTimeout(video._retryPlayT3);
+      clearTimeout(video._retryPlayT4);
       try { video.pause?.(); } catch (_) {}
       if (opts.reset === true) {
         try { video.currentTime = 0; } catch (_) {}
@@ -4167,7 +4152,7 @@ function syncBodyVisuals() {
     function resizeCanvas() {
       if (!dom.board) return;
       const info = boardLogicalRect();
-      const fxScale = clamp(Number(perfSettings.fxResolutionScale) || 1, 0.16, 1);
+      const fxScale = clamp(Number(perfSettings.fxResolutionScale) || 1, 0.28, 1);
       const fxWidth = Math.max(1, Math.round(info.width * fxScale));
       const fxHeight = Math.max(1, Math.round(info.height * fxScale));
       state.fxLogicalWidth = info.width;
@@ -4644,7 +4629,7 @@ function syncBodyVisuals() {
       if (!dom.chatLane) return;
       const now = performance.now();
       const cooldown = (forcedClass === 'super' ? 0.56 : (forcedText ? 0.72 : 0.86)) * (perfSettings.commentCooldownScale || 1);
-      if (!forcedText && Math.random() < (perfSettings.commentDropChance || 0)) return;
+      if (!forcedText && (perfSettings.commentDropChance || 0) > 0 && rand() < perfSettings.commentDropChance) return;
       if (now - lastCommentSpawnAt < cooldown * 1000) return;
       let text = forcedText || '';
       let cls = forcedClass || '';
@@ -4692,11 +4677,11 @@ function syncBodyVisuals() {
       targetLane.appendChild(node);
       lastCommentSpawnAt = now;
       if (specialType) {
-        while (dom.chatLane.childNodes.length > (perfSettings.specialCommentLaneMax || 1)) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > 2) dom.chatLane.firstChild.remove();
       } else if (dom.chatLaneBack) {
-        while (dom.chatLaneBack.childNodes.length > (perfSettings.commentLaneMax || 2)) dom.chatLaneBack.firstChild.remove();
+        while (dom.chatLaneBack.childNodes.length > 3) dom.chatLaneBack.firstChild.remove();
       } else {
-        while (dom.chatLane.childNodes.length > (perfSettings.commentLaneMax || 2)) dom.chatLane.firstChild.remove();
+        while (dom.chatLane.childNodes.length > 3) dom.chatLane.firstChild.remove();
       }
     }
 
@@ -4797,7 +4782,7 @@ function syncBodyVisuals() {
       setTimeout(() => {
         activePopTextCount = Math.max(0, activePopTextCount - 1);
         el.remove();
-      }, 850);
+      }, 980);
     }
 
     const SUPERCHAT_CHAIN_THEME = {
@@ -4871,7 +4856,7 @@ function makeBody(x, y, index, specialType = false) {
         frictionStatic:0.01,
         frictionAir:0.006,
         density:isBomb ? 0.00245 : (isFire ? 0.00255 : (isBuzz ? 0.0022 : 0.002)),
-        slop:0.05,
+        slop:0.02,
         label:isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content')),
         render:{
           opacity,
@@ -4882,7 +4867,10 @@ function makeBody(x, y, index, specialType = false) {
       body.contentIndex = index;
       body.spawnAt = performance.now();
       body.displayScale = scale;
-      body.sleepThreshold = isBomb ? 26 : (isFire ? 24 : (isBuzz ? 22 : 18));
+      body.sleepThreshold = isBomb ? 28 : (isFire ? 26 : (isBuzz ? 24 : 20));
+      body.plugin = body.plugin || {};
+      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 900 : (isFire ? 840 : (isBuzz ? 820 : 760)));
+      requestHighPrecisionPhysics(isBomb ? 900 : 760);
       Composite.add(engine.world, body);
       registerLiveBody(body);
       const node = ensureBodyVisual(body);
@@ -4992,6 +4980,8 @@ function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
       Body.setAngularVelocity(body, clamp(Number.isFinite(body.angularVelocity) ? body.angularVelocity : 0, -0.14, 0.14) * 0.6);
       body.plugin = body.plugin || {};
       body.plugin.lastActiveAt = performance.now();
+      body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, performance.now() + 260);
+      requestHighPrecisionPhysics(260);
       markBodyVisualDirty(body);
       markGroupScanDirty(body);
       body.floatStartAt = 0;
@@ -5027,7 +5017,7 @@ function rescueFloatingBodies() {
       const boardHeight = dom.board.clientHeight || 0;
       const boardWidth = dom.board.clientWidth || 0;
       const now = performance.now();
-      const hash = buildSpatialHash(getActiveBodies().length ? getActiveBodies() : worldBodies());
+      const hash = buildSpatialHash(worldBodies());
       for (const body of bodies) {
         const age = now - (body.spawnAt || 0);
         if (age < 420) continue;
@@ -5057,6 +5047,7 @@ function rescueFloatingBodies() {
         }
         if (!body.floatStartAt) body.floatStartAt = now;
         if (now - body.floatStartAt < 110) continue;
+        requestHighPrecisionPhysics(260);
         repairBodyPosition(body, boardWidth, boardHeight, 'floating-rescue');
         body.floatStartAt = now;
       }
@@ -5082,7 +5073,10 @@ function purgeBrokenBodies() {
         const lightlyOutside = body.position.y > height + radius * 1.6 || body.position.y < -radius * 1.6 || body.position.x < -radius * 1.6 || body.position.x > width + radius * 1.6;
         if (farOutside || lightlyOutside) {
           body.outOfRangeSince = body.outOfRangeSince || now;
-          if (farOutside || now - body.outOfRangeSince > 70) repairBodyPosition(body, width, height, 'broken');
+          if (farOutside || now - body.outOfRangeSince > 70) {
+            requestHighPrecisionPhysics(240);
+            repairBodyPosition(body, width, height, 'broken');
+          }
         } else {
           body.outOfRangeSince = 0;
           state.repairQueueIds?.delete(body.id);
@@ -5557,6 +5551,7 @@ function destroyEngine() {
     
 function initEngine() {
       engine = Engine.create({ enableSleeping:true, gravity:{ x:0, y:1.5 }, positionIterations:2, velocityIterations:1, constraintIterations:1 });
+      engine.timing.timeScale = 1;
       render = null;
       state.forceFullVisualSync = true;
       state.lastFrameTs = 0;
@@ -6116,9 +6111,14 @@ function initEngine() {
 
 function stepPhysics(frameDt) {
   if (!engine) return;
-  const fixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
-  const maxSteps = Math.max(1, state.maxPhysicsSteps || 1);
-  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.5));
+  refreshActiveBodies();
+  const now = performance.now();
+  const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
+  const highPrecision = needsHighPrecisionPhysics(now);
+  const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 48) : baseFixedDeltaMs;
+  const maxSteps = highPrecision ? Math.max(2, state.maxPhysicsSteps || 1) : 1;
+  applyPhysicsQuality(highPrecision);
+  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.35));
   let steps = 0;
   while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
     Engine.update(engine, fixedDeltaMs);
@@ -6127,7 +6127,8 @@ function stepPhysics(frameDt) {
   }
   if (steps > 0) {
     state.boardStatsCache = null;
-    refreshActiveBodies();
+    refreshActiveBodies(now);
+    stabilizeActiveBodies(now);
   }
 }
 
@@ -6141,11 +6142,21 @@ function requestLoop(ts) {
         state.lastLogicTs = ts;
         return;
       }
-      const frameDt = clamp((ts - state.lastFrameTs) / 1000, 0.001, 0.04);
+      const frameDt = clamp((ts - state.lastFrameTs) / 1000, 0.001, 0.05);
       state.lastFrameTs = ts;
       stepPhysics(frameDt);
+
+      state.visualTimer += frameDt;
+      if (state.visualTimer >= perfSettings.visualInterval) {
+        const visualDt = state.visualTimer;
+        if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(visualDt);
+        if (hasPendingVisualWork()) syncBodyVisuals();
+        state.visualTimer = 0;
+      }
+      backgroundWatchdog(frameDt);
+
       if (state.lastLogicTs && ts - state.lastLogicTs < (perfSettings.logicFrameMs || 0)) return;
-      const dt = clamp((ts - state.lastLogicTs) / 1000, 0.001, 0.06);
+      const dt = clamp((ts - state.lastLogicTs) / 1000, 0.001, 0.08);
       state.lastLogicTs = ts;
       state.idle += dt;
       state.runTime += dt;
@@ -6265,7 +6276,6 @@ function requestLoop(ts) {
       const mixStrength = clamp((state.fireMode > 0 ? 0.78 : 0) + (state.buzzMode > 0 ? 0.92 : 0) + (state.clipTime > 0 ? 0.36 : 0) + (state.tension < 35 ? 0.32 : 0) + (state.topDangerTime > 0.5 ? 0.22 : 0), 0, 1);
       setHyperMix(mixStrength);
       updateMoodText(dt);
-      state.visualTimer += dt;
       state.uiTimer += dt;
       state.cleanupTimer += dt;
       state.rescueTimer += dt;
@@ -6278,12 +6288,6 @@ function requestLoop(ts) {
         state.rescueTimer = 0;
         rescueFloatingBodies();
       }
-      if (state.visualTimer >= perfSettings.visualInterval) {
-        if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(state.visualTimer);
-        syncBodyVisuals();
-        state.visualTimer = 0;
-      }
-      backgroundWatchdog(dt);
       if (state.uiTimer >= perfSettings.uiInterval) {
         updateDynamicVoiceCues(ts);
         updateUi();
