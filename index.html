@@ -2524,25 +2524,36 @@ function requestHighPrecisionPhysics(durationMs = 420) {
 function needsHighPrecisionPhysics(now = performance.now()) {
   if ((state.physicsHighPrecisionUntil || 0) > now) return true;
   const activeBodies = getActiveBodies();
+  const liveCount = state.liveBodies?.length || 0;
+  const crowded = liveCount >= 18;
+  const lowerBandY = (boardHeight || dom.board?.clientHeight || 0) * 0.42;
   for (let i = 0; i < activeBodies.length; i += 1) {
     const body = activeBodies[i];
     if (!body || body.plugin?.pendingRemoval) continue;
-    const recentSpawn = body.spawnAt && now - body.spawnAt < 720;
+    const vx = Math.abs(body.velocity?.x || 0);
+    const vy = Math.abs(body.velocity?.y || 0);
+    const av = Math.abs(body.angularVelocity || 0);
+    const recentSpawn = body.spawnAt && now - body.spawnAt < (crowded ? 920 : 720);
     const flagged = body.plugin?.highPrecisionUntil && body.plugin.highPrecisionUntil > now;
-    const fast = body.speed > 2.25
-      || Math.abs(body.velocity?.x || 0) > 2.0
-      || Math.abs(body.velocity?.y || 0) > 2.3
-      || Math.abs(body.angularVelocity || 0) > 0.18;
-    if (recentSpawn || flagged || fast) return true;
+    const fast = body.speed > (crowded ? 1.55 : 2.25)
+      || vx > (crowded ? 1.2 : 2.0)
+      || vy > (crowded ? 1.45 : 2.3)
+      || av > (crowded ? 0.11 : 0.18);
+    const compressionRisk = crowded
+      && (body.position?.y || 0) > lowerBandY
+      && (vy > 0.58 || body.speed > 0.95);
+    if (recentSpawn || flagged || fast || compressionRisk) return true;
   }
   return false;
 }
 
 function applyPhysicsQuality(highPrecision = false) {
   if (!engine) return;
-  engine.positionIterations = highPrecision ? 4 : 2;
-  engine.velocityIterations = highPrecision ? 2 : 1;
-  engine.constraintIterations = 1;
+  const crowded = !!state.physicsCrowded;
+  const compression = !!state.physicsCompressionRisk;
+  engine.positionIterations = highPrecision ? (compression ? 6 : 5) : 2;
+  engine.velocityIterations = highPrecision ? (compression ? 4 : 3) : 1;
+  engine.constraintIterations = compression ? 2 : 1;
 }
 
 function stabilizeActiveBodies(now = performance.now()) {
@@ -2580,18 +2591,37 @@ function refreshActiveBodies(now = performance.now()) {
   const nextBodies = [];
   const nextIds = new Set();
   const liveBodies = state.liveBodies || [];
+  const liveCount = liveBodies.length;
+  const crowded = liveCount >= 18;
+  const activeMemoryMs = crowded ? 220 : 320;
+  const linearThreshold = crowded ? 0.055 : 0.04;
+  const angularThreshold = crowded ? 0.028 : 0.02;
+  const lowerCullY = (boardHeight || dom.board?.clientHeight || 0) * 0.62;
   for (let i = 0; i < liveBodies.length; i += 1) {
     const body = liveBodies[i];
     if (!body || body.plugin?.pendingRemoval) continue;
     body.plugin = body.plugin || {};
+    const vx = Math.abs(body.velocity?.x || 0);
+    const vy = Math.abs(body.velocity?.y || 0);
+    const av = Math.abs(body.angularVelocity || 0);
     const moving = !body.isSleeping
-      || body.speed > 0.04
-      || Math.abs(body.velocity?.x || 0) > 0.04
-      || Math.abs(body.velocity?.y || 0) > 0.04
-      || Math.abs(body.angularVelocity || 0) > 0.02;
+      || body.speed > linearThreshold
+      || vx > linearThreshold
+      || vy > linearThreshold
+      || av > angularThreshold;
     if (moving) body.plugin.lastActiveAt = now;
-    const recentlyActive = moving || (body.plugin.lastActiveAt && now - body.plugin.lastActiveAt < 320);
-    if (!recentlyActive) continue;
+    const deepSettled = crowded
+      && (body.position?.y || 0) > lowerCullY
+      && (now - (body.spawnAt || 0)) > 900
+      && body.speed < 0.09
+      && vx < 0.06
+      && vy < 0.08
+      && av < 0.03
+      && !body.outOfRangeSince
+      && !body.floatStartAt
+      && !(body.plugin?.highPrecisionUntil > now);
+    const recentlyActive = moving || (body.plugin.lastActiveAt && now - body.plugin.lastActiveAt < activeMemoryMs);
+    if (!recentlyActive || deepSettled) continue;
     nextBodies.push(body);
     nextIds.add(body.id);
     if (moving) markGroupScanDirty(body);
@@ -2607,8 +2637,15 @@ function getActiveBodies() {
 
 function collectRepairCandidates() {
   const map = new Map();
+  const now = performance.now();
+  const boardH = boardHeight || dom.board?.clientHeight || 0;
   getActiveBodies().forEach(body => {
-    if (body && state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval) map.set(body.id, body);
+    if (!body || !state.liveBodyIds?.has(body.id) || body.plugin?.pendingRemoval) return;
+    const recent = now - (body.spawnAt || 0) < 1400;
+    const moving = body.speed > 0.16 || Math.abs(body.velocity?.x || 0) > 0.14 || Math.abs(body.velocity?.y || 0) > 0.16 || Math.abs(body.angularVelocity || 0) > 0.06;
+    const unsafeBand = !boardH || body.position.y < boardH * 0.84;
+    const flagged = !!(body.outOfRangeSince || body.floatStartAt || (body.plugin?.highPrecisionUntil > now));
+    if (recent || moving || unsafeBand || flagged) map.set(body.id, body);
   });
   state.repairQueueIds?.forEach(id => {
     const body = bodyById(id);
@@ -3268,21 +3305,21 @@ function wakeBodiesNearRemoval(removedBodies) {
       if (!sleepers.length) return;
       const hash = buildSpatialHash(sleepers);
       const now = performance.now();
-      requestHighPrecisionPhysics(320);
+      requestHighPrecisionPhysics(260);
       for (const spot of removedBodies) {
         const seed = { position: spot.position, circleRadius: spot.circleRadius || 0 };
         visitNearbyFromHash(hash, seed, 1, body => {
           const dx = Math.abs(body.position.x - spot.position.x);
           const dy = body.position.y - spot.position.y;
-          const reachX = (body.circleRadius || 0) + (spot.circleRadius || 0) + 14;
-          const reachUp = Math.max(24, (body.circleRadius || 0) + 10);
-          const reachDown = (body.circleRadius || 0) + (spot.circleRadius || 0) + 46;
+          const reachX = (body.circleRadius || 0) + (spot.circleRadius || 0) + 12;
+          const reachUp = Math.max(20, (body.circleRadius || 0) + 8);
+          const reachDown = (body.circleRadius || 0) + (spot.circleRadius || 0) + 32;
           if (dx > reachX || dy < -reachUp || dy > reachDown) return false;
           Sleeping.set(body, false);
           body.floatStartAt = 0;
           body.plugin = body.plugin || {};
           body.plugin.lastActiveAt = now;
-          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 380);
+          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 340);
           markBodyVisualDirty(body);
           markGroupScanDirty(body);
           return false;
@@ -3656,7 +3693,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = 'v95-fall-smooth';
+    const BUILD_ID = 'v97-collision-cool-crowd';
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4884,12 +4921,12 @@ function makeBody(x, y, index, specialType = false) {
       const opacity = 0;
       const scale = spriteScaleFor(index, radius, specialType);
       const body = Bodies.circle(x, y, radius, {
-        restitution:0.02,
-        friction:0.008,
-        frictionStatic:0.01,
+        restitution:0.012,
+        friction:0.012,
+        frictionStatic:0.028,
         frictionAir:0.006,
         density:isBomb ? 0.00245 : (isFire ? 0.00255 : (isBuzz ? 0.0022 : 0.002)),
-        slop:0.02,
+        slop:0.0135,
         label:isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content')),
         render:{
           opacity,
@@ -4900,10 +4937,10 @@ function makeBody(x, y, index, specialType = false) {
       body.contentIndex = index;
       body.spawnAt = performance.now();
       body.displayScale = scale;
-      body.sleepThreshold = isBomb ? 28 : (isFire ? 26 : (isBuzz ? 24 : 20));
+      body.sleepThreshold = isBomb ? 22 : (isFire ? 20 : (isBuzz ? 18 : 16));
       body.plugin = body.plugin || {};
-      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 900 : (isFire ? 840 : (isBuzz ? 820 : 760)));
-      requestHighPrecisionPhysics(isBomb ? 900 : 760);
+      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 980 : (isFire ? 920 : (isBuzz ? 900 : 860)));
+      requestHighPrecisionPhysics(isBomb ? 980 : 860);
       Composite.add(engine.world, body);
       registerLiveBody(body);
       const node = ensureBodyVisual(body);
@@ -4992,7 +5029,9 @@ function makeBody(x, y, index, specialType = false) {
 
     function boardStats(force = false) {
       const now = performance.now();
-      if (!force && state.boardStatsCache && now - state.boardStatsCacheAt < perfSettings.boardStatsCacheMs) return state.boardStatsCache;
+      const liveCount = state.liveBodies?.length || 0;
+      const cacheMs = perfSettings.boardStatsCacheMs * (liveCount >= 28 ? 1.7 : liveCount >= 20 ? 1.35 : 1);
+      if (!force && state.boardStatsCache && now - state.boardStatsCacheAt < cacheMs) return state.boardStatsCache;
       state.boardStatsCache = computeBoardStats();
       state.boardStatsCacheAt = now;
       return state.boardStatsCache;
@@ -5228,9 +5267,23 @@ function scanAllClearableGroups() {
         const body = active[i];
         if (body && !body.plugin?.pendingRemoval) seedMap.set(body.id, body);
       }
-      const seedBodies = Array.from(seedMap.values());
-      const periodicFullScan = now - (state.lastFullGroupScanAt || 0) > 2.4 * 1000;
-      const tooManySeeds = seedBodies.length >= Math.max(12, (state.liveBodies?.length || 0) * 0.45);
+      let seedBodies = Array.from(seedMap.values());
+      const liveCount = state.liveBodies?.length || 0;
+      const crowded = liveCount >= 18;
+      const boardH = boardHeight || dom.board?.clientHeight || 0;
+      if (crowded && seedBodies.length) {
+        seedBodies = seedBodies.filter(body => {
+          const recent = now - (body.spawnAt || 0) < 1200;
+          const moving = body.speed > 0.18 || Math.abs(body.velocity?.x || 0) > 0.14 || Math.abs(body.velocity?.y || 0) > 0.16;
+          const upperBand = !boardH || body.position.y < boardH * 0.82;
+          const flagged = body.plugin?.highPrecisionUntil > now;
+          return recent || moving || upperBand || flagged;
+        });
+        seedBodies.sort((a, b) => ((b.plugin?.highPrecisionUntil || 0) - (a.plugin?.highPrecisionUntil || 0)) || ((b.speed || 0) - (a.speed || 0)) || (a.position.y - b.position.y));
+        if (seedBodies.length > 16) seedBodies = seedBodies.slice(0, 16);
+      }
+      const periodicFullScan = now - (state.lastFullGroupScanAt || 0) > (crowded ? 4.2 : 2.4) * 1000;
+      const tooManySeeds = seedBodies.length >= Math.max(crowded ? 10 : 12, liveCount * (crowded ? 0.32 : 0.45));
       const groups = [];
       if (!seedBodies.length && !periodicFullScan) {
         return groups;
@@ -6146,12 +6199,21 @@ function stepPhysics(frameDt) {
   if (!engine) return;
   refreshActiveBodies();
   const now = performance.now();
+  const activeBodies = getActiveBodies();
+  const liveCount = state.liveBodies?.length || 0;
+  const crowded = liveCount >= 18;
+  const compressionY = (boardHeight || dom.board?.clientHeight || 0) * 0.42;
+  const compressionRisk = crowded && activeBodies.some(body => body && !body.plugin?.pendingRemoval && (body.position?.y || 0) > compressionY && ((body.velocity?.y || 0) > 0.58 || body.speed > 0.95));
+  state.physicsCrowded = crowded;
+  state.physicsCompressionRisk = compressionRisk;
   const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
-  const highPrecision = needsHighPrecisionPhysics(now);
-  const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 48) : baseFixedDeltaMs;
-  const maxSteps = highPrecision ? Math.max(2, state.maxPhysicsSteps || 1) : 1;
+  const highPrecision = needsHighPrecisionPhysics(now) || compressionRisk;
+  const fixedDeltaMs = highPrecision
+    ? Math.min(baseFixedDeltaMs, compressionRisk ? 1000 / 56 : 1000 / 50)
+    : baseFixedDeltaMs;
+  const maxSteps = highPrecision ? Math.max(compressionRisk ? 3 : 2, state.maxPhysicsSteps || 1) : 1;
   applyPhysicsQuality(highPrecision);
-  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.35));
+  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.6));
   let steps = 0;
   while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
     Engine.update(engine, fixedDeltaMs);
@@ -6249,7 +6311,9 @@ function requestLoop(ts) {
         state.buzzItemTimer = 10.2 + rand() * 6.4;
       }
 
-      if (state.scanTimer >= perfSettings.scanInterval) {
+      const liveCount = state.liveBodies?.length || 0;
+      const loadScale = liveCount >= 30 ? 1.65 : (liveCount >= 22 ? 1.35 : 1);
+      if (state.scanTimer >= perfSettings.scanInterval * Math.min(1.25, loadScale)) {
         state.scanTimer = 0;
         resolveGroups();
       }
@@ -6313,16 +6377,16 @@ function requestLoop(ts) {
       state.uiTimer += dt;
       state.cleanupTimer += dt;
       state.rescueTimer += dt;
-      if (state.cleanupTimer >= perfSettings.cleanupInterval) {
+      if (state.cleanupTimer >= perfSettings.cleanupInterval * loadScale) {
         state.cleanupTimer = 0;
         cleanupOffscreenBodies();
         purgeBrokenBodies();
       }
-      if (state.rescueTimer >= perfSettings.rescueInterval) {
+      if (state.rescueTimer >= perfSettings.rescueInterval * Math.min(1.28, loadScale)) {
         state.rescueTimer = 0;
         rescueFloatingBodies();
       }
-      if (state.uiTimer >= perfSettings.uiInterval) {
+      if (state.uiTimer >= perfSettings.uiInterval * Math.min(1.18, loadScale)) {
         updateDynamicVoiceCues(ts);
         updateUi();
         state.uiTimer = 0;
