@@ -4896,23 +4896,56 @@ function makeBody(x, y, index, specialType = false) {
       });
       body.gameType = isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content'));
       body.contentIndex = index;
-      body.spawnAt = performance.now();
+      const now = performance.now();
+      body.spawnAt = now;
       body.displayScale = scale;
       body.sleepThreshold = isBomb ? 32 : (isFire ? 30 : (isBuzz ? 28 : 24));
       body.plugin = body.plugin || {};
-      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 1180 : (isFire ? 1100 : (isBuzz ? 1040 : 980)));
+      body.plugin.lastActiveAt = now;
+      body.plugin.highPrecisionUntil = now + (isBomb ? 1180 : (isFire ? 1100 : (isBuzz ? 1040 : 980)));
       requestHighPrecisionPhysics(isBomb ? 1180 : 980);
       Composite.add(engine.world, body);
       registerLiveBody(body);
+      if (!(state.activeBodyIds instanceof Set)) state.activeBodyIds = new Set();
+      if (!Array.isArray(state.activeBodies)) state.activeBodies = [];
+      if (!state.activeBodyIds.has(body.id)) {
+        state.activeBodyIds.add(body.id);
+        state.activeBodies.push(body);
+      }
       const node = ensureBodyVisual(body);
       if (node) {
         const diameter = visualDiameter(radius, specialType);
+        const rawX = Math.round((x - diameter / 2) * 10) / 10;
+        const rawY = Math.round((y - diameter / 2) * 10) / 10;
+        const rawAngle = Math.round((body.angle || 0) * 100) / 100;
+        const className = [
+          'item-chip',
+          body.gameType === 'hazard' ? 'hazard' : '',
+          body.gameType === 'fire' ? 'fire' : '',
+          body.gameType === 'buzz' ? 'buzz' : '',
+          body.gameType === 'content' && body.contentIndex === state.trendIndex ? 'trend' : ''
+        ].filter(Boolean).join(' ');
+        const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : ((body.gameType === 'content' && body.contentIndex === state.trendIndex) ? 'saturate(1.1)' : 'none');
         node.dataset.diameter = String(diameter);
         node.style.width = `${diameter}px`;
         node.style.height = `${diameter}px`;
-        node.style.transform = `translate(${Math.round((x - diameter / 2) * 10) / 10}px, ${Math.round((y - diameter / 2) * 10) / 10}px)`;
+        node.className = className;
+        node.style.visibility = 'visible';
+        node.hidden = false;
+        node.style.transform = `translate3d(${rawX}px, ${rawY}px, 0) rotate(${rawAngle}rad) scale(1)`;
         node.style.opacity = '1';
+        node.style.zIndex = String(100 + Math.round(y * 10) + (body.id % 10));
+        node.style.filter = filterValue;
+        node._diameter = diameter;
+        node._transform = node.style.transform;
+        node._drawX = rawX;
+        node._drawY = rawY;
+        node._drawAngle = rawAngle;
+        node._drawScale = 1;
+        node._zIndex = node.style.zIndex;
+        node._filter = filterValue;
       }
+      markBodyVisualDirty(body);
       markGroupScanDirty(body);
       return body;
     }
@@ -6009,6 +6042,9 @@ function initEngine() {
       const body = makeBody(x, spawnY, idx2, false);
       state.boardStatsCache = null;
       body.spawnSerial = state.dropSerial;
+      state.forceFullVisualSync = true;
+      state.lastVisualSyncTs = 0;
+      syncBodyVisuals();
       ensureQueueLength(3);
       state.idle = 0;
       state.tension = clamp(state.tension - 0.18, 0, 100);
