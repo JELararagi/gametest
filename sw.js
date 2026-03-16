@@ -1,4 +1,4 @@
-const CACHE_NAME = "limit-meltdown-v122-assets-cleanup";
+const CACHE_NAME = "limit-meltdown-v123-se-recheck-polyphony";
 const PRECACHE = [
   "./",
   "./index.html",

@@ -701,7 +701,6 @@
     #game-shell{--top-hud-h:154px !important; --bottom-info-h:86px !important; --bottom-controls-h:44px !important}
     #board-wrap{padding:calc(var(--top-hud-h) + 4px) 8px calc(var(--bottom-stack) + 4px) !important}
     #top-left{left:8px !important;right:8px !important;bottom:calc(var(--bottom-controls-h) + 8px) !important;height:calc(var(--bottom-info-h) + 9px) !important;min-height:calc(var(--bottom-info-h) + 9px) !important;padding:0 8px 10px !important;gap:0 !important;grid-template-columns:minmax(0,1fr) !important;align-items:center !important;overflow:hidden !important}
-    #top-left #burst-btn{display:none !important}
     #top-left .score-stack{width:100% !important;display:grid !important;align-content:center !important;gap:0 !important;min-width:0 !important}
     #top-left .score-stack > :not(#drop-selector):not(#pause-btn){display:none !important}
     #drop-selector{margin-top:0 !important;direction:ltr !important;justify-content:space-between !important;align-items:center !important;gap:6px !important;width:100% !important;flex-wrap:nowrap !important;min-width:0 !important;overflow:hidden !important;padding:0 2px !important}
@@ -2298,6 +2297,7 @@
 
     const voiceCache = new Map();
     const sfxCache = new Map();
+    const sfxPoolCursor = new Map();
     const sfxFileMap = {
       drop:'assets/audio/se_drop_soft_01.m4a',
       drop_blocked:'assets/audio/se_drop_blocked.m4a',
@@ -3690,7 +3690,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v122_assets_cleanup";
+    const BUILD_ID = "v123_se_recheck_polyphony";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4203,24 +4203,61 @@ function syncBodyVisuals() {
     }
 
 
-    function getSfxAudio(path) {
-      if (!path) return null;
+    function sfxPolyphony(kind = '') {
+      if (kind === 'clear') return 5;
+      if (kind === 'big') return 4;
+      if (kind === 'drop') return 4;
+      if (kind.startsWith('chain')) return 4;
+      if (kind === 'buzz_clear' || kind === 'bomb_clear' || kind === 'fire_start' || kind === 'fire_clear') return 3;
+      return 2;
+    }
+
+    function getSfxAudio(path, polyphony = 2) {
+      if (!path) return [];
+      const desired = Math.max(1, Math.min(6, Math.floor(polyphony || 1)));
       if (!sfxCache.has(path)) {
-        const resolved = resolveAudioAsset(path);
-        const audio = new Audio(resolved);
-        audio.preload = 'metadata';
-        audio.addEventListener('error', () => { audio.dataset.failed = '1'; }, { once:true });
-        sfxCache.set(path, audio);
+        sfxCache.set(path, []);
       }
-      return sfxCache.get(path);
+      const pool = sfxCache.get(path);
+      if (pool.length < desired) {
+        const resolved = resolveAudioAsset(path);
+        while (pool.length < desired) {
+          const audio = new Audio(resolved);
+          audio.preload = 'metadata';
+          audio.addEventListener('error', () => { audio.dataset.failed = '1'; }, { once:true });
+          pool.push(audio);
+        }
+      }
+      return pool;
+    }
+
+    function pickSfxAudio(path, kind = '') {
+      const pool = getSfxAudio(path, sfxPolyphony(kind));
+      if (!pool.length) return null;
+      const available = pool.find(audio => {
+        if (audio.dataset.failed === '1') return false;
+        if (audio.paused || audio.ended) return true;
+        const duration = Number(audio.duration || 0);
+        return duration > 0 && audio.currentTime >= Math.max(0, duration - 0.045);
+      });
+      if (available) return available;
+      const cursor = sfxPoolCursor.get(path) || 0;
+      const chosen = pool[cursor % pool.length] || pool[0];
+      sfxPoolCursor.set(path, (cursor + 1) % Math.max(1, pool.length));
+      return chosen;
     }
 
     function playAssetSfx(kind, volume = 0.72) {
       let path = sfxFileMap[kind] || null;
       if (!path && kind === 'chain') path = sfxFileMap.chain_2;
-      const audio = getSfxAudio(path);
+      const audio = pickSfxAudio(path, kind);
       if (!audio || muted || audio.dataset.failed === '1') return false;
-      try { audio.pause(); audio.currentTime = 0; } catch (_) {}
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.playbackRate = 1;
+        audio.preservesPitch = true;
+      } catch (_) {}
       audio.volume = clamp(volume, 0, 1);
       audio.play().catch(() => {});
       return true;
