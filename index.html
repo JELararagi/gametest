@@ -2380,6 +2380,8 @@
       physicsAccumulator:0,
       fixedDeltaMs:1000 / 36,
       maxPhysicsSteps:2,
+      lastVisualSyncTs:0,
+      lastPhysicsHighPrecision:false,
       topDangerTime:0,
       overfillTime:0,
       moodTimer:0,
@@ -2526,12 +2528,12 @@ function needsHighPrecisionPhysics(now = performance.now()) {
   for (let i = 0; i < activeBodies.length; i += 1) {
     const body = activeBodies[i];
     if (!body || body.plugin?.pendingRemoval) continue;
-    const recentSpawn = body.spawnAt && now - body.spawnAt < 720;
+    const recentSpawn = body.spawnAt && now - body.spawnAt < 960;
     const flagged = body.plugin?.highPrecisionUntil && body.plugin.highPrecisionUntil > now;
-    const fast = body.speed > 2.25
-      || Math.abs(body.velocity?.x || 0) > 2.0
-      || Math.abs(body.velocity?.y || 0) > 2.3
-      || Math.abs(body.angularVelocity || 0) > 0.18;
+    const fast = body.speed > 1.95
+      || Math.abs(body.velocity?.x || 0) > 1.65
+      || Math.abs(body.velocity?.y || 0) > 1.85
+      || Math.abs(body.angularVelocity || 0) > 0.12;
     if (recentSpawn || flagged || fast) return true;
   }
   return false;
@@ -2539,8 +2541,8 @@ function needsHighPrecisionPhysics(now = performance.now()) {
 
 function applyPhysicsQuality(highPrecision = false) {
   if (!engine) return;
-  engine.positionIterations = highPrecision ? 4 : 2;
-  engine.velocityIterations = highPrecision ? 2 : 1;
+  engine.positionIterations = highPrecision ? 5 : 2;
+  engine.velocityIterations = highPrecision ? 3 : 1;
   engine.constraintIterations = 1;
 }
 
@@ -2554,9 +2556,9 @@ function stabilizeActiveBodies(now = performance.now()) {
     const vx = body.velocity?.x || 0;
     const vy = body.velocity?.y || 0;
     const av = body.angularVelocity || 0;
-    const maxVx = 10.5;
-    const maxVy = 13.5;
-    const maxAv = 0.48;
+    const maxVx = 9.8;
+    const maxVy = 12.2;
+    const maxAv = 0.42;
     if (Math.abs(vx) > maxVx || Math.abs(vy) > maxVy) {
       Body.setVelocity(body, {
         x: clamp(vx, -maxVx, maxVx),
@@ -2837,7 +2839,7 @@ function unregisterLiveBody(body) {
     
 const PERF_PRESET_DEFAULT = Object.freeze({
       mobileLowPower:false,
-      physicsFps:40,
+      physicsFps:42,
       runnerMaxUpdates:2,
       logicFrameMs:24,
       scanInterval:0.62,
@@ -3267,7 +3269,7 @@ function wakeBodiesNearRemoval(removedBodies) {
       if (!sleepers.length) return;
       const hash = buildSpatialHash(sleepers);
       const now = performance.now();
-      requestHighPrecisionPhysics(320);
+      requestHighPrecisionPhysics(420);
       for (const spot of removedBodies) {
         const seed = { position: spot.position, circleRadius: spot.circleRadius || 0 };
         visitNearbyFromHash(hash, seed, 1, body => {
@@ -3281,7 +3283,7 @@ function wakeBodiesNearRemoval(removedBodies) {
           body.floatStartAt = 0;
           body.plugin = body.plugin || {};
           body.plugin.lastActiveAt = now;
-          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 380);
+          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 520);
           markBodyVisualDirty(body);
           markGroupScanDirty(body);
           return false;
@@ -4856,7 +4858,7 @@ function makeBody(x, y, index, specialType = false) {
         frictionStatic:0.01,
         frictionAir:0.006,
         density:isBomb ? 0.00245 : (isFire ? 0.00255 : (isBuzz ? 0.0022 : 0.002)),
-        slop:0.02,
+        slop:0.012,
         label:isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content')),
         render:{
           opacity,
@@ -4867,10 +4869,10 @@ function makeBody(x, y, index, specialType = false) {
       body.contentIndex = index;
       body.spawnAt = performance.now();
       body.displayScale = scale;
-      body.sleepThreshold = isBomb ? 28 : (isFire ? 26 : (isBuzz ? 24 : 20));
+      body.sleepThreshold = isBomb ? 32 : (isFire ? 30 : (isBuzz ? 28 : 24));
       body.plugin = body.plugin || {};
-      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 900 : (isFire ? 840 : (isBuzz ? 820 : 760)));
-      requestHighPrecisionPhysics(isBomb ? 900 : 760);
+      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 1180 : (isFire ? 1100 : (isBuzz ? 1040 : 980)));
+      requestHighPrecisionPhysics(isBomb ? 1180 : 980);
       Composite.add(engine.world, body);
       registerLiveBody(body);
       const node = ensureBodyVisual(body);
@@ -4974,14 +4976,14 @@ function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
       Sleeping.set(body, false);
       Body.setPosition(body, { x:safeX, y:safeY });
       Body.setVelocity(body, {
-        x: clamp(Number.isFinite(body.velocity.x) ? body.velocity.x : 0, -2.4, 2.4) * 0.18,
-        y: Math.max(0.38, Math.min(2.6, (Number.isFinite(body.velocity.y) ? body.velocity.y : 0) + 0.22))
+        x: clamp(Number.isFinite(body.velocity.x) ? body.velocity.x : 0, -2.0, 2.0) * 0.12,
+        y: Math.max(0.32, Math.min(2.1, (Number.isFinite(body.velocity.y) ? body.velocity.y : 0) + 0.16))
       });
-      Body.setAngularVelocity(body, clamp(Number.isFinite(body.angularVelocity) ? body.angularVelocity : 0, -0.14, 0.14) * 0.6);
+      Body.setAngularVelocity(body, clamp(Number.isFinite(body.angularVelocity) ? body.angularVelocity : 0, -0.12, 0.12) * 0.46);
       body.plugin = body.plugin || {};
       body.plugin.lastActiveAt = performance.now();
-      body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, performance.now() + 260);
-      requestHighPrecisionPhysics(260);
+      body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, performance.now() + 340);
+      requestHighPrecisionPhysics(340);
       markBodyVisualDirty(body);
       markGroupScanDirty(body);
       body.floatStartAt = 0;
@@ -5047,7 +5049,7 @@ function rescueFloatingBodies() {
         }
         if (!body.floatStartAt) body.floatStartAt = now;
         if (now - body.floatStartAt < 110) continue;
-        requestHighPrecisionPhysics(260);
+        requestHighPrecisionPhysics(340);
         repairBodyPosition(body, boardWidth, boardHeight, 'floating-rescue');
         body.floatStartAt = now;
       }
@@ -5074,7 +5076,7 @@ function purgeBrokenBodies() {
         if (farOutside || lightlyOutside) {
           body.outOfRangeSince = body.outOfRangeSince || now;
           if (farOutside || now - body.outOfRangeSince > 70) {
-            requestHighPrecisionPhysics(240);
+            requestHighPrecisionPhysics(320);
             repairBodyPosition(body, width, height, 'broken');
           }
         } else {
@@ -5541,6 +5543,7 @@ function destroyEngine() {
       state.nextPreviewGroups = [];
       state.lastFrameTs = 0;
       state.lastLogicTs = 0;
+      state.lastVisualSyncTs = 0;
       state.physicsAccumulator = 0;
       resetLiveBodyRegistry();
       clearVisuals();
@@ -5556,6 +5559,7 @@ function initEngine() {
       state.forceFullVisualSync = true;
       state.lastFrameTs = 0;
       state.lastLogicTs = 0;
+      state.lastVisualSyncTs = 0;
       state.physicsAccumulator = 0;
       updateWorldBounds();
       configureRunnerPerformance();
@@ -5615,6 +5619,7 @@ function initEngine() {
       state.lastTs = 0;
       state.lastFrameTs = 0;
       state.lastLogicTs = 0;
+      state.lastVisualSyncTs = 0;
       state.physicsAccumulator = 0;
       state.topDangerTime = 0;
       state.overfillTime = 0;
@@ -5653,6 +5658,7 @@ function initEngine() {
       state.streamTime = 0;
       state.finalSpurt = false;
       state.visualTimer = 0;
+      state.lastVisualSyncTs = 0;
       state.uiTimer = 0;
       state.cleanupTimer = 0;
       state.rescueTimer = 0;
@@ -6115,10 +6121,11 @@ function stepPhysics(frameDt) {
   const now = performance.now();
   const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
   const highPrecision = needsHighPrecisionPhysics(now);
-  const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 48) : baseFixedDeltaMs;
-  const maxSteps = highPrecision ? Math.max(2, state.maxPhysicsSteps || 1) : 1;
+  const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 64) : baseFixedDeltaMs;
+  const maxSteps = highPrecision ? Math.max(3, state.maxPhysicsSteps || 1) : 1;
   applyPhysicsQuality(highPrecision);
-  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.35));
+  state.lastPhysicsHighPrecision = highPrecision;
+  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 0.95));
   let steps = 0;
   while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
     Engine.update(engine, fixedDeltaMs);
@@ -6140,17 +6147,23 @@ function requestLoop(ts) {
       if (!state.lastFrameTs) {
         state.lastFrameTs = ts;
         state.lastLogicTs = ts;
+        state.lastVisualSyncTs = ts;
         return;
       }
       const frameDt = clamp((ts - state.lastFrameTs) / 1000, 0.001, 0.05);
       state.lastFrameTs = ts;
       stepPhysics(frameDt);
 
+      const pendingVisuals = hasPendingVisualWork();
+      const visualSyncIntervalMs = state.lastPhysicsHighPrecision ? (1000 / 60) : (1000 / 54);
+      if (pendingVisuals && (!state.lastVisualSyncTs || ts - state.lastVisualSyncTs >= visualSyncIntervalMs)) {
+        syncBodyVisuals();
+        state.lastVisualSyncTs = ts;
+      }
       state.visualTimer += frameDt;
       if (state.visualTimer >= perfSettings.visualInterval) {
         const visualDt = state.visualTimer;
         if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(visualDt);
-        if (hasPendingVisualWork()) syncBodyVisuals();
         state.visualTimer = 0;
       }
       backgroundWatchdog(frameDt);
