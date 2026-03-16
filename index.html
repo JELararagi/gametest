@@ -359,8 +359,8 @@
     .howto-note{margin-top:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;line-height:1.7;color:#e8def5;font-size:.86rem}
     .howto-note strong{color:#fff}
     #big-buzz-banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:32;opacity:0}
-    #big-buzz-banner .core{max-width:min(94%, 500px);padding:18px 20px 20px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,216,76,.45), rgba(255,47,146,.28) 48%, rgba(8,4,14,0) 76%);display:grid;justify-items:center;gap:8px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff4a3;text-shadow:0 0 22px rgba(255,216,76,.95),0 0 58px rgba(255,47,146,.78),0 0 96px rgba(255,255,255,.3);transform:scale(.8) rotate(-1deg)}
-    #big-buzz-banner .title{font-size:clamp(2.2rem,11vw,4.4rem);font-weight:900;letter-spacing:.01em;line-height:1;white-space:nowrap}
+    #big-buzz-banner .core{max-width:min(94%, 500px);padding:18px 20px 20px;border-radius:34px;background:radial-gradient(circle at center, rgba(255,232,120,.58), rgba(255,194,46,.30) 46%, rgba(120,76,0,.10) 70%, rgba(8,4,14,0) 82%);display:grid;justify-items:center;gap:8px;font-family:'Orbitron',sans-serif;text-align:center;color:#ffe27a;text-shadow:0 0 18px rgba(255,220,110,.92),0 0 38px rgba(255,191,48,.64),0 0 72px rgba(255,255,255,.26);transform:translateX(-10px) scale(.8) rotate(-1deg)}
+    #big-buzz-banner .title{font-size:clamp(2.8215rem,14.1075vw,5.643rem);font-weight:900;letter-spacing:.01em;line-height:1;white-space:nowrap;color:#ffd54a;-webkit-text-stroke:3px rgba(0,0,0,.9);paint-order:stroke fill;transform:translateX(-10px)}
     #big-buzz-banner .sub{display:inline-flex;align-items:center;justify-content:center;min-width:150px;padding:8px 18px;border-radius:999px;background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));border:1px solid rgba(255,248,190,.45);font-size:clamp(.92rem,4vw,1.35rem);font-weight:900;letter-spacing:.08em;color:#fffef6;box-shadow:0 0 18px rgba(255,227,122,.32)}
     #big-buzz-banner.show{animation:bigBuzzBurst 3.84s cubic-bezier(.19,.89,.24,1)}
     #big-buzz-banner.show .core{animation:bigBuzzPulse 3.84s cubic-bezier(.19,.89,.24,1)}
@@ -672,11 +672,11 @@
     .item-chip.buzz::after{content:'✨' !important;background:rgba(255,215,90,.24) !important}
     #fire-banner,#superchat-banner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.88);pointer-events:none;z-index:34;opacity:0}
     #fire-banner .core{min-width:300px;padding:18px 24px;border-radius:30px;background:radial-gradient(circle at center, rgba(255,210,210,.20), rgba(255,70,70,.28) 44%, rgba(255,24,90,.16) 66%, rgba(8,4,14,0) 80%);display:grid;justify-items:center;gap:5px;font-family:'Orbitron',sans-serif;text-align:center;color:#fff0f0;text-shadow:0 0 10px rgba(255,255,255,.42),0 0 18px rgba(255,70,90,.52),0 0 28px rgba(255,44,44,.30)}
-    #fire-banner .title{font-size:clamp(2.4rem,11vw,4.5rem);font-weight:900;letter-spacing:.02em;white-space:nowrap}
+    #fire-banner .title{font-size:clamp(3.6rem,16.5vw,6.75rem);font-weight:900;letter-spacing:.02em;white-space:nowrap;color:#ff3b30;-webkit-text-stroke:3px rgba(255,255,255,.96);paint-order:stroke fill}
     #fire-banner.show{animation:fireBurst 4.16s cubic-bezier(.19,.89,.24,1)}
-    #superchat-banner .card{min-width:220px;max-width:390px;padding:9px 12px;border-radius:20px;background:rgba(18,10,30,.40);border:2px solid rgba(142,248,255,.72);box-shadow:0 8px 16px rgba(0,0,0,.20);display:grid;gap:3px;justify-items:start;backdrop-filter:none}
-    #superchat-banner .amount{font-family:'Orbitron',sans-serif;font-size:.92rem;font-weight:900;letter-spacing:.02em;color:#fff}
-    #superchat-banner .message{font-size:.96rem;font-weight:900;line-height:1.22;color:#fff}
+    #superchat-banner .card{min-width:220px;max-width:390px;padding:9px 12px;border-radius:20px;background:rgba(255,255,255,.72);border:2px solid rgba(142,248,255,.72);box-shadow:0 8px 16px rgba(0,0,0,.20);display:grid;gap:3px;justify-items:start;backdrop-filter:none}
+    #superchat-banner .amount{font-family:'Orbitron',sans-serif;font-size:1.84rem;font-weight:900;letter-spacing:.02em;color:#7a4f00;text-shadow:none}
+    #superchat-banner .message{font-size:.96rem;font-weight:900;line-height:1.22;color:#3a2430;text-shadow:none}
     #superchat-banner.show{animation:superchatBurst 7.2s cubic-bezier(.19,.89,.24,1)}
     @keyframes fireBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.68)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
     @keyframes superchatBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}9%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}84%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
@@ -1393,19 +1393,23 @@
     }
     #speech-bubble::after{border-bottom-color:rgba(255,164,223,.24) !important;}
     #big-buzz-banner .core{
-      background:radial-gradient(circle at center, rgba(255,183,231,.48), rgba(255,93,183,.34) 44%, rgba(120,239,255,.22) 68%, rgba(8,4,14,0) 82%) !important;
-      color:#fff7ff !important;
-      text-shadow:0 0 22px rgba(255,255,255,.72), 0 0 48px rgba(255,93,183,.94), 0 0 90px rgba(120,239,255,.34) !important;
+      background:radial-gradient(circle at center, rgba(255,237,160,.56), rgba(255,205,74,.34) 42%, rgba(140,96,8,.16) 70%, rgba(8,4,14,0) 84%) !important;
+      color:#ffe27a !important;
+      text-shadow:0 0 18px rgba(255,244,178,.78), 0 0 36px rgba(255,196,54,.92), 0 0 68px rgba(255,255,255,.24) !important;
     }
     #big-buzz-banner .sub{
-      background:linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.10)) !important;
-      border-color:rgba(255,255,255,.48) !important;
-      box-shadow:0 0 18px rgba(255,93,183,.24) !important;
+      background:linear-gradient(180deg, rgba(255,250,214,.28), rgba(255,232,154,.10)) !important;
+      border-color:rgba(255,235,160,.58) !important;
+      box-shadow:0 0 18px rgba(255,196,54,.26) !important;
+      color:#fff7d1 !important;
     }
     #fire-banner .core{
-      background:radial-gradient(circle at center, rgba(255,221,236,.20), rgba(255,95,151,.42) 42%, rgba(255,52,106,.24) 68%, rgba(8,4,14,0) 82%) !important;
-      text-shadow:0 0 18px rgba(255,255,255,.52), 0 0 36px rgba(255,95,151,.88), 0 0 72px rgba(255,52,106,.52) !important;
+      background:radial-gradient(circle at center, rgba(255,220,220,.24), rgba(255,74,74,.42) 40%, rgba(255,24,48,.28) 68%, rgba(8,4,14,0) 82%) !important;
+      color:#ffd7d7 !important;
+      text-shadow:0 0 18px rgba(255,255,255,.52), 0 0 36px rgba(255,74,74,.92), 0 0 72px rgba(255,48,48,.58) !important;
     }
+    #big-buzz-banner .title{font-size:clamp(2.8215rem,14.1075vw,5.643rem) !important;color:#ffd54a !important;-webkit-text-stroke:3px rgba(0,0,0,.9) !important;paint-order:stroke fill !important;transform:translateX(-10px) !important;}
+    #fire-banner .title{font-size:clamp(3.6rem,16.5vw,6.75rem) !important;color:#ff3b30 !important;-webkit-text-stroke:3px rgba(255,255,255,.96) !important;paint-order:stroke fill !important;}
     #game-screen.bigbuzz #board-glass{
       background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)) !important;
     }
@@ -1459,7 +1463,7 @@
 <body>
   <div id="bg-container">
     <video id="bg-video" data-src="assets/bg/bg_cyber.mp4" muted loop playsinline autoplay preload="none"></video>
-    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
+    <video id="bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline autoplay preload="auto"></video>
   </div>
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
@@ -1503,7 +1507,7 @@
     <div id="game-shell">
       <div id="board-wrap">
         <div id="game-board">
-          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video>
+          <video id="board-bg-video-hype" data-src="assets/bg/bg_bigbuzz_loop.mp4" muted loop playsinline webkit-playsinline autoplay preload="auto"></video>
           <div id="board-grid"></div>
           <img id="board-character" class="board-character-layer active" src="assets/img/char_normal.png" alt="配信者背景">
           <img id="board-character-back" class="board-character-layer" src="assets/img/char_normal.png" alt="配信者背景">
@@ -2592,7 +2596,8 @@ function refreshActiveBodies(now = performance.now()) {
       || Math.abs(body.velocity?.y || 0) > 0.04
       || Math.abs(body.angularVelocity || 0) > 0.02;
     if (moving) body.plugin.lastActiveAt = now;
-    const recentlyActive = moving || (body.plugin.lastActiveAt && now - body.plugin.lastActiveAt < 320);
+    const activeWindowMs = (state.liveBodies?.length || 0) >= 26 ? 220 : 320;
+    const recentlyActive = moving || (body.plugin.lastActiveAt && now - body.plugin.lastActiveAt < activeWindowMs);
     if (!recentlyActive) continue;
     nextBodies.push(body);
     nextIds.add(body.id);
@@ -2835,7 +2840,7 @@ function unregisterLiveBody(body) {
     const CONTENT_BASE_WEIGHTS = [14, 14, 14, 14, 14, 14, 14];
     const CONTENT_SCORE_VALUES = [280, 330, 390, 460, 560, 700, 880];
 
-    const BOARD_BODY_ITEM_SCALE = 1.3248;
+    const BOARD_BODY_ITEM_SCALE = 1.45728;
     const UNIFIED_BODY_RADIUS = Math.round(31 * BOARD_BODY_ITEM_SCALE);
     
 const PERF_PRESET_DEFAULT = Object.freeze({
@@ -2924,7 +2929,7 @@ const PERF_PRESET_DEFAULT = Object.freeze({
 
     function applyMediaProfile() {
       applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'auto');
-      applyElementSource(dom.bgVideoHype, resolveVideoAsset(dom.bgVideoHype), 'metadata');
+      applyElementSource(dom.bgVideoHype, resolveVideoAsset(dom.bgVideoHype), 'auto');
       [dom.bgmNormal, dom.bgmHyper, dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(audio => {
         if (!audio) return;
         const desired = resolveAudioAsset(audio.getAttribute('src') || audio.dataset.assignedSrc || '');
@@ -2985,7 +2990,7 @@ function applyPerformanceProfile() {
     function spriteScaleFor(index, radius, isHazard = false) {
       return 0.001;
     }
-    const BOARD_VISUAL_ITEM_SCALE = 0.9;
+    const BOARD_VISUAL_ITEM_SCALE = 0.99;
     function visualDiameter(radius, specialType = false) {
       const base = radius * 2.06;
       return Math.round(base * BOARD_VISUAL_ITEM_SCALE);
@@ -3660,7 +3665,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v109_launch_ring_true_center";
+    const BUILD_ID = "v114_ui_banner_video_airfix";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -3843,9 +3848,14 @@ function syncBodyVisuals() {
     }
 
     function primeBigBuzzVisuals() {
-      if (!dom.boardBgVideoHype) return;
-      applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'auto');
-      setupLoopVideo(dom.boardBgVideoHype, 'auto');
+      if (dom.boardBgVideoHype) {
+        applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'auto');
+        setupLoopVideo(dom.boardBgVideoHype, 'auto');
+      }
+      if (dom.bgVideoHype) {
+        applyElementSource(dom.bgVideoHype, resolveVideoAsset(dom.bgVideoHype), 'auto');
+        setupLoopVideo(dom.bgVideoHype, 'auto');
+      }
     }
 
     function ensureAudio() {
@@ -3957,16 +3967,36 @@ function syncBodyVisuals() {
       dom.gameShell?.classList.toggle('bigbuzz', hype);
       if (dom.boardBgVideoHype) {
         dom.boardBgVideoHype.style.opacity = hype ? '1' : '0';
+        dom.boardBgVideoHype.style.visibility = hype ? 'visible' : 'hidden';
+        dom.boardBgVideoHype.style.display = 'block';
+      }
+      if (dom.bgVideoHype) {
+        dom.bgVideoHype.style.opacity = hype ? '1' : '0';
+        dom.bgVideoHype.style.visibility = hype ? 'visible' : 'hidden';
+        dom.bgVideoHype.style.display = 'block';
       }
       if (mode === 'title') {
         if (dom.boardBgVideoHype) stopLoopVideo(dom.boardBgVideoHype, { reset:false });
+        if (dom.bgVideoHype) stopLoopVideo(dom.bgVideoHype, { reset:false });
       } else if (mode === 'bigbuzz') {
         primeBigBuzzVisuals();
-        applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'auto');
-        setupLoopVideo(dom.boardBgVideoHype, 'auto');
-        playLoopVideo(dom.boardBgVideoHype, { reset:previousMode !== 'bigbuzz', preload:'auto' });
+        if (dom.boardBgVideoHype) {
+          applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'auto');
+          setupLoopVideo(dom.boardBgVideoHype, 'auto');
+          playLoopVideo(dom.boardBgVideoHype, { reset:previousMode !== 'bigbuzz', preload:'auto' });
+          setTimeout(() => playLoopVideo(dom.boardBgVideoHype, { preload:'auto' }), 120);
+          setTimeout(() => playLoopVideo(dom.boardBgVideoHype, { preload:'auto' }), 420);
+        }
+        if (dom.bgVideoHype) {
+          applyElementSource(dom.bgVideoHype, resolveVideoAsset(dom.bgVideoHype), 'auto');
+          setupLoopVideo(dom.bgVideoHype, 'auto');
+          playLoopVideo(dom.bgVideoHype, { reset:previousMode !== 'bigbuzz', preload:'auto' });
+          setTimeout(() => playLoopVideo(dom.bgVideoHype, { preload:'auto' }), 120);
+          setTimeout(() => playLoopVideo(dom.bgVideoHype, { preload:'auto' }), 420);
+        }
       } else {
         if (dom.boardBgVideoHype) stopLoopVideo(dom.boardBgVideoHype, { reset:false });
+        if (dom.bgVideoHype) stopLoopVideo(dom.bgVideoHype, { reset:false });
       }
       state.backgroundWatchdogTimer = 0;
       lastBigBuzzVisualActive = hype;
@@ -3978,8 +4008,9 @@ function syncBodyVisuals() {
       state.backgroundWatchdogTimer = 0;
       if (document.hidden || state.paused) return;
       const mode = currentBackgroundMode();
-      if (mode === 'bigbuzz' && dom.boardBgVideoHype?.paused) {
-        playLoopVideo(dom.boardBgVideoHype, { preload:'auto' });
+      if (mode === 'bigbuzz') {
+        if (dom.boardBgVideoHype?.paused) playLoopVideo(dom.boardBgVideoHype, { preload:'auto' });
+        if (dom.bgVideoHype?.paused) playLoopVideo(dom.bgVideoHype, { preload:'auto' });
       }
     }
 
@@ -4944,7 +4975,7 @@ function syncBodyVisuals() {
       if (amount) {
         amount.textContent = `+${fmt(Math.max(0, Math.round(gain || 0)))}`;
         amount.style.color = theme.border;
-        amount.style.fontSize = `${0.76 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)}rem`;
+        amount.style.fontSize = `${(0.76 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)) * 2}rem`;
       }
       if (message) {
         message.textContent = choice(SUPERCHAT_CHAIN_MESSAGES);
@@ -4969,11 +5000,11 @@ function makeBody(x, y, index, specialType = false) {
       const scale = spriteScaleFor(index, radius, specialType);
       const body = Bodies.circle(x, y, radius, {
         restitution:0.02,
-        friction:0.008,
-        frictionStatic:0.01,
-        frictionAir:0.006,
+        friction:0.007,
+        frictionStatic:0.008,
+        frictionAir:0.0045,
         density:isBomb ? 0.00245 : (isFire ? 0.00255 : (isBuzz ? 0.0022 : 0.002)),
-        slop:0.02,
+        slop:0.016,
         label:isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content')),
         render:{
           opacity,
@@ -4984,7 +5015,7 @@ function makeBody(x, y, index, specialType = false) {
       body.contentIndex = index;
       body.spawnAt = performance.now();
       body.displayScale = scale;
-      body.sleepThreshold = isBomb ? 28 : (isFire ? 26 : (isBuzz ? 24 : 20));
+      body.sleepThreshold = isBomb ? 34 : (isFire ? 32 : (isBuzz ? 30 : 26));
       body.plugin = body.plugin || {};
       body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 900 : (isFire ? 840 : (isBuzz ? 820 : 760)));
       requestHighPrecisionPhysics(isBomb ? 900 : 760);
@@ -5076,7 +5107,9 @@ function makeBody(x, y, index, specialType = false) {
 
     function boardStats(force = false) {
       const now = performance.now();
-      if (!force && state.boardStatsCache && now - state.boardStatsCacheAt < perfSettings.boardStatsCacheMs) return state.boardStatsCache;
+      const liveCount = state.liveBodies?.length || 0;
+      const cacheMs = perfSettings.boardStatsCacheMs * (liveCount >= 34 ? 1.95 : (liveCount >= 28 ? 1.6 : (liveCount >= 22 ? 1.28 : 1)));
+      if (!force && state.boardStatsCache && now - state.boardStatsCacheAt < cacheMs) return state.boardStatsCache;
       state.boardStatsCache = computeBoardStats();
       state.boardStatsCacheAt = now;
       return state.boardStatsCache;
@@ -5137,9 +5170,9 @@ function rescueFloatingBodies() {
       const hash = buildSpatialHash(worldBodies());
       for (const body of bodies) {
         const age = now - (body.spawnAt || 0);
-        if (age < 420) continue;
+        if (age < 260) continue;
         if (body.position.y < 72 || body.position.y > boardHeight - 60) continue;
-        const movingEnough = Math.abs(body.velocity.y) > 0.18 || Math.abs(body.velocity.x) > 0.22 || Math.abs(body.angularVelocity || 0) > 0.05;
+        const movingEnough = Math.abs(body.velocity.y) > 0.12 || Math.abs(body.velocity.x) > 0.16 || Math.abs(body.angularVelocity || 0) > 0.04;
         if (movingEnough) {
           body.floatStartAt = 0;
           continue;
@@ -5163,8 +5196,19 @@ function rescueFloatingBodies() {
           continue;
         }
         if (!body.floatStartAt) body.floatStartAt = now;
-        if (now - body.floatStartAt < 110) continue;
-        requestHighPrecisionPhysics(260);
+        if (body.isSleeping) {
+          Sleeping.set(body, false);
+          Body.setVelocity(body, {
+            x: clamp((body.velocity?.x || 0) * 0.92, -1.0, 1.0),
+            y: Math.max(0.62, body.velocity?.y || 0.62)
+          });
+          body.plugin = body.plugin || {};
+          body.plugin.lastActiveAt = now;
+          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 420);
+          requestHighPrecisionPhysics(420);
+        }
+        if (now - body.floatStartAt < 36) continue;
+        requestHighPrecisionPhysics(420);
         repairBodyPosition(body, boardWidth, boardHeight, 'floating-rescue');
         body.floatStartAt = now;
       }
@@ -6279,6 +6323,8 @@ function requestLoop(ts) {
       state.lastLogicTs = ts;
       state.idle += dt;
       state.runTime += dt;
+      const liveCount = state.liveBodies?.length || 0;
+      const crowdFactor = liveCount >= 34 ? 1.9 : (liveCount >= 28 ? 1.6 : (liveCount >= 22 ? 1.28 : 1));
       state.scanTimer += dt;
       state.commentTimer += dt;
       state.clipCooldown = Math.max(0, state.clipCooldown - dt);
@@ -6334,7 +6380,7 @@ function requestLoop(ts) {
         state.buzzItemTimer = 10.2 + rand() * 6.4;
       }
 
-      if (state.scanTimer >= perfSettings.scanInterval) {
+      if (state.scanTimer >= perfSettings.scanInterval * crowdFactor) {
         state.scanTimer = 0;
         resolveGroups();
       }
@@ -6367,7 +6413,7 @@ function requestLoop(ts) {
       state.commentEventTimer = 0;
       state.commentEventType = '';
       state.commentEventText = '';
-      const chatInterval = (state.clipTime > 0 ? 1.85 : 3.10) * perfSettings.commentIntervalScale;
+      const chatInterval = (state.clipTime > 0 ? 1.95 : 3.25) * perfSettings.commentIntervalScale * Math.min(1.28, 0.96 + (crowdFactor - 1) * 0.22);
       if (state.commentTimer >= chatInterval) {
         state.commentTimer = 0;
         spawnComment(false);
@@ -6398,16 +6444,16 @@ function requestLoop(ts) {
       state.uiTimer += dt;
       state.cleanupTimer += dt;
       state.rescueTimer += dt;
-      if (state.cleanupTimer >= perfSettings.cleanupInterval) {
+      if (state.cleanupTimer >= perfSettings.cleanupInterval * crowdFactor) {
         state.cleanupTimer = 0;
         cleanupOffscreenBodies();
         purgeBrokenBodies();
       }
-      if (state.rescueTimer >= perfSettings.rescueInterval) {
+      if (state.rescueTimer >= perfSettings.rescueInterval * Math.min(1.14, 0.92 + (crowdFactor - 1) * 0.14)) {
         state.rescueTimer = 0;
         rescueFloatingBodies();
       }
-      if (state.uiTimer >= perfSettings.uiInterval) {
+      if (state.uiTimer >= perfSettings.uiInterval * Math.min(1.18, 0.96 + (crowdFactor - 1) * 0.16)) {
         updateDynamicVoiceCues(ts);
         updateUi();
         state.uiTimer = 0;
