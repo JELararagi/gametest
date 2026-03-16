@@ -2299,19 +2299,39 @@
     const voiceCache = new Map();
     const sfxCache = new Map();
     const sfxFileMap = {
-      drop:'assets/audio/se_drop_soft_01.wav',
-      clear:'assets/audio/se_clear_small_01.wav',
-      big:'assets/audio/se_clear_big_01.wav',
-      chain_2:'assets/audio/se_chain_02.wav',
-      chain_3:'assets/audio/se_chain_03.wav',
-      chain_4:'assets/audio/se_chain_04.wav',
-      warn:'assets/audio/se_trend_warning.wav',
-      switch:'assets/audio/se_trend_shift.wav',
-      ready:'assets/audio/se_apology_ready.wav',
-      burst:'assets/audio/se_apology_fire.wav',
-      bad:'assets/audio/se_gameover_blast.wav',
-      hazard:'assets/audio/se_hazard_spawn.wav',
-      hurry:'assets/audio/se_timer_hurry.wav'
+      drop:'assets/audio/se_drop_soft_01.m4a',
+      drop_blocked:'assets/audio/se_drop_blocked.m4a',
+      clear:'assets/audio/se_clear_small_01.m4a',
+      big:'assets/audio/se_clear_big_01.m4a',
+      chain_2:'assets/audio/se_chain_02.m4a',
+      chain_3:'assets/audio/se_chain_03.m4a',
+      chain_4:'assets/audio/se_chain_04.m4a',
+      chain_5:'assets/audio/se_chain_05.m4a',
+      chain_6:'assets/audio/se_chain_06.m4a',
+      chain_red:'assets/audio/se_chain_redsuper_fixed.m4a',
+      warn:'assets/audio/se_trend_warning.m4a',
+      switch:'assets/audio/se_trend_shift.m4a',
+      ready:'assets/audio/se_apology_ready.m4a',
+      burst:'assets/audio/se_apology_fire.m4a',
+      bad:'assets/audio/se_gameover_blast.m4a',
+      hazard:'assets/audio/se_hazard_spawn.m4a',
+      hurry:'assets/audio/se_timer_hurry.m4a',
+      ui_item_select:'assets/audio/se_ui_item_select.m4a',
+      ui_start:'assets/audio/se_ui_start_stream.m4a',
+      ui_open:'assets/audio/se_ui_open_panel.m4a',
+      ui_back:'assets/audio/se_ui_back.m4a',
+      ui_pause_open:'assets/audio/se_ui_pause_open.m4a',
+      ui_pause_close:'assets/audio/se_ui_pause_close.m4a',
+      ui_retry:'assets/audio/se_ui_retry.m4a',
+      ui_copy:'assets/audio/se_ui_copy_result.m4a',
+      bomb_clear:'assets/audio/se_bomb_clear.m4a',
+      fire_start:'assets/audio/se_fire_start.m4a',
+      fire_clear:'assets/audio/se_fire_clear.m4a',
+      buzz_spawn:'assets/audio/se_buzz_spawn.m4a',
+      buzz_clear:'assets/audio/se_buzz_clear_bigbuzz_start.m4a',
+      bigbuzz_extend:'assets/audio/se_bigbuzz_extend.m4a',
+      crown:'assets/audio/se_crown_takeover.m4a',
+      topline:'assets/audio/se_topline_warning.m4a'
     };
     const voiceCooldowns = { default:0, calm:0, clear:0, chain:0, hype:0, warning:0, fire:0, top:0, focus:0 };
     const lastVoicePathByKind = Object.create(null);
@@ -2330,6 +2350,11 @@
     let lastBigBuzzVisualActive = false;
     let warningVoiceLatched = false;
     let topVoiceLatched = false;
+    let trendWarningSfxLatched = false;
+    let topWarningSfxLatched = false;
+    let hurrySfxLatched = false;
+    let helpReadySfxLatched = false;
+    let fireClearCueLatched = false;
     let focusVoiceCooldownUntil = 0;
     let calmVoiceCooldownUntil = 0;
     let startupVoiceLockUntil = 0;
@@ -3665,7 +3690,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v114_ui_banner_video_airfix";
+    const BUILD_ID = "v122_assets_cleanup";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4201,6 +4226,62 @@ function syncBodyVisuals() {
       return true;
     }
 
+    function playChainTierSfx(chainTier = 2, volume = 0.9) {
+      const tier = Math.max(2, Math.floor(chainTier || 2));
+      const key = tier >= 7 ? 'chain_red' : `chain_${Math.min(6, tier)}`;
+      return playAssetSfx(key, volume);
+    }
+
+    function hasLiveFire() {
+      return worldBodiesByType('fire').some(body => state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval);
+    }
+
+    function isBurstButtonVisible() {
+      if (!dom.burstBtn) return false;
+      try {
+        const style = window.getComputedStyle(dom.burstBtn);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+      } catch (_) {
+        return true;
+      }
+    }
+
+    function canUseBurstHelp() {
+      return !!(state.active && !state.paused && state.fireMode > 0 && hasLiveFire() && state.fireCooldown <= 0.05);
+    }
+
+    function handleFireResolved(reason = 'clear') {
+      if (fireClearCueLatched) return false;
+      if (hasLiveFire()) return false;
+      fireClearCueLatched = true;
+      state.fireMode = 0;
+      dom.dangerFog.classList.remove('show');
+      playAssetSfx('fire_clear', reason === 'help' ? 0.98 : 0.92);
+      setCaption('炎はおさまったよ。まだ立て直せる！', 1.7);
+      return true;
+    }
+
+    function updateBurstReadiness() {
+      const ready = canUseBurstHelp();
+      state.buzzReady = ready;
+      if (dom.burstBtn) {
+        dom.burstBtn.classList.toggle('ready', ready);
+        setBurstButtonLabel(ready ? 'ready' : 'default');
+      }
+      if (ready && !helpReadySfxLatched) {
+        helpReadySfxLatched = true;
+        if (isBurstButtonVisible()) {
+          flashBurstButton();
+          playAssetSfx('ready', 0.86);
+          triggerVoiceCue('apology_ready', 1);
+          setCaption('おたすけ準備OK。炎を3〜5こだけ消せる。', 1.7);
+        }
+      } else if (!ready) {
+        helpReadySfxLatched = false;
+      }
+      return ready;
+    }
+
     function sfx(type, intensity = 1) {
       if (muted) return;
       persistPlayerName();
@@ -4508,7 +4589,7 @@ function syncBodyVisuals() {
       }
       if (withFlash) {
         flashScreen(trend.accent);
-        sfx('switch', 0.9);
+        playAssetSfx('switch', 0.92);
         showTrendShiftBanner('shift', previousIndex == null ? index : previousIndex, index, state.futureTrendIndex);
       }
       state.setupCarryLen = 0;
@@ -4599,11 +4680,13 @@ function syncBodyVisuals() {
 
     function setSelectedDropIndex(index, opts = {}) {
       const idx = clamp(Math.floor(index || 0), 0, CONTENTS.length - 1);
+      const prev = clamp(Math.floor(state.selectedDropIndex || 0), 0, CONTENTS.length - 1);
       state.selectedDropIndex = idx;
       ensureQueueLength(3);
       refreshQueue();
       renderPreview();
       updateDropSelectorUi();
+      if (!opts.silent && idx !== prev) playAssetSfx('ui_item_select', 0.78);
       if (!opts.silent) setCaption(`落とすアイテムを『${CONTENTS[idx].name}』に固定しました。`, 0.8);
     }
 
@@ -4986,7 +5069,6 @@ function syncBodyVisuals() {
       dom.superchatBanner.classList.add('show');
       clearTimeout(state.superchatBannerTimer);
       state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), (4000 + tier * 520 + comboTier * 150) * 2);
-      sfx('ready', Math.min(2.2, 0.56 + tier * 0.2 + comboTier * 0.05));
     }
 
     
@@ -5525,8 +5607,7 @@ function scanAllClearableGroups() {
       addRing(center.x, center.y, '#ffd84c', 82, 360);
       flashScreen('#ff7b5b');
       popText(center.x, center.y - 18, 'BOMB!!', '#fff4a3', 32);
-      playAssetSfx('hazard', 0.96);
-      sfx('burst', 1.5);
+      playAssetSfx('bomb_clear', 0.98);
       const gain = Math.round((state.clipTime > 0 ? 2400 : 1200));
       state.score += gain;
       popText(center.x, center.y + 24, `+${fmt(gain)}`, '#ffd84c', 24);
@@ -5573,8 +5654,7 @@ function scanAllClearableGroups() {
       flashScreen('#ffe37a');
       addRing(center.x, center.y, '#ffe37a', 56, 340);
       addRing(center.x, center.y, '#ff5ab1', 88, 420);
-      playAssetSfx('ready', 0.96);
-      sfx('big', 1.46);
+      playAssetSfx('buzz_clear', 0.98);
       const gain = Math.round((state.clipTime > 0 ? 3200 : 1600));
       state.score += gain;
       popText(center.x, center.y + 18, `+${fmt(gain)}`, '#ffe37a', 24);
@@ -5655,20 +5735,23 @@ function scanAllClearableGroups() {
         addRing(center.x, center.y - 34, '#ff5ab1', 64, 380);
         spawnComment(false, '1位きた！王冠ゲット！', 'super', '👑');
         triggerVoiceCue('win', 1, { force:true });
-        sfx('big', 1.7);
+        playAssetSfx('crown', 0.96);
       }
 
-      if (chainTier >= 4) {
-        popText(center.x, center.y + 88, `${chainTier} CHAIN!`, '#fff0ff', 24);
-        spawnComment(false, '連鎖つづいてる！', 'super', '💥');
-        triggerVoiceCue('chain', chainTier);
-        sfx('chain', Math.min(1.85, 1.0 + chainTier * 0.18));
+      if (chainTier >= 2) {
+        popText(center.x, center.y - 78, `${chainTier}連鎖`, '#ffb7ff', 22);
+        if (chainTier >= 4) {
+          popText(center.x, center.y + 88, `${chainTier} CHAIN!`, '#fff0ff', 24);
+          spawnComment(false, '連鎖つづいてる！', 'super', '💥');
+          triggerVoiceCue('chain', chainTier);
+        }
+        playChainTierSfx(chainTier, Math.min(1, 0.84 + chainTier * 0.03));
       } else if (state.combo >= 4) {
         triggerVoiceCue('big', state.combo);
-        sfx('big', Math.min(1.6, 1.0 + state.combo * 0.1));
+        playAssetSfx('big', Math.min(1, 0.9 + state.combo * 0.04));
       } else {
         triggerVoiceCue('clear', group.length);
-        sfx('clear', Math.min(1.2, 0.9 + state.combo * 0.08));
+        playAssetSfx('clear', Math.min(1, 0.78 + state.combo * 0.05));
       }
 
       if (mainIndex === state.trendIndex) {
@@ -5676,9 +5759,7 @@ function scanAllClearableGroups() {
       }
 
       if (state.fireMode > 0 && !worldBodiesByType('fire').length) {
-        state.fireMode = 0;
-        dom.dangerFog.classList.remove('show');
-        setCaption('炎はおさまったよ。まだ立て直せる！', 1.7);
+        handleFireResolved('clear');
       }
     }
 
@@ -5871,8 +5952,7 @@ function initEngine() {
       addRing(cx, cy, '#fff4a3', 24, 260);
       addRing(cx, cy, '#ff5ab1', 38, 320);
       addRing(cx, cy, '#ffffff', 18, 200);
-      playAssetSfx('big', fresh ? 0.94 : 0.82);
-      sfx('big', fresh ? 1.2 : 0.96);
+      if (!fresh) playAssetSfx('bigbuzz_extend', 0.9);
     }
 
 
@@ -5902,6 +5982,11 @@ function initEngine() {
       lastHyperBgmActive = false;
       warningVoiceLatched = false;
       topVoiceLatched = false;
+      trendWarningSfxLatched = false;
+      topWarningSfxLatched = false;
+      hurrySfxLatched = false;
+      helpReadySfxLatched = false;
+      fireClearCueLatched = false;
       focusVoiceCooldownUntil = 0;
       calmVoiceCooldownUntil = 0;
       setHyperMix(0);
@@ -5976,11 +6061,24 @@ function initEngine() {
     }
 
     function activateBurst() {
-      return 0;
+      if (!state.active || state.paused) return 0;
+      if (!canUseBurstHelp()) {
+        setCaption(hasLiveFire() ? 'おたすけは、もう少しで使える。' : '炎上中にだけ、おたすけが使える。', 1.2);
+        playAssetSfx('drop_blocked', 0.62);
+        return 0;
+      }
+      helpReadySfxLatched = false;
+      state.buzzReady = false;
+      state.buzzActivations += 1;
+      state.fireCooldown = Math.max(state.fireCooldown, 2.8);
+      return clearAllHazards(true);
     }
 
     function triggerFire(reason = 'bomb') {
       if (!state.active) return;
+      fireClearCueLatched = false;
+      helpReadySfxLatched = false;
+      state.buzzReady = false;
       state.fireMode = Math.max(state.fireMode, 999);
       state.fireCooldown = Math.max(state.fireCooldown, 1.2);
       state.fireClearCount = 0;
@@ -5997,8 +6095,7 @@ function initEngine() {
       addParticles(cx, cy, 'rgba(255,196,120,.96)', 18, 7.4);
       addRing(cx, cy, '#ff6b7b', 28, 260);
       addRing(cx, cy, '#ffd2c4', 18, 190);
-      playAssetSfx('burst', 0.98);
-      sfx('bad', 1.08);
+      playAssetSfx('fire_start', 0.98);
       say('fire', 2.2);
       showFireBanner('大炎上!!');
       setTimeout(() => dom.gameShell.classList.remove('shake'), 260);
@@ -6028,8 +6125,7 @@ function initEngine() {
       addParticles(x, 48, 'rgba(255,223,110,.94)', 8, 3.8);
       popText(x, 92, 'バズり', '#fff0a3', 22);
       spawnComment(false, 'バズりが来た！3こで大バズり！', 'super', '✨');
-      playAssetSfx('ready', 0.76);
-      sfx('ready', 0.92);
+      playAssetSfx('buzz_spawn', 0.84);
     }
 
 
@@ -6055,8 +6151,6 @@ function initEngine() {
       }
       state.boardStatsCache = null;
       state.fireMode = Math.max(state.fireMode, 999);
-      playAssetSfx('hazard', 0.86);
-      sfx('bad', 0.94);
       return dropped;
     }
 
@@ -6066,7 +6160,7 @@ function initEngine() {
       if (!hazards.length) {
         if (fromBurst) {
           setCaption('今いっしょに消せる炎はないみたい。', 1.4);
-          sfx('warn', 0.72);
+          playAssetSfx('drop_blocked', 0.62);
         }
         return 0;
       }
@@ -6098,7 +6192,8 @@ function initEngine() {
       spawnComment(false, `おたすけで炎を${shuffled.length}こ消した！`, 'super', '🧯');
       setCaption('おたすけで炎を3〜5こだけ消したよ。爆弾はそのまま。', 2.2);
       triggerVoiceCue('apology_fire', Math.max(2, shuffled.length));
-      sfx('burst', 1.18);
+      playAssetSfx('burst', 0.98);
+      if (!worldBodiesByType('fire').length) handleFireResolved('help');
       setTimeout(() => dom.gameShell.classList.remove('shake'), 320);
       return shuffled.length;
     }
@@ -6119,7 +6214,7 @@ function initEngine() {
 
       if (!safeDrop.clear) {
         setCaption('投下ライン付近がふさがっている。少し崩してから落とそう。', 0.9);
-        sfx('bad', 0.22);
+        playAssetSfx('drop_blocked', 0.74);
         return;
       }
 
@@ -6150,7 +6245,7 @@ function initEngine() {
       renderPreview();
       addParticles(launchFxCenter.x, launchFxCenter.y, CONTENTS[idx2].accent, 9, 3.4);
       addRing(launchFxCenter.x, launchFxCenter.y, CONTENTS[idx2].accent, 14, 180);
-      sfx('drop', 0.5);
+      playAssetSfx('drop', 0.72);
     }
 
     function updateUi() {
@@ -6185,8 +6280,7 @@ function initEngine() {
       if (dom.chainView) dom.chainView.textContent = `${state.chainCount || 0}連鎖`;
       const avatarMood = performance.now() < avatarLockUntil ? avatarLockMood : pickAvatarMood();
       setAvatarVisual(avatarMood);
-      dom.burstBtn.classList.remove('ready');
-      setBurstButtonLabel('default');
+      updateBurstReadiness();
       dom.topDangerLine.classList.toggle('show', state.topDangerTime > 0.45 || state.overfillTime > 0.35);
       if (dom.streamTimeMini) dom.streamTimeMini.textContent = '';
       if (dom.streamTimeTop) dom.streamTimeTop.textContent = '';
@@ -6245,15 +6339,35 @@ function initEngine() {
       const calmActive = state.active && !focusActive && !warningActive && !topActive && state.fireMode <= 0 && state.clipTime <= 0;
 
       if (warningActive) {
+        if (!trendWarningSfxLatched) {
+          playAssetSfx('warn', 0.84);
+          trendWarningSfxLatched = true;
+        }
         if (!warningVoiceLatched && triggerVoiceCue('warning', nextPreviewLen)) warningVoiceLatched = true;
       } else if (nextPreviewLen <= 1) {
         warningVoiceLatched = false;
+        trendWarningSfxLatched = false;
       }
 
       if (topActive) {
+        if (!topWarningSfxLatched) {
+          playAssetSfx('topline', 0.9);
+          topWarningSfxLatched = true;
+        }
         if (!topVoiceLatched && triggerVoiceCue('top')) topVoiceLatched = true;
       } else if (state.topDangerTime < 0.18 && state.overfillTime < 0.14) {
         topVoiceLatched = false;
+        topWarningSfxLatched = false;
+      }
+
+      const hurryActive = state.active && state.tension <= 22 && !topActive && !warningActive && state.fireMode <= 0 && state.clipTime <= 0;
+      if (hurryActive) {
+        if (!hurrySfxLatched) {
+          playAssetSfx('hurry', 0.88);
+          hurrySfxLatched = true;
+        }
+      } else if (state.tension >= 28 || topActive || warningActive || state.fireMode > 0 || state.clipTime > 0) {
+        hurrySfxLatched = false;
       }
 
       if (focusActive && now >= focusVoiceCooldownUntil) {
@@ -6426,8 +6540,7 @@ function requestLoop(ts) {
         } else {
           state.fireMode = Math.max(0, state.fireMode - dt * 3.2);
           if (state.fireMode <= 0) {
-            dom.dangerFog.classList.remove('show');
-            setCaption('炎はおさまったよ。まだ立て直せる！', 1.7);
+            handleFireResolved('clear');
           }
         }
       }
@@ -6496,8 +6609,6 @@ function requestLoop(ts) {
       setAvatarVisual(isTimeUp ? 'yami' : 'panic');
       stopAllVoiceAudio();
       state.resultVoicePlayed = triggerVoiceCue((crownTargetScore(state.seed) > 0 && Math.floor(state.score) >= crownTargetScore(state.seed)) ? 'win' : 'lose');
-      sfx(isTimeUp ? 'big' : 'bad', 1.28);
-      sfx('burst', isTimeUp ? 0.92 : 1.05);
       playAssetSfx('bad', isTimeUp ? 0.82 : 0.96);
 
       setTimeout(() => {
@@ -6558,6 +6669,11 @@ function requestLoop(ts) {
         lastHyperBgmActive = false;
       warningVoiceLatched = false;
       topVoiceLatched = false;
+      trendWarningSfxLatched = false;
+      topWarningSfxLatched = false;
+      hurrySfxLatched = false;
+      helpReadySfxLatched = false;
+      fireClearCueLatched = false;
       focusVoiceCooldownUntil = 0;
       calmVoiceCooldownUntil = 0;
       setHyperMix(0);
@@ -6578,6 +6694,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
       try {
         await navigator.clipboard.writeText(text);
         setCaption('結果をコピーした。配信者同士でそのまま貼って競える。', 2.2);
+        playAssetSfx('ui_copy', 0.82);
         if (dom.shareBtn) dom.shareBtn.textContent = '✅ コピー済み';
         setTimeout(() => { if (dom.shareBtn) dom.shareBtn.textContent = '📋 結果をコピー'; }, 1600);
       } catch (_) {
@@ -6597,24 +6714,24 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
 }
     }
 
-    dom.startBtn.addEventListener('click', startGame);
-    dom.retryBtn.addEventListener('click', () => { if (typeof stopResultBgm === 'function') stopResultBgm(); startGame(); });
+    dom.startBtn.addEventListener('click', () => { playAssetSfx('ui_start', 0.9); startGame(); });
+    dom.retryBtn.addEventListener('click', () => { playAssetSfx('ui_retry', 0.88); if (typeof stopResultBgm === 'function') stopResultBgm(); startGame(); });
     if (new URLSearchParams(location.search).get('auto') === '1') {
       window.addEventListener('load', () => setTimeout(() => dom.startBtn?.click(), 80), { once:true });
     }
 
-    dom.howtoBtn?.addEventListener('click', () => { document.body.classList.remove('title-mode','gameplay-mode'); setTitleBackgroundActive(false); dom.startScreen.classList.add('hidden'); dom.howtoScreen?.classList.remove('hidden'); requestAnimationFrame(alignTrendMainToGameCenter); });
-    dom.howtoBackBtn?.addEventListener('click', () => { document.body.classList.remove('gameplay-mode'); document.body.classList.add('title-mode'); setTitleBackgroundActive(true); dom.howtoScreen?.classList.add('hidden'); dom.startScreen.classList.remove('hidden'); requestAnimationFrame(alignTrendMainToGameCenter); });
-    dom.howtoStartBtn?.addEventListener('click', startGame);
-    dom.pauseBtn?.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); togglePause(); });
-    dom.resumeGameBtn?.addEventListener('click', () => togglePause(false));
-    dom.resumeBtn?.addEventListener('click', () => togglePause(false));
-    dom.retryPlayBtn?.addEventListener('click', startGame);
-    dom.pauseRetryBtn?.addEventListener('click', startGame);
-    dom.titleBtn?.addEventListener('click', goToTitle);
-    dom.pauseTitleBtn?.addEventListener('click', goToTitle);
+    dom.howtoBtn?.addEventListener('click', () => { playAssetSfx('ui_open', 0.82); document.body.classList.remove('title-mode','gameplay-mode'); setTitleBackgroundActive(false); dom.startScreen.classList.add('hidden'); dom.howtoScreen?.classList.remove('hidden'); requestAnimationFrame(alignTrendMainToGameCenter); });
+    dom.howtoBackBtn?.addEventListener('click', () => { playAssetSfx('ui_back', 0.82); document.body.classList.remove('gameplay-mode'); document.body.classList.add('title-mode'); setTitleBackgroundActive(true); dom.howtoScreen?.classList.add('hidden'); dom.startScreen.classList.remove('hidden'); requestAnimationFrame(alignTrendMainToGameCenter); });
+    dom.howtoStartBtn?.addEventListener('click', () => { playAssetSfx('ui_start', 0.9); startGame(); });
+    dom.pauseBtn?.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); playAssetSfx(state.paused ? 'ui_pause_close' : 'ui_pause_open', 0.82); togglePause(); });
+    dom.resumeGameBtn?.addEventListener('click', () => { playAssetSfx('ui_pause_close', 0.82); togglePause(false); });
+    dom.resumeBtn?.addEventListener('click', () => { playAssetSfx('ui_pause_close', 0.82); togglePause(false); });
+    dom.retryPlayBtn?.addEventListener('click', () => { playAssetSfx('ui_retry', 0.88); startGame(); });
+    dom.pauseRetryBtn?.addEventListener('click', () => { playAssetSfx('ui_retry', 0.88); startGame(); });
+    dom.titleBtn?.addEventListener('click', () => { playAssetSfx('ui_back', 0.82); goToTitle(); });
+    dom.pauseTitleBtn?.addEventListener('click', () => { playAssetSfx('ui_back', 0.82); goToTitle(); });
     dom.pauseMuteBtn?.addEventListener('click', toggleMute);
-    dom.resultTitleBtn?.addEventListener('click', goToTitle);
+    dom.resultTitleBtn?.addEventListener('click', () => { playAssetSfx('ui_back', 0.82); goToTitle(); });
 
     dom.dropSelectorButtons?.forEach(btn => {
       btn.addEventListener('click', () => {
