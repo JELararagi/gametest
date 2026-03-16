@@ -1,4 +1,4 @@
-const CACHE_NAME = "meltdown-v97-collision-cool-crowd";
+const CACHE_NAME = "meltdown-v95-fall-smooth";
 const PRECACHE = [
   './',
   './index.html',
