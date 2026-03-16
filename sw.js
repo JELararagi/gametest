@@ -1,5 +1,4 @@
-const CACHE_NAME = "v92-runtime-clean";
-const CACHE_NAME = 'trendbuzz-v84-cool-visual-lock';
+const CACHE_NAME = "meltdown-v93-v84base-drop-safe-collision";
 const PRECACHE = [
   './',
   './index.html',

@@ -2516,7 +2516,7 @@ function queueBodyRepair(bodyOrId) {
 }
 
 function requestHighPrecisionPhysics(durationMs = 420) {
-  const until = performance.now() + Math.max(180, durationMs || 0);
+  const until = performance.now() + Math.max(120, durationMs || 0);
   state.physicsHighPrecisionUntil = Math.max(state.physicsHighPrecisionUntil || 0, until);
 }
 
@@ -2528,10 +2528,10 @@ function needsHighPrecisionPhysics(now = performance.now()) {
     if (!body || body.plugin?.pendingRemoval) continue;
     const recentSpawn = body.spawnAt && now - body.spawnAt < 980;
     const flagged = body.plugin?.highPrecisionUntil && body.plugin.highPrecisionUntil > now;
-    const fast = body.speed > 1.85
-      || Math.abs(body.velocity?.x || 0) > 1.7
-      || Math.abs(body.velocity?.y || 0) > 2.0
-      || Math.abs(body.angularVelocity || 0) > 0.15;
+    const fast = body.speed > 2.25
+      || Math.abs(body.velocity?.x || 0) > 2.0
+      || Math.abs(body.velocity?.y || 0) > 2.3
+      || Math.abs(body.angularVelocity || 0) > 0.18;
     if (recentSpawn || flagged || fast) return true;
   }
   return false;
@@ -2837,11 +2837,11 @@ function unregisterLiveBody(body) {
     
 const PERF_PRESET_DEFAULT = Object.freeze({
       mobileLowPower:false,
-      physicsFps:42,
+      physicsFps:40,
       runnerMaxUpdates:2,
       logicFrameMs:24,
       scanInterval:0.62,
-      visualInterval:1 / 54,
+      visualInterval:1 / 45,
       uiInterval:0.58,
       cleanupInterval:1.55,
       rescueInterval:1.72,
@@ -2865,8 +2865,8 @@ const PERF_PRESET_DEFAULT = Object.freeze({
       superchatMinGapMs:900,
       videoPreload:'metadata',
       fxResolutionScale:0.44,
-      transformPositionThreshold:0.62,
-      transformAngleThreshold:0.035,
+      transformPositionThreshold:0.68,
+      transformAngleThreshold:0.04,
       motionThreshold:0.07,
       motionAngularThreshold:0.03,
       newBodyVisualMs:220,
@@ -3267,7 +3267,7 @@ function wakeBodiesNearRemoval(removedBodies) {
       if (!sleepers.length) return;
       const hash = buildSpatialHash(sleepers);
       const now = performance.now();
-      requestHighPrecisionPhysics(540);
+      requestHighPrecisionPhysics(320);
       for (const spot of removedBodies) {
         const seed = { position: spot.position, circleRadius: spot.circleRadius || 0 };
         visitNearbyFromHash(hash, seed, 1, body => {
@@ -3281,7 +3281,7 @@ function wakeBodiesNearRemoval(removedBodies) {
           body.floatStartAt = 0;
           body.plugin = body.plugin || {};
           body.plugin.lastActiveAt = now;
-          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 380);
+          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 520);
           markBodyVisualDirty(body);
           markGroupScanDirty(body);
           return false;
@@ -3635,7 +3635,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = 'v91-v84-fps-collision-cool';
+    const BUILD_ID = 'v93-v84base-drop-safe-collision';
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4869,8 +4869,8 @@ function makeBody(x, y, index, specialType = false) {
       body.displayScale = scale;
       body.sleepThreshold = isBomb ? 30 : (isFire ? 28 : (isBuzz ? 26 : 22));
       body.plugin = body.plugin || {};
-      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 1120 : (isFire ? 1020 : (isBuzz ? 980 : 920)));
-      requestHighPrecisionPhysics(isBomb ? 1120 : 920);
+      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 1080 : (isFire ? 980 : (isBuzz ? 940 : 920)));
+      requestHighPrecisionPhysics(isBomb ? 1080 : 920);
       Composite.add(engine.world, body);
       registerLiveBody(body);
       const node = ensureBodyVisual(body);
@@ -4980,7 +4980,7 @@ function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
       Body.setAngularVelocity(body, clamp(Number.isFinite(body.angularVelocity) ? body.angularVelocity : 0, -0.14, 0.14) * 0.6);
       body.plugin = body.plugin || {};
       body.plugin.lastActiveAt = performance.now();
-      body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, performance.now() + 260);
+      body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, performance.now() + 420);
       requestHighPrecisionPhysics(260);
       markBodyVisualDirty(body);
       markGroupScanDirty(body);
@@ -6118,7 +6118,7 @@ function stepPhysics(frameDt) {
   const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 60) : baseFixedDeltaMs;
   const maxSteps = highPrecision ? Math.max(3, state.maxPhysicsSteps || 1) : 1;
   applyPhysicsQuality(highPrecision);
-  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.35));
+  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.5));
   let steps = 0;
   while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
     Engine.update(engine, fixedDeltaMs);
