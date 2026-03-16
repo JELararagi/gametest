@@ -1,6 +1,4 @@
-const CACHE_NAME = "meltdown-v95-fall-smooth";
-const PRECACHE = [
-  './',
+const CACHE_NAME = "limit-meltdown-v105-launch-center-gameover-se'./',
   './index.html',
   './manifest.webmanifest',
   './assets/bg/overlay_gameover_glitch.mp4',

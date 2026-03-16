@@ -1464,8 +1464,8 @@
   <div id="bg-vignette"></div>
   <div id="global-flash"></div>
 
-  <audio id="audio-bgm-lofi" src="assets/audio/bgm_lofi.m4a" loop preload="none"></audio>
-  <audio id="audio-bgm-hyper" src="assets/audio/bgm_hyper.m4a" loop preload="none"></audio>
+  <audio id="audio-bgm-lofi" src="assets/audio/bgm_lofi.m4a" loop preload="auto"></audio>
+  <audio id="audio-bgm-hyper" src="assets/audio/bgm_hyper.m4a" loop preload="auto"></audio>
   <audio id="audio-merge" src="assets/audio/se_clear_small_01.m4a" preload="metadata"></audio>
   <audio id="voice-start" src="assets/audio/voice_mc_start_01.m4a" preload="metadata"></audio>
   <audio id="voice-alert" src="assets/audio/voice_mc_fire_01.m4a" preload="metadata"></audio>
@@ -2059,6 +2059,8 @@
     let lastDropSelectorIndex = -1;
     let previewRestoreTimer = 0;
     let lastPreviewRenderKey = '';
+    let lastPreviewCenterX = 0;
+    let lastPreviewCenterY = 0;
 
     function buildSpatialHash(bodies, cellSize = SPATIAL_HASH_CELL) {
       const buckets = new Map();
@@ -2926,8 +2928,10 @@ const PERF_PRESET_DEFAULT = Object.freeze({
       [dom.bgmNormal, dom.bgmHyper, dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(audio => {
         if (!audio) return;
         const desired = resolveAudioAsset(audio.getAttribute('src') || audio.dataset.assignedSrc || '');
-        if (desired) applyElementSource(audio, desired, 'metadata');
+        const preloadMode = (audio === dom.bgmNormal || audio === dom.bgmHyper) ? 'auto' : 'metadata';
+        if (desired) applyElementSource(audio, desired, preloadMode);
       });
+      maintainBgmPlayback(false);
     }
 
     
@@ -3656,7 +3660,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = 'v95-fall-smooth';
+    const BUILD_ID = "v102_launchfx_bgm_fix";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -3790,7 +3794,7 @@ function syncBodyVisuals() {
         });
         try {
           document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) retry();
+            if (!document.hidden) { retry(); maintainBgmPlayback(false); }
           }, { passive:true });
         } catch (_) {}
       }
@@ -3851,15 +3855,66 @@ function syncBodyVisuals() {
       if (resultStingerAudio) resultStingerAudio.muted = muted;
     }
 
+    function shouldMaintainGameplayBgm() {
+      return !!(state.active && !state.finishing && !document.hidden && dom.gameScreen && !dom.gameScreen.classList.contains('hidden') && dom.resultScreen && dom.resultScreen.classList.contains('hidden'));
+    }
+
+    function setupBgmElement(audio) {
+      if (!audio || audio.dataset.loopGuardReady === '1') return;
+      audio.dataset.loopGuardReady = '1';
+      try { audio.loop = true; } catch (_) {}
+      const retry = () => {
+        if (muted || !shouldMaintainGameplayBgm()) return;
+        const hyperActive = !!(state.active && state.clipTime > 0);
+        const intended = hyperActive ? dom.bgmHyper : dom.bgmNormal;
+        if (audio !== intended) return;
+        try {
+          if (audio.paused) {
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') p.catch(() => {});
+          }
+        } catch (_) {}
+      };
+      try { audio.addEventListener('ended', retry, { passive:true }); } catch (_) {}
+      try { audio.addEventListener('stalled', retry, { passive:true }); } catch (_) {}
+      try { audio.addEventListener('suspend', retry, { passive:true }); } catch (_) {}
+      try { audio.addEventListener('canplay', retry, { passive:true }); } catch (_) {}
+      try { audio.addEventListener('loadeddata', retry, { passive:true }); } catch (_) {}
+    }
+
+    function maintainBgmPlayback(force = false) {
+      if (!dom.bgmNormal || !dom.bgmHyper) return;
+      setupBgmElement(dom.bgmNormal);
+      setupBgmElement(dom.bgmHyper);
+      if (muted || !shouldMaintainGameplayBgm()) {
+        try { dom.bgmNormal.pause(); } catch (_) {}
+        try { dom.bgmHyper.pause(); } catch (_) {}
+        return;
+      }
+      const hyperActive = !!(state.active && state.clipTime > 0);
+      const active = hyperActive ? dom.bgmHyper : dom.bgmNormal;
+      const inactive = hyperActive ? dom.bgmNormal : dom.bgmHyper;
+      try { inactive.pause(); } catch (_) {}
+      try { active.loop = true; } catch (_) {}
+      if (force || active.paused) {
+        try {
+          const p = active.play();
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        } catch (_) {}
+      }
+    }
+
     function playBgm() {
       persistPlayerName();
       ensureAudio();
+      setupBgmElement(dom.bgmNormal);
+      setupBgmElement(dom.bgmHyper);
       dom.bgmNormal.volume = muted ? 0 : perfSettings.bgmNormalVolume;
       dom.bgmHyper.volume = muted ? 0 : 0;
       dom.bgmNormal.currentTime = 0;
       dom.bgmHyper.currentTime = 0;
       try { dom.bgmHyper.pause(); } catch (_) {}
-      dom.bgmNormal.play().catch(() => {});
+      maintainBgmPlayback(true);
       lastHyperBgmActive = false;
     }
 
@@ -3870,15 +3925,14 @@ function syncBodyVisuals() {
         if (hyperActive) {
           try { dom.bgmNormal.pause(); } catch (_) {}
           try { dom.bgmHyper.currentTime = 0; } catch (_) {}
-          dom.bgmHyper.play().catch(() => {});
         } else {
           try { dom.bgmHyper.pause(); } catch (_) {}
-          dom.bgmNormal.play().catch(() => {});
         }
       }
       lastHyperBgmActive = hyperActive;
       dom.bgmNormal.volume = muted ? 0 : (hyperActive ? 0 : perfSettings.bgmNormalVolume);
       dom.bgmHyper.volume = muted ? 0 : (hyperActive ? perfSettings.bgmHyperVolume : 0);
+      maintainBgmPlayback(false);
     }
 
 
@@ -4548,6 +4602,8 @@ function syncBodyVisuals() {
       const ringSize = Math.round(size + 12);
       const itemSize = Math.max(48, Math.round(size * 0.82));
       const previewTop = Math.max(20, metrics.fullLineY - ringSize - 4);
+      lastPreviewCenterX = x;
+      lastPreviewCenterY = previewTop + ringSize / 2;
       const previewKey = `${Math.round(x * 10)}|${previewTop}|${ringSize}|${itemSize}`;
       if (previewKey === lastPreviewRenderKey) return;
       lastPreviewRenderKey = previewKey;
@@ -4585,6 +4641,34 @@ function syncBodyVisuals() {
         dom.previewRing.style.borderColor = 'rgba(255,255,255,.3)';
         dom.previewRing.style.boxShadow = '0 0 18px rgba(255,255,255,.12)';
       }, 460);
+    }
+
+    function previewLaunchCenter(dropX = hoverX, dropIndex = state.selectedDropIndex ?? 0) {
+      const radius = dropRadiusFor(dropIndex);
+      const boardW = dom.board?.clientWidth || boardLogicalRect().width;
+      const fallbackX = clamp(dropX, radius + 6, boardW - radius - 6);
+      if (lastPreviewCenterX > 0 && lastPreviewCenterY > 0) {
+        return { x:lastPreviewCenterX, y:lastPreviewCenterY };
+      }
+      if (dom.previewRing) {
+        const ringH = dom.previewRing.offsetHeight || dom.previewRing.offsetWidth || 0;
+        const leftPx = parseFloat(dom.previewRing.style.left || '');
+        const topPx = parseFloat(dom.previewRing.style.top || '');
+        if (Number.isFinite(leftPx) && Number.isFinite(topPx) && ringH > 0) {
+          return {
+            x: leftPx,
+            y: topPx + ringH / 2
+          };
+        }
+      }
+      const metrics = getBoardMetrics();
+      const size = visualDiameter(radius, false);
+      const ringSize = Math.round(size + 12);
+      const previewTop = Math.max(20, metrics.fullLineY - ringSize - 4);
+      return {
+        x: fallbackX,
+        y: previewTop + ringSize / 2
+      };
     }
 
     function activateCommentEvent(type = '') {
@@ -6002,6 +6086,7 @@ function initEngine() {
 
       ensureQueueLength(3);
       const idx2 = state.selectedDropIndex ?? 0;
+      const launchFxCenter = previewLaunchCenter(x, idx2);
       triggerPreviewLaunchFx(CONTENTS[idx2]?.accent || '#ffffff');
       state.dropSerial += 1;
       const body = makeBody(x, spawnY, idx2, false);
@@ -6019,8 +6104,8 @@ function initEngine() {
         if (rand() < 0.08) spawnComment(false, `${CONTENTS[idx2].name}、いま欲しいやつ`, 'hot', contentChatIcon(idx2));
       }
       renderPreview();
-      addParticles(x, Math.max(40, radius + 16), CONTENTS[idx2].accent, 9, 3.4);
-      addRing(x, Math.max(44, radius + 22), CONTENTS[idx2].accent, 14, 180);
+      addParticles(launchFxCenter.x, launchFxCenter.y, CONTENTS[idx2].accent, 9, 3.4);
+      addRing(launchFxCenter.x, launchFxCenter.y, CONTENTS[idx2].accent, 14, 180);
       sfx('drop', 0.5);
     }
 
@@ -6183,7 +6268,7 @@ function requestLoop(ts) {
       const forceVisualNow = hasFastMovingBodies();
       if (state.visualTimer >= perfSettings.visualInterval || forceVisualNow) {
         const visualDt = forceVisualNow ? Math.max(frameDt, state.visualTimer) : state.visualTimer;
-        if ((state.particles.length || state.rings.length || state.fxNeedsClear) && state.visualTimer >= perfSettings.visualInterval) updateFx(visualDt);
+        if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(visualDt);
         if (hasPendingVisualWork()) syncBodyVisuals();
         state.visualTimer = 0;
       }
@@ -6341,8 +6426,16 @@ function requestLoop(ts) {
       if (state.gameOverReason === 'time') state.gameOverReason = 'full';
       state.finishing = true;
       state.active = false;
+      state.clipTime = 0;
       cancelAnimationFrame(rafId);
       rafId = 0;
+      try { dom.bgmNormal.pause(); } catch (_) {}
+      try { dom.bgmHyper.pause(); } catch (_) {}
+      try { dom.bgmNormal.currentTime = 0; } catch (_) {}
+      try { dom.bgmHyper.currentTime = 0; } catch (_) {}
+      try { dom.bgmNormal.volume = 0; } catch (_) {}
+      try { dom.bgmHyper.volume = 0; } catch (_) {}
+      lastHyperBgmActive = false;
 
       const resultDelay = 700;
       if (dom.gameoverFxVideo) { try { dom.gameoverFxVideo.currentTime = 0; dom.gameoverFxVideo.classList.add('show'); dom.gameoverFxVideo.play().catch(() => {}); } catch(_) {} }
@@ -6359,6 +6452,7 @@ function requestLoop(ts) {
       state.resultVoicePlayed = triggerVoiceCue((crownTargetScore(state.seed) > 0 && Math.floor(state.score) >= crownTargetScore(state.seed)) ? 'win' : 'lose');
       sfx(isTimeUp ? 'big' : 'bad', 1.28);
       sfx('burst', isTimeUp ? 0.92 : 1.05);
+      playAssetSfx('bad', isTimeUp ? 0.82 : 0.96);
 
       setTimeout(() => {
         dom.gameShell.classList.remove('shake');
