@@ -1,4 +1,4 @@
-const CACHE_NAME = "limit-meltdown-v123-se-recheck-polyphony";
+const CACHE_NAME = "limit-meltdown-v125-notrendshiftsfx";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -11,7 +11,6 @@ const PRECACHE = [
   "./assets/audio/se_clear_small_01.m4a",
   "./assets/audio/se_clear_big_01.m4a",
   "./assets/audio/se_drop_soft_01.m4a",
-  "./assets/audio/se_trend_shift.m4a",
   "./assets/audio/se_trend_warning.m4a",
   "./assets/audio/se_hazard_spawn.m4a",
   "./assets/audio/se_apology_ready.m4a",

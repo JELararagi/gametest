@@ -250,9 +250,6 @@
     .action-btn .txt{font-size:.72rem;color:#fbecc4;margin-top:4px}
     .action-btn.ready{background:linear-gradient(180deg, rgba(255,225,120,.95), rgba(255,130,64,.86));color:#2c1200;box-shadow:0 0 0 1px rgba(255,250,220,.42), 0 0 34px rgba(255,180,72,.44), 0 18px 32px rgba(255,120,44,.24), inset 0 1px 0 rgba(255,255,255,.4);animation:pulse 1s infinite}
     .action-btn.warn{background:linear-gradient(180deg, rgba(255,138,138,.24), rgba(255,87,114,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 10px 22px rgba(0,0,0,.22)}
-    #center-top #burst-btn{width:100%;min-width:88px;min-height:88px;border-radius:22px;padding:0;pointer-events:auto}
-    #center-top #burst-btn .txt{font-size:.9rem;line-height:1.05}
-    #center-top #burst-btn .icon{font-size:1.35rem}
     @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
     .action-btn.switch-flash{animation:burstReadyFlash .92s ease-out 1, pulse 1s .92s infinite}
     @keyframes burstReadyFlash{0%{box-shadow:0 0 0 rgba(255,216,76,0), inset 0 1px 0 rgba(255,255,255,.06);filter:brightness(1)}25%{box-shadow:0 0 0 8px rgba(255,216,76,.18),0 0 34px rgba(255,216,76,.45),0 0 68px rgba(0,236,255,.22);filter:brightness(1.15)}100%{box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 26px rgba(255,216,76,.34), inset 0 1px 0 rgba(255,255,255,.1);filter:brightness(1)}}
@@ -319,9 +316,6 @@
     #next-switch-copy{display:none}
     #center-top .hero-label{font-size:.66rem}
     #center-top > .trend-copy{display:none}
-    #top-left #burst-btn{width:60px;min-width:60px;height:60px;min-height:60px;border-radius:18px;padding:0;margin-top:0}
-    #top-left #burst-btn .icon{font-size:1rem}
-    #top-left #burst-btn .txt{font-size:.56rem;line-height:1.02;letter-spacing:.02em}
     #top-left{left:8px;right:8px;bottom:calc(var(--bottom-controls-h) + 10px);padding:10px 12px;height:var(--bottom-info-h);min-height:var(--bottom-info-h);max-height:var(--bottom-info-h);min-width:0;max-width:none;align-items:center;gap:10px;justify-content:space-between;display:grid;grid-template-columns:minmax(0,1fr) 60px;z-index:22}
     #top-left .mini-label{font-size:1.04rem}
     #score-view.big-num{font-size:2.6rem}
@@ -338,7 +332,6 @@
       .trend-name{font-size:1.08rem}
       #next-trend-thumb{width:38px;height:38px}
       .future-stack img{width:34px;height:34px}
-      #top-left #burst-btn{width:60px;min-width:60px;height:60px;min-height:60px}
       #score-view.big-num{font-size:2.15rem}
     }
 
@@ -346,7 +339,7 @@
     .play-controls{display:none}
     .play-mini-btn{min-width:0;min-height:calc(var(--bottom-controls-h) - 16px);border:none;border-radius:16px;padding:0 10px;background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.05));color:#fff;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 18px rgba(0,0,0,.16)}
     .play-mini-btn.wide{min-width:88px}
-    @media (max-width: 520px){#drop-selector{gap:6px}.drop-pick-btn{width:48px;height:48px;border-radius:14px}#top-left #burst-btn{width:48px;min-width:48px;height:48px;min-height:48px;border-radius:14px}}
+    @media (max-width: 520px){#drop-selector{gap:6px}.drop-pick-btn{width:48px;height:48px;border-radius:14px}}
     #pause-overlay{position:absolute;inset:0;z-index:40;background:rgba(6,3,10,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px}
     #pause-overlay .pause-card{width:min(82%,320px);background:rgba(12,6,18,.94);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:18px;display:grid;gap:10px;box-shadow:0 18px 44px rgba(0,0,0,.36)}
     .howto-diagram{margin-top:18px;display:grid;gap:12px}
@@ -661,7 +654,7 @@
     #top-left .score-stack{display:grid !important;align-content:center !important;align-items:center !important;gap:0 !important;min-height:0 !important}
     #top-left .score-stack > :not(#drop-selector):not(#pause-btn){display:none !important}
     #drop-selector{margin-top:0 !important;gap:8px !important;direction:ltr !important;justify-content:flex-start !important}
-    .drop-pick-btn,#top-left #burst-btn{width:60px !important;height:60px !important;min-width:60px !important;min-height:60px !important;border-radius:16px !important;padding:5px 4px 4px !important;margin-top:0 !important}
+    .drop-pick-btn{width:60px !important;height:60px !important;min-width:60px !important;min-height:60px !important;border-radius:16px !important;padding:5px 4px 4px !important;margin-top:0 !important}
     #play-controls{left:8px !important;right:8px !important;bottom:6px !important;height:var(--bottom-controls-h) !important;padding:0 !important;gap:6px !important}
     .play-mini-btn{min-height:calc(var(--bottom-controls-h) - 2px) !important;border-radius:14px !important;font-size:.76rem !important;padding:0 8px !important}
     .item-chip.hazard{background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.94), rgba(255,255,255,.82) 28%, rgba(255,255,255,.58) 50%, rgba(22,14,34,.96) 76%) !important;border-color:rgba(255,255,255,.34) !important}
@@ -1649,7 +1642,6 @@
             <button class="drop-pick-btn active" data-drop-index="0" data-label="雑談" title="雑談"><img src="assets/img/item_1.png" alt="雑談"><span class="lbl">雑談</span></button>
           </div>
         </div>
-        <button id="burst-btn" class="action-btn"><div><div class="icon">🧯</div><div class="txt">おたすけ</div></div></button>
       </div>
 
       <div id="play-controls">
@@ -2310,7 +2302,6 @@
       chain_6:'assets/audio/se_chain_06.m4a',
       chain_red:'assets/audio/se_chain_redsuper_fixed.m4a',
       warn:'assets/audio/se_trend_warning.m4a',
-      switch:'assets/audio/se_trend_shift.m4a',
       ready:'assets/audio/se_apology_ready.m4a',
       burst:'assets/audio/se_apology_fire.m4a',
       bad:'assets/audio/se_gameover_blast.m4a',
@@ -2355,6 +2346,8 @@
     let hurrySfxLatched = false;
     let helpReadySfxLatched = false;
     let fireClearCueLatched = false;
+    let lastClearLikeSfxAt = 0;
+    let trendShiftSfxTimer = 0;
     let focusVoiceCooldownUntil = 0;
     let calmVoiceCooldownUntil = 0;
     let startupVoiceLockUntil = 0;
@@ -3690,7 +3683,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v123_se_recheck_polyphony";
+    const BUILD_ID = "v125_notrendshiftsfx";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4260,7 +4253,15 @@ function syncBodyVisuals() {
       } catch (_) {}
       audio.volume = clamp(volume, 0, 1);
       audio.play().catch(() => {});
+      if (kind === 'clear' || kind === 'big' || kind === 'chain' || kind === 'chain_2' || kind === 'chain_3' || kind === 'chain_4' || kind === 'chain_5' || kind === 'chain_6' || kind === 'chain_red' || kind === 'bomb_clear' || kind === 'buzz_clear' || kind === 'fire_clear') {
+        lastClearLikeSfxAt = performance.now();
+      }
       return true;
+    }
+
+    function playTrendShiftSfxDeferred(volume = 0.92) {
+      clearTimeout(trendShiftSfxTimer);
+      return false;
     }
 
     function playChainTierSfx(chainTier = 2, volume = 0.9) {
@@ -4626,7 +4627,7 @@ function syncBodyVisuals() {
       }
       if (withFlash) {
         flashScreen(trend.accent);
-        playAssetSfx('switch', 0.92);
+        playTrendShiftSfxDeferred(0.92);
         showTrendShiftBanner('shift', previousIndex == null ? index : previousIndex, index, state.futureTrendIndex);
       }
       state.setupCarryLen = 0;
@@ -6024,6 +6025,8 @@ function initEngine() {
       hurrySfxLatched = false;
       helpReadySfxLatched = false;
       fireClearCueLatched = false;
+      clearTimeout(trendShiftSfxTimer);
+      trendShiftSfxTimer = 0;
       focusVoiceCooldownUntil = 0;
       calmVoiceCooldownUntil = 0;
       setHyperMix(0);
@@ -6362,8 +6365,10 @@ function initEngine() {
         dom.captionText.textContent = caption;
       }
       updatePinCommentUi();
-      if (state.fireMode > 0) dom.burstBtn.classList.add('warn');
-      else dom.burstBtn.classList.remove('warn');
+      if (dom.burstBtn) {
+        if (state.fireMode > 0) dom.burstBtn.classList.add('warn');
+        else dom.burstBtn.classList.remove('warn');
+      }
     }
 
     function updateDynamicVoiceCues(now = performance.now()) {
@@ -6711,6 +6716,8 @@ function requestLoop(ts) {
       hurrySfxLatched = false;
       helpReadySfxLatched = false;
       fireClearCueLatched = false;
+      clearTimeout(trendShiftSfxTimer);
+      trendShiftSfxTimer = 0;
       focusVoiceCooldownUntil = 0;
       calmVoiceCooldownUntil = 0;
       setHyperMix(0);
@@ -6780,7 +6787,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     dom.muteBtn.addEventListener('click', toggleMute);
     dom.resultMuteBtn.addEventListener('click', toggleMute);
     if (dom.shareBtn) dom.shareBtn.addEventListener('click', copyResult);
-    dom.burstBtn.addEventListener('click', activateBurst);
+    dom.burstBtn?.addEventListener('click', activateBurst);
     let holdDropX = 0;
     function stopHoldDrop() {}
     dom.board.addEventListener('pointermove', event => {
