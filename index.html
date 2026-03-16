@@ -3501,6 +3501,33 @@ function getVisualPredictionMs() {
       return clamp(state.physicsAccumulator || 0, 0, Math.min(baseFixedDeltaMs * 0.9, 14));
     }
 
+    function kickstartFreshBody(body) {
+      if (!engine || !body || body.isStatic) return;
+      const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / Math.max(24, perfSettings.physicsFps || 42));
+      const microStepMs = clamp(baseFixedDeltaMs * 0.34, 4.5, 8.5);
+      const prevPosIter = engine.positionIterations;
+      const prevVelIter = engine.velocityIterations;
+      const prevConIter = engine.constraintIterations;
+      try {
+        engine.positionIterations = Math.max(prevPosIter || 6, 7);
+        engine.velocityIterations = Math.max(prevVelIter || 4, 5);
+        engine.constraintIterations = Math.max(prevConIter || 2, 2);
+        Engine.update(engine, microStepMs);
+      } catch (_) {
+      } finally {
+        engine.positionIterations = prevPosIter;
+        engine.velocityIterations = prevVelIter;
+        engine.constraintIterations = prevConIter;
+      }
+      state.physicsAccumulator = Math.max(0, Math.min((state.physicsAccumulator || 0) + microStepMs * 0.6, baseFixedDeltaMs));
+      state.boardStatsCache = null;
+      const stamp = performance.now();
+      refreshActiveBodies(stamp);
+      stabilizeActiveBodies(stamp);
+      markBodyVisualDirty(body);
+      state.forceFullVisualSync = true;
+    }
+
     function hasFastActiveVisuals() {
       const activeBodies = state.activeBodies || [];
       for (let i = 0; i < activeBodies.length; i += 1) {
@@ -6082,7 +6109,8 @@ function initEngine() {
       state.boardStatsCache = null;
       body.spawnSerial = state.dropSerial;
       body.plugin = body.plugin || {};
-      body.plugin.spawnVisualUntil = performance.now() + 220;
+      body.plugin.spawnVisualUntil = performance.now() + 72;
+      kickstartFreshBody(body);
       state.forceFullVisualSync = true;
       state.lastVisualSyncTs = 0;
       syncBodyVisuals();
