@@ -3492,6 +3492,26 @@ function hasPendingVisualWork() {
       return !!(state.activeBodies && state.activeBodies.length);
     }
 
+function getVisualPredictionMs() {
+      const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / Math.max(24, perfSettings.physicsFps || 42));
+      return clamp(state.physicsAccumulator || 0, 0, Math.min(baseFixedDeltaMs * 0.9, 14));
+    }
+
+    function hasFastActiveVisuals() {
+      const activeBodies = state.activeBodies || [];
+      for (let i = 0; i < activeBodies.length; i += 1) {
+        const body = activeBodies[i];
+        if (!body || body.isSleeping) continue;
+        if (body.speed > Math.max(0.045, perfSettings.motionThreshold || 0.03)
+          || Math.abs(body.velocity?.x || 0) > Math.max(0.045, perfSettings.motionThreshold || 0.03)
+          || Math.abs(body.velocity?.y || 0) > Math.max(0.045, perfSettings.motionThreshold || 0.03)
+          || Math.abs(body.angularVelocity || 0) > Math.max(0.02, perfSettings.motionAngularThreshold || 0.015)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
 function syncBodyVisuals() {
       if (!engine || !dom.itemLayer) return;
       const bodies = worldBodies();
@@ -3563,9 +3583,18 @@ function syncBodyVisuals() {
         const nextPreviewLen = nextPreviewMap.get(body.id) || 0;
         const forecastReady = body.gameType === 'content' && body.contentIndex === state.nextTrendIndex && nextPreviewLen >= 2;
         const safeRadius = Math.max(8, radius);
-        const rawX = Number.isFinite(body.position.x) ? body.position.x : boardW / 2;
-        const rawY = Number.isFinite(body.position.y) ? body.position.y : boardH * 0.5;
-        const rawAngle = Number.isFinite(body.angle) ? body.angle : 0;
+        let rawX = Number.isFinite(body.position.x) ? body.position.x : boardW / 2;
+        let rawY = Number.isFinite(body.position.y) ? body.position.y : boardH * 0.5;
+        let rawAngle = Number.isFinite(body.angle) ? body.angle : 0;
+        if (!body.isSleeping) {
+          const predictMs = getVisualPredictionMs();
+          if (predictMs > 0.001) {
+            const predictScale = predictMs / (1000 / 60);
+            rawX += (body.velocity?.x || 0) * predictScale;
+            rawY += (body.velocity?.y || 0) * predictScale;
+            rawAngle += (body.angularVelocity || 0) * predictScale;
+          }
+        }
         if (!Number.isFinite(body.position.x) || !Number.isFinite(body.position.y) || !Number.isFinite(body.angle)) {
           queueBodyRepair(body);
         }
@@ -6155,7 +6184,8 @@ function requestLoop(ts) {
       stepPhysics(frameDt);
 
       const pendingVisuals = hasPendingVisualWork();
-      const visualSyncIntervalMs = state.lastPhysicsHighPrecision ? (1000 / 60) : (1000 / 54);
+      const fastActiveVisuals = hasFastActiveVisuals();
+      const visualSyncIntervalMs = fastActiveVisuals ? (1000 / 60) : (state.lastPhysicsHighPrecision ? (1000 / 60) : (1000 / 54));
       if (pendingVisuals && (!state.lastVisualSyncTs || ts - state.lastVisualSyncTs >= visualSyncIntervalMs)) {
         syncBodyVisuals();
         state.lastVisualSyncTs = ts;

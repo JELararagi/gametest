@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trendbuzz-v85-frame-collision-cool';
+const CACHE_NAME = 'trendbuzz-v86-fall-fps-fix';
 const PRECACHE = [
   './',
   './index.html',
