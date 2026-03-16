@@ -3660,7 +3660,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v102_launchfx_bgm_fix";
+    const BUILD_ID = "v109_launch_ring_true_center";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4648,7 +4648,7 @@ function syncBodyVisuals() {
       const boardW = dom.board?.clientWidth || boardLogicalRect().width;
       const fallbackX = clamp(dropX, radius + 6, boardW - radius - 6);
       if (lastPreviewCenterX > 0 && lastPreviewCenterY > 0) {
-        return { x:lastPreviewCenterX, y:lastPreviewCenterY };
+        return { x:lastPreviewCenterX, y:lastPreviewCenterY - 15 };
       }
       if (dom.previewRing) {
         const ringH = dom.previewRing.offsetHeight || dom.previewRing.offsetWidth || 0;
@@ -4657,7 +4657,7 @@ function syncBodyVisuals() {
         if (Number.isFinite(leftPx) && Number.isFinite(topPx) && ringH > 0) {
           return {
             x: leftPx,
-            y: topPx + ringH / 2
+            y: topPx + ringH / 2 - 15
           };
         }
       }
@@ -4667,7 +4667,7 @@ function syncBodyVisuals() {
       const previewTop = Math.max(20, metrics.fullLineY - ringSize - 4);
       return {
         x: fallbackX,
-        y: previewTop + ringSize / 2
+        y: previewTop + ringSize / 2 - 15
       };
     }
 
