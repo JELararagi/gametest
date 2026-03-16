@@ -3501,7 +3501,55 @@ function getVisualPredictionMs() {
       return clamp(state.physicsAccumulator || 0, 0, Math.min(baseFixedDeltaMs * 0.9, 14));
     }
 
-    function kickstartFreshBody(body) {
+    
+    function attachLaunchBridge(body, centerX, centerY, index, specialType = false) {
+      if (!body) return;
+      const diameter = visualDiameter(contentBodyRadius(index, specialType), specialType);
+      const ringSize = Math.round(diameter + 12);
+      const startLeft = parseFloat(dom.previewRing?.style.left || '0') - ringSize / 2 + (ringSize - diameter) / 2;
+      const startTop = parseFloat(dom.previewRing?.style.top || '0') + (ringSize - diameter) / 2;
+      const targetLeft = Math.round((centerX - diameter / 2) * 10) / 10;
+      const targetTop = Math.round((centerY - diameter / 2) * 10) / 10;
+      body.plugin = body.plugin || {};
+      body.plugin.launchBridge = {
+        fromX: startLeft,
+        fromY: startTop,
+        startAt: performance.now(),
+        durationMs: 96,
+        diameter
+      };
+      const node = bodyVisuals.get(body.id);
+      if (node) {
+        node.style.transform = `translate3d(${startLeft}px, ${startTop}px, 0) rotate(0rad) scale(1)`;
+        node._transform = node.style.transform;
+        node._drawX = startLeft;
+        node._drawY = startTop;
+        node._drawAngle = 0;
+      }
+      try {
+        Body.setVelocity(body, { x:(body.velocity?.x || 0) * 0.35, y:Math.max(body.velocity?.y || 0, 0.58) });
+        Sleeping.set(body, false);
+      } catch (_) {}
+    }
+
+    function applyLaunchBridge(body, drawX, drawY, now) {
+      const bridge = body?.plugin?.launchBridge;
+      if (!bridge) return { x:drawX, y:drawY };
+      const elapsed = now - (bridge.startAt || now);
+      const duration = Math.max(24, bridge.durationMs || 0);
+      if (elapsed >= duration) {
+        try { delete body.plugin.launchBridge; } catch (_) { body.plugin.launchBridge = null; }
+        return { x:drawX, y:drawY };
+      }
+      const t = Math.max(0, Math.min(1, elapsed / duration));
+      const ease = 1 - Math.pow(1 - t, 3);
+      return {
+        x: bridge.fromX + (drawX - bridge.fromX) * ease,
+        y: bridge.fromY + (drawY - bridge.fromY) * ease
+      };
+    }
+
+function kickstartFreshBody(body) {
       if (!engine || !body || body.isStatic) return;
       const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / Math.max(24, perfSettings.physicsFps || 42));
       const microStepMs = clamp(baseFixedDeltaMs * 0.34, 4.5, 8.5);
@@ -6103,13 +6151,13 @@ function initEngine() {
       ensureQueueLength(3);
       const idx2 = state.selectedDropIndex ?? 0;
       triggerPreviewLaunchFx(CONTENTS[idx2]?.accent || '#ffffff');
-      spawnDropLaunchGhost(x, spawnY, idx2, false);
       state.dropSerial += 1;
       const body = makeBody(x, spawnY, idx2, false);
       state.boardStatsCache = null;
       body.spawnSerial = state.dropSerial;
       body.plugin = body.plugin || {};
-      body.plugin.spawnVisualUntil = performance.now() + 72;
+      body.plugin.spawnVisualUntil = performance.now() + 56;
+      attachLaunchBridge(body, x, spawnY, idx2, false);
       kickstartFreshBody(body);
       state.forceFullVisualSync = true;
       state.lastVisualSyncTs = 0;
@@ -6129,7 +6177,7 @@ function initEngine() {
       } else {
         if (rand() < 0.08) spawnComment(false, `${CONTENTS[idx2].name}、いま欲しいやつ`, 'hot', contentChatIcon(idx2));
       }
-      requestAnimationFrame(() => renderPreview());
+      renderPreview();
       addParticles(x, Math.max(40, radius + 16), CONTENTS[idx2].accent, 9, 3.4);
       addRing(x, Math.max(44, radius + 22), CONTENTS[idx2].accent, 14, 180);
       sfx('drop', 0.5);
