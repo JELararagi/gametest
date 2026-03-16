@@ -843,7 +843,7 @@
     #start-screen .rank-row .rk{font-size:24px !important}
     #start-screen .rank-row .nm{font-size:24px !important}
     #start-screen .rank-row .sc{font-size:24px !important}
-    #item-layer .item-chip{will-change:transform;contain:layout paint style;content-visibility:auto}
+    #item-layer .item-chip{will-change:transform;contain:layout paint style;content-visibility:visible}
     #item-layer .item-chip img{will-change:transform;transform:translateZ(0)}
 
 
@@ -1517,6 +1517,7 @@
           <div id="caption-box"><div id="caption-text">タップして落とす。今の話題を3つ消す。次の波は上のアイコンで先読み。</div></div>
           <div id="board-combo-strip">COMBO <span id="combo-view" class="combo">x0</span> ・ <span id="chain-view" class="chain">0連鎖</span></div>
           <div id="item-layer"></div>
+          <div id="drop-launch-ghost-layer"></div>
           <canvas id="fx-canvas"></canvas>
           <canvas id="particle-canvas"></canvas>
           <div id="drop-guide"></div>
@@ -1781,6 +1782,7 @@
       chatLane: document.getElementById('chat-lane'),
       mergeCanvas: document.getElementById('merge-canvas'),
       itemLayer: document.getElementById('item-layer'),
+      dropLaunchGhostLayer: document.getElementById('drop-launch-ghost-layer'),
       particleCanvas: document.getElementById('particle-canvas'),
       fxCanvas: document.getElementById('fx-canvas'),
       previewItem: document.getElementById('preview-item'),
@@ -3464,7 +3466,8 @@ function wakeBodiesNearRemoval(removedBodies) {
       img.alt = bodyImageAlt(body);
       img.src = bodyImageSrc(body);
       img.loading = 'eager';
-      img.decoding = 'async';
+      img.decoding = 'sync';
+      try { img.fetchPriority = 'high'; } catch (_) {}
       node._imgSrc = img.src;
       node._imgAlt = img.alt;
       img.addEventListener('error', () => {
@@ -3478,6 +3481,7 @@ function wakeBodiesNearRemoval(removedBodies) {
       node._img = img;
       node.style.display = 'grid';
       node.style.visibility = 'visible';
+      node.style.contentVisibility = 'visible';
       dom.itemLayer.appendChild(node);
       bodyVisuals.set(body.id, node);
       return node;
@@ -3586,7 +3590,7 @@ function syncBodyVisuals() {
         let rawX = Number.isFinite(body.position.x) ? body.position.x : boardW / 2;
         let rawY = Number.isFinite(body.position.y) ? body.position.y : boardH * 0.5;
         let rawAngle = Number.isFinite(body.angle) ? body.angle : 0;
-        if (!body.isSleeping) {
+        if (!body.isSleeping && !(body.plugin?.spawnVisualUntil > now)) {
           const predictMs = getVisualPredictionMs();
           if (predictMs > 0.001) {
             const predictScale = predictMs / (1000 / 60);
@@ -3666,7 +3670,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = 'v84-cool-visual-lock';
+    const BUILD_ID = 'v87-drop-transition-fix2';
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4568,6 +4572,40 @@ function syncBodyVisuals() {
       dom.previewItem.style.height = `${itemSize}px`;
       dom.previewRing.style.width = `${ringSize}px`;
       dom.previewRing.style.height = `${ringSize}px`;
+    }
+
+
+    function spawnDropLaunchGhost(centerX, centerY, index, specialType = false) {
+      const layer = dom.dropLaunchGhostLayer;
+      if (!layer || !dom.previewRing || !dom.previewItem) return;
+      const radius = contentBodyRadius(index, specialType);
+      const diameter = visualDiameter(radius, specialType);
+      const ringSize = Math.round(diameter + 12);
+      const startLeft = parseFloat(dom.previewRing.style.left || '0') - ringSize / 2;
+      const startTop = parseFloat(dom.previewRing.style.top || '0');
+      const endLeft = Math.round((centerX - diameter / 2) * 10) / 10;
+      const endTop = Math.round((centerY - diameter / 2) * 10) / 10;
+      const ghost = document.createElement('div');
+      ghost.className = `drop-launch-ghost item-chip ${specialType === 'hazard' ? 'hazard' : ''} ${specialType === 'fire' ? 'fire' : ''} ${specialType === 'buzz' ? 'buzz' : ''}`.trim();
+      ghost.style.width = `${diameter}px`;
+      ghost.style.height = `${diameter}px`;
+      ghost.style.left = `${startLeft + (ringSize - diameter) / 2}px`;
+      ghost.style.top = `${startTop + (ringSize - diameter) / 2}px`;
+      ghost.style.opacity = '0.98';
+      ghost.style.transform = 'translate3d(0,0,0) scale(1)';
+      ghost.style.borderColor = dom.previewRing.style.borderColor || 'rgba(255,255,255,.28)';
+      ghost.style.boxShadow = dom.previewRing.style.boxShadow || '0 0 18px rgba(255,255,255,.12)';
+      ghost.style.setProperty('--ghost-x', `${endLeft - (startLeft + (ringSize - diameter) / 2)}px`);
+      ghost.style.setProperty('--ghost-y', `${endTop - (startTop + (ringSize - diameter) / 2)}px`);
+      const img = document.createElement('img');
+      img.src = bodyImageSrc({ contentIndex:index, gameType:specialType || 'content' });
+      img.alt = bodyImageAlt({ contentIndex:index, gameType:specialType || 'content' });
+      img.decoding = 'sync';
+      img.loading = 'eager';
+      try { img.fetchPriority = 'high'; } catch (_) {}
+      ghost.appendChild(img);
+      layer.appendChild(ghost);
+      setTimeout(() => ghost.remove(), 220);
     }
 
     function triggerPreviewLaunchFx(color = '#ffffff') {
@@ -6038,13 +6076,20 @@ function initEngine() {
       ensureQueueLength(3);
       const idx2 = state.selectedDropIndex ?? 0;
       triggerPreviewLaunchFx(CONTENTS[idx2]?.accent || '#ffffff');
+      spawnDropLaunchGhost(x, spawnY, idx2, false);
       state.dropSerial += 1;
       const body = makeBody(x, spawnY, idx2, false);
       state.boardStatsCache = null;
       body.spawnSerial = state.dropSerial;
+      body.plugin = body.plugin || {};
+      body.plugin.spawnVisualUntil = performance.now() + 220;
       state.forceFullVisualSync = true;
       state.lastVisualSyncTs = 0;
       syncBodyVisuals();
+      requestAnimationFrame(() => {
+        state.forceFullVisualSync = true;
+        syncBodyVisuals();
+      });
       ensureQueueLength(3);
       state.idle = 0;
       state.tension = clamp(state.tension - 0.18, 0, 100);
@@ -6056,7 +6101,7 @@ function initEngine() {
       } else {
         if (rand() < 0.08) spawnComment(false, `${CONTENTS[idx2].name}、いま欲しいやつ`, 'hot', contentChatIcon(idx2));
       }
-      renderPreview();
+      requestAnimationFrame(() => renderPreview());
       addParticles(x, Math.max(40, radius + 16), CONTENTS[idx2].accent, 9, 3.4);
       addRing(x, Math.max(44, radius + 22), CONTENTS[idx2].accent, 14, 180);
       sfx('drop', 0.5);
