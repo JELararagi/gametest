@@ -1,4 +1,4 @@
-const CACHE_NAME = "v91-runtime-clean";
+const CACHE_NAME = "v92-runtime-clean";
 const CACHE_NAME = 'trendbuzz-v84-cool-visual-lock';
 const PRECACHE = [
   './',

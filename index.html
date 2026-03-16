@@ -6147,23 +6147,11 @@ function requestLoop(ts) {
       stepPhysics(frameDt);
 
       state.visualTimer += frameDt;
-      const activeBodies = state.activeBodies || [];
-      let fastActiveBody = false;
-      for (let i = 0; i < activeBodies.length; i += 1) {
-        const body = activeBodies[i];
-        if (!body || body.plugin?.pendingRemoval) continue;
-        if (body.speed > 1.1 || Math.abs(body.velocity?.y || 0) > 1.25 || Math.abs(body.velocity?.x || 0) > 1.0) {
-          fastActiveBody = true;
-          break;
-        }
-      }
-      const targetVisualInterval = fastActiveBody ? Math.min(perfSettings.visualInterval, 1 / 60) : perfSettings.visualInterval;
-      while (state.visualTimer >= targetVisualInterval) {
-        const visualDt = targetVisualInterval;
+      if (state.visualTimer >= perfSettings.visualInterval) {
+        const visualDt = state.visualTimer;
         if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(visualDt);
         if (hasPendingVisualWork()) syncBodyVisuals();
-        state.visualTimer -= targetVisualInterval;
-        if (state.visualTimer > targetVisualInterval * 2.5) state.visualTimer = targetVisualInterval;
+        state.visualTimer = 0;
       }
       backgroundWatchdog(frameDt);
 
