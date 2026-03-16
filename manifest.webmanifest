@@ -2,7 +2,7 @@
   "name": "トレバズ！",
   "short_name": "トレバズ",
   "description": "今バズる話題をつなぎ、次の波を先読みして今日の王冠を狙う。配信向けの物理演算トレンドパズル。",
-  "start_url": "./index.html?build=v85-runtime-clean",
+  "start_url": "./index.html?build=v80-runtime-clean",
   "display": "standalone",
   "background_color": "#09010d",
   "theme_color": "#ff2f92",

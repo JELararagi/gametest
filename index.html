@@ -843,7 +843,7 @@
     #start-screen .rank-row .rk{font-size:24px !important}
     #start-screen .rank-row .nm{font-size:24px !important}
     #start-screen .rank-row .sc{font-size:24px !important}
-    #item-layer .item-chip{will-change:transform;contain:layout paint style;content-visibility:visible}
+    #item-layer .item-chip{will-change:transform;contain:layout paint style;content-visibility:auto}
     #item-layer .item-chip img{will-change:transform;transform:translateZ(0)}
 
 
@@ -1517,7 +1517,6 @@
           <div id="caption-box"><div id="caption-text">タップして落とす。今の話題を3つ消す。次の波は上のアイコンで先読み。</div></div>
           <div id="board-combo-strip">COMBO <span id="combo-view" class="combo">x0</span> ・ <span id="chain-view" class="chain">0連鎖</span></div>
           <div id="item-layer"></div>
-          <div id="drop-launch-ghost-layer"></div>
           <canvas id="fx-canvas"></canvas>
           <canvas id="particle-canvas"></canvas>
           <div id="drop-guide"></div>
@@ -1782,7 +1781,6 @@
       chatLane: document.getElementById('chat-lane'),
       mergeCanvas: document.getElementById('merge-canvas'),
       itemLayer: document.getElementById('item-layer'),
-      dropLaunchGhostLayer: document.getElementById('drop-launch-ghost-layer'),
       particleCanvas: document.getElementById('particle-canvas'),
       fxCanvas: document.getElementById('fx-canvas'),
       previewItem: document.getElementById('preview-item'),
@@ -2382,8 +2380,6 @@
       physicsAccumulator:0,
       fixedDeltaMs:1000 / 36,
       maxPhysicsSteps:2,
-      lastVisualSyncTs:0,
-      lastPhysicsHighPrecision:false,
       topDangerTime:0,
       overfillTime:0,
       moodTimer:0,
@@ -2520,7 +2516,7 @@ function queueBodyRepair(bodyOrId) {
 }
 
 function requestHighPrecisionPhysics(durationMs = 420) {
-  const until = performance.now() + Math.max(120, durationMs || 0);
+  const until = performance.now() + Math.max(180, durationMs || 0);
   state.physicsHighPrecisionUntil = Math.max(state.physicsHighPrecisionUntil || 0, until);
 }
 
@@ -2530,12 +2526,12 @@ function needsHighPrecisionPhysics(now = performance.now()) {
   for (let i = 0; i < activeBodies.length; i += 1) {
     const body = activeBodies[i];
     if (!body || body.plugin?.pendingRemoval) continue;
-    const recentSpawn = body.spawnAt && now - body.spawnAt < 960;
+    const recentSpawn = body.spawnAt && now - body.spawnAt < 980;
     const flagged = body.plugin?.highPrecisionUntil && body.plugin.highPrecisionUntil > now;
-    const fast = body.speed > 1.95
-      || Math.abs(body.velocity?.x || 0) > 1.65
-      || Math.abs(body.velocity?.y || 0) > 1.85
-      || Math.abs(body.angularVelocity || 0) > 0.12;
+    const fast = body.speed > 1.85
+      || Math.abs(body.velocity?.x || 0) > 1.7
+      || Math.abs(body.velocity?.y || 0) > 2.0
+      || Math.abs(body.angularVelocity || 0) > 0.15;
     if (recentSpawn || flagged || fast) return true;
   }
   return false;
@@ -2558,9 +2554,9 @@ function stabilizeActiveBodies(now = performance.now()) {
     const vx = body.velocity?.x || 0;
     const vy = body.velocity?.y || 0;
     const av = body.angularVelocity || 0;
-    const maxVx = 9.8;
-    const maxVy = 12.2;
-    const maxAv = 0.42;
+    const maxVx = 10.5;
+    const maxVy = 13.5;
+    const maxAv = 0.48;
     if (Math.abs(vx) > maxVx || Math.abs(vy) > maxVy) {
       Body.setVelocity(body, {
         x: clamp(vx, -maxVx, maxVx),
@@ -2845,7 +2841,7 @@ const PERF_PRESET_DEFAULT = Object.freeze({
       runnerMaxUpdates:2,
       logicFrameMs:24,
       scanInterval:0.62,
-      visualInterval:1 / 45,
+      visualInterval:1 / 54,
       uiInterval:0.58,
       cleanupInterval:1.55,
       rescueInterval:1.72,
@@ -2869,8 +2865,8 @@ const PERF_PRESET_DEFAULT = Object.freeze({
       superchatMinGapMs:900,
       videoPreload:'metadata',
       fxResolutionScale:0.44,
-      transformPositionThreshold:0.68,
-      transformAngleThreshold:0.04,
+      transformPositionThreshold:0.62,
+      transformAngleThreshold:0.035,
       motionThreshold:0.07,
       motionAngularThreshold:0.03,
       newBodyVisualMs:220,
@@ -3271,7 +3267,7 @@ function wakeBodiesNearRemoval(removedBodies) {
       if (!sleepers.length) return;
       const hash = buildSpatialHash(sleepers);
       const now = performance.now();
-      requestHighPrecisionPhysics(420);
+      requestHighPrecisionPhysics(540);
       for (const spot of removedBodies) {
         const seed = { position: spot.position, circleRadius: spot.circleRadius || 0 };
         visitNearbyFromHash(hash, seed, 1, body => {
@@ -3285,7 +3281,7 @@ function wakeBodiesNearRemoval(removedBodies) {
           body.floatStartAt = 0;
           body.plugin = body.plugin || {};
           body.plugin.lastActiveAt = now;
-          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 520);
+          body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 380);
           markBodyVisualDirty(body);
           markGroupScanDirty(body);
           return false;
@@ -3466,8 +3462,7 @@ function wakeBodiesNearRemoval(removedBodies) {
       img.alt = bodyImageAlt(body);
       img.src = bodyImageSrc(body);
       img.loading = 'eager';
-      img.decoding = 'sync';
-      try { img.fetchPriority = 'high'; } catch (_) {}
+      img.decoding = 'async';
       node._imgSrc = img.src;
       node._imgAlt = img.alt;
       img.addEventListener('error', () => {
@@ -3481,7 +3476,6 @@ function wakeBodiesNearRemoval(removedBodies) {
       node._img = img;
       node.style.display = 'grid';
       node.style.visibility = 'visible';
-      node.style.contentVisibility = 'visible';
       dom.itemLayer.appendChild(node);
       bodyVisuals.set(body.id, node);
       return node;
@@ -3494,101 +3488,6 @@ function hasPendingVisualWork() {
       if (state.shiftGlowTimer > 0) return true;
       if (state.visualDirtyIds?.size || state.visualPreviewIds?.size || state.visualNextPreviewIds?.size || state.visualGlowIds?.size) return true;
       return !!(state.activeBodies && state.activeBodies.length);
-    }
-
-function getVisualPredictionMs() {
-      const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / Math.max(24, perfSettings.physicsFps || 42));
-      return clamp(state.physicsAccumulator || 0, 0, Math.min(baseFixedDeltaMs * 0.9, 14));
-    }
-
-    
-    function attachLaunchBridge(body, centerX, centerY, index, specialType = false) {
-      if (!body) return;
-      const diameter = visualDiameter(contentBodyRadius(index, specialType), specialType);
-      const ringSize = Math.round(diameter + 12);
-      const startLeft = parseFloat(dom.previewRing?.style.left || '0') - ringSize / 2 + (ringSize - diameter) / 2;
-      const startTop = parseFloat(dom.previewRing?.style.top || '0') + (ringSize - diameter) / 2;
-      const targetLeft = Math.round((centerX - diameter / 2) * 10) / 10;
-      const targetTop = Math.round((centerY - diameter / 2) * 10) / 10;
-      body.plugin = body.plugin || {};
-      body.plugin.launchBridge = {
-        fromX: startLeft,
-        fromY: startTop,
-        startAt: performance.now(),
-        durationMs: 96,
-        diameter
-      };
-      const node = bodyVisuals.get(body.id);
-      if (node) {
-        node.style.transform = `translate3d(${startLeft}px, ${startTop}px, 0) rotate(0rad) scale(1)`;
-        node._transform = node.style.transform;
-        node._drawX = startLeft;
-        node._drawY = startTop;
-        node._drawAngle = 0;
-      }
-      try {
-        Body.setVelocity(body, { x:(body.velocity?.x || 0) * 0.35, y:Math.max(body.velocity?.y || 0, 0.58) });
-        Sleeping.set(body, false);
-      } catch (_) {}
-    }
-
-    function applyLaunchBridge(body, drawX, drawY, now) {
-      const bridge = body?.plugin?.launchBridge;
-      if (!bridge) return { x:drawX, y:drawY };
-      const elapsed = now - (bridge.startAt || now);
-      const duration = Math.max(24, bridge.durationMs || 0);
-      if (elapsed >= duration) {
-        try { delete body.plugin.launchBridge; } catch (_) { body.plugin.launchBridge = null; }
-        return { x:drawX, y:drawY };
-      }
-      const t = Math.max(0, Math.min(1, elapsed / duration));
-      const ease = 1 - Math.pow(1 - t, 3);
-      return {
-        x: bridge.fromX + (drawX - bridge.fromX) * ease,
-        y: bridge.fromY + (drawY - bridge.fromY) * ease
-      };
-    }
-
-function kickstartFreshBody(body) {
-      if (!engine || !body || body.isStatic) return;
-      const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / Math.max(24, perfSettings.physicsFps || 42));
-      const microStepMs = clamp(baseFixedDeltaMs * 0.34, 4.5, 8.5);
-      const prevPosIter = engine.positionIterations;
-      const prevVelIter = engine.velocityIterations;
-      const prevConIter = engine.constraintIterations;
-      try {
-        engine.positionIterations = Math.max(prevPosIter || 6, 7);
-        engine.velocityIterations = Math.max(prevVelIter || 4, 5);
-        engine.constraintIterations = Math.max(prevConIter || 2, 2);
-        Engine.update(engine, microStepMs);
-      } catch (_) {
-      } finally {
-        engine.positionIterations = prevPosIter;
-        engine.velocityIterations = prevVelIter;
-        engine.constraintIterations = prevConIter;
-      }
-      state.physicsAccumulator = Math.max(0, Math.min((state.physicsAccumulator || 0) + microStepMs * 0.6, baseFixedDeltaMs));
-      state.boardStatsCache = null;
-      const stamp = performance.now();
-      refreshActiveBodies(stamp);
-      stabilizeActiveBodies(stamp);
-      markBodyVisualDirty(body);
-      state.forceFullVisualSync = true;
-    }
-
-    function hasFastActiveVisuals() {
-      const activeBodies = state.activeBodies || [];
-      for (let i = 0; i < activeBodies.length; i += 1) {
-        const body = activeBodies[i];
-        if (!body || body.isSleeping) continue;
-        if (body.speed > Math.max(0.045, perfSettings.motionThreshold || 0.03)
-          || Math.abs(body.velocity?.x || 0) > Math.max(0.045, perfSettings.motionThreshold || 0.03)
-          || Math.abs(body.velocity?.y || 0) > Math.max(0.045, perfSettings.motionThreshold || 0.03)
-          || Math.abs(body.angularVelocity || 0) > Math.max(0.02, perfSettings.motionAngularThreshold || 0.015)) {
-          return true;
-        }
-      }
-      return false;
     }
 
 function syncBodyVisuals() {
@@ -3662,18 +3561,9 @@ function syncBodyVisuals() {
         const nextPreviewLen = nextPreviewMap.get(body.id) || 0;
         const forecastReady = body.gameType === 'content' && body.contentIndex === state.nextTrendIndex && nextPreviewLen >= 2;
         const safeRadius = Math.max(8, radius);
-        let rawX = Number.isFinite(body.position.x) ? body.position.x : boardW / 2;
-        let rawY = Number.isFinite(body.position.y) ? body.position.y : boardH * 0.5;
-        let rawAngle = Number.isFinite(body.angle) ? body.angle : 0;
-        if (!body.isSleeping && !(body.plugin?.spawnVisualUntil > now)) {
-          const predictMs = getVisualPredictionMs();
-          if (predictMs > 0.001) {
-            const predictScale = predictMs / (1000 / 60);
-            rawX += (body.velocity?.x || 0) * predictScale;
-            rawY += (body.velocity?.y || 0) * predictScale;
-            rawAngle += (body.angularVelocity || 0) * predictScale;
-          }
-        }
+        const rawX = Number.isFinite(body.position.x) ? body.position.x : boardW / 2;
+        const rawY = Number.isFinite(body.position.y) ? body.position.y : boardH * 0.5;
+        const rawAngle = Number.isFinite(body.angle) ? body.angle : 0;
         if (!Number.isFinite(body.position.x) || !Number.isFinite(body.position.y) || !Number.isFinite(body.angle)) {
           queueBodyRepair(body);
         }
@@ -3745,7 +3635,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = 'v87-drop-transition-fix2';
+    const BUILD_ID = 'v91-v84-fps-collision-cool';
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4649,40 +4539,6 @@ function syncBodyVisuals() {
       dom.previewRing.style.height = `${ringSize}px`;
     }
 
-
-    function spawnDropLaunchGhost(centerX, centerY, index, specialType = false) {
-      const layer = dom.dropLaunchGhostLayer;
-      if (!layer || !dom.previewRing || !dom.previewItem) return;
-      const radius = contentBodyRadius(index, specialType);
-      const diameter = visualDiameter(radius, specialType);
-      const ringSize = Math.round(diameter + 12);
-      const startLeft = parseFloat(dom.previewRing.style.left || '0') - ringSize / 2;
-      const startTop = parseFloat(dom.previewRing.style.top || '0');
-      const endLeft = Math.round((centerX - diameter / 2) * 10) / 10;
-      const endTop = Math.round((centerY - diameter / 2) * 10) / 10;
-      const ghost = document.createElement('div');
-      ghost.className = `drop-launch-ghost item-chip ${specialType === 'hazard' ? 'hazard' : ''} ${specialType === 'fire' ? 'fire' : ''} ${specialType === 'buzz' ? 'buzz' : ''}`.trim();
-      ghost.style.width = `${diameter}px`;
-      ghost.style.height = `${diameter}px`;
-      ghost.style.left = `${startLeft + (ringSize - diameter) / 2}px`;
-      ghost.style.top = `${startTop + (ringSize - diameter) / 2}px`;
-      ghost.style.opacity = '0.98';
-      ghost.style.transform = 'translate3d(0,0,0) scale(1)';
-      ghost.style.borderColor = dom.previewRing.style.borderColor || 'rgba(255,255,255,.28)';
-      ghost.style.boxShadow = dom.previewRing.style.boxShadow || '0 0 18px rgba(255,255,255,.12)';
-      ghost.style.setProperty('--ghost-x', `${endLeft - (startLeft + (ringSize - diameter) / 2)}px`);
-      ghost.style.setProperty('--ghost-y', `${endTop - (startTop + (ringSize - diameter) / 2)}px`);
-      const img = document.createElement('img');
-      img.src = bodyImageSrc({ contentIndex:index, gameType:specialType || 'content' });
-      img.alt = bodyImageAlt({ contentIndex:index, gameType:specialType || 'content' });
-      img.decoding = 'sync';
-      img.loading = 'eager';
-      try { img.fetchPriority = 'high'; } catch (_) {}
-      ghost.appendChild(img);
-      layer.appendChild(ghost);
-      setTimeout(() => ghost.remove(), 220);
-    }
-
     function triggerPreviewLaunchFx(color = '#ffffff') {
       if (!dom.previewRing) return;
       dom.previewRing.style.borderColor = hexToRgba(color, 0.82);
@@ -5000,7 +4856,7 @@ function makeBody(x, y, index, specialType = false) {
         frictionStatic:0.01,
         frictionAir:0.006,
         density:isBomb ? 0.00245 : (isFire ? 0.00255 : (isBuzz ? 0.0022 : 0.002)),
-        slop:0.012,
+        slop:0.0135,
         label:isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content')),
         render:{
           opacity,
@@ -5009,56 +4865,23 @@ function makeBody(x, y, index, specialType = false) {
       });
       body.gameType = isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content'));
       body.contentIndex = index;
-      const now = performance.now();
-      body.spawnAt = now;
+      body.spawnAt = performance.now();
       body.displayScale = scale;
-      body.sleepThreshold = isBomb ? 32 : (isFire ? 30 : (isBuzz ? 28 : 24));
+      body.sleepThreshold = isBomb ? 30 : (isFire ? 28 : (isBuzz ? 26 : 22));
       body.plugin = body.plugin || {};
-      body.plugin.lastActiveAt = now;
-      body.plugin.highPrecisionUntil = now + (isBomb ? 1180 : (isFire ? 1100 : (isBuzz ? 1040 : 980)));
-      requestHighPrecisionPhysics(isBomb ? 1180 : 980);
+      body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 1120 : (isFire ? 1020 : (isBuzz ? 980 : 920)));
+      requestHighPrecisionPhysics(isBomb ? 1120 : 920);
       Composite.add(engine.world, body);
       registerLiveBody(body);
-      if (!(state.activeBodyIds instanceof Set)) state.activeBodyIds = new Set();
-      if (!Array.isArray(state.activeBodies)) state.activeBodies = [];
-      if (!state.activeBodyIds.has(body.id)) {
-        state.activeBodyIds.add(body.id);
-        state.activeBodies.push(body);
-      }
       const node = ensureBodyVisual(body);
       if (node) {
         const diameter = visualDiameter(radius, specialType);
-        const rawX = Math.round((x - diameter / 2) * 10) / 10;
-        const rawY = Math.round((y - diameter / 2) * 10) / 10;
-        const rawAngle = Math.round((body.angle || 0) * 100) / 100;
-        const className = [
-          'item-chip',
-          body.gameType === 'hazard' ? 'hazard' : '',
-          body.gameType === 'fire' ? 'fire' : '',
-          body.gameType === 'buzz' ? 'buzz' : '',
-          body.gameType === 'content' && body.contentIndex === state.trendIndex ? 'trend' : ''
-        ].filter(Boolean).join(' ');
-        const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : ((body.gameType === 'content' && body.contentIndex === state.trendIndex) ? 'saturate(1.1)' : 'none');
         node.dataset.diameter = String(diameter);
         node.style.width = `${diameter}px`;
         node.style.height = `${diameter}px`;
-        node.className = className;
-        node.style.visibility = 'visible';
-        node.hidden = false;
-        node.style.transform = `translate3d(${rawX}px, ${rawY}px, 0) rotate(${rawAngle}rad) scale(1)`;
+        node.style.transform = `translate(${Math.round((x - diameter / 2) * 10) / 10}px, ${Math.round((y - diameter / 2) * 10) / 10}px)`;
         node.style.opacity = '1';
-        node.style.zIndex = String(100 + Math.round(y * 10) + (body.id % 10));
-        node.style.filter = filterValue;
-        node._diameter = diameter;
-        node._transform = node.style.transform;
-        node._drawX = rawX;
-        node._drawY = rawY;
-        node._drawAngle = rawAngle;
-        node._drawScale = 1;
-        node._zIndex = node.style.zIndex;
-        node._filter = filterValue;
       }
-      markBodyVisualDirty(body);
       markGroupScanDirty(body);
       return body;
     }
@@ -5151,14 +4974,14 @@ function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
       Sleeping.set(body, false);
       Body.setPosition(body, { x:safeX, y:safeY });
       Body.setVelocity(body, {
-        x: clamp(Number.isFinite(body.velocity.x) ? body.velocity.x : 0, -2.0, 2.0) * 0.12,
-        y: Math.max(0.32, Math.min(2.1, (Number.isFinite(body.velocity.y) ? body.velocity.y : 0) + 0.16))
+        x: clamp(Number.isFinite(body.velocity.x) ? body.velocity.x : 0, -2.4, 2.4) * 0.18,
+        y: Math.max(0.38, Math.min(2.6, (Number.isFinite(body.velocity.y) ? body.velocity.y : 0) + 0.22))
       });
-      Body.setAngularVelocity(body, clamp(Number.isFinite(body.angularVelocity) ? body.angularVelocity : 0, -0.12, 0.12) * 0.46);
+      Body.setAngularVelocity(body, clamp(Number.isFinite(body.angularVelocity) ? body.angularVelocity : 0, -0.14, 0.14) * 0.6);
       body.plugin = body.plugin || {};
       body.plugin.lastActiveAt = performance.now();
-      body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, performance.now() + 340);
-      requestHighPrecisionPhysics(340);
+      body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, performance.now() + 260);
+      requestHighPrecisionPhysics(260);
       markBodyVisualDirty(body);
       markGroupScanDirty(body);
       body.floatStartAt = 0;
@@ -5224,7 +5047,7 @@ function rescueFloatingBodies() {
         }
         if (!body.floatStartAt) body.floatStartAt = now;
         if (now - body.floatStartAt < 110) continue;
-        requestHighPrecisionPhysics(340);
+        requestHighPrecisionPhysics(260);
         repairBodyPosition(body, boardWidth, boardHeight, 'floating-rescue');
         body.floatStartAt = now;
       }
@@ -5251,7 +5074,7 @@ function purgeBrokenBodies() {
         if (farOutside || lightlyOutside) {
           body.outOfRangeSince = body.outOfRangeSince || now;
           if (farOutside || now - body.outOfRangeSince > 70) {
-            requestHighPrecisionPhysics(320);
+            requestHighPrecisionPhysics(240);
             repairBodyPosition(body, width, height, 'broken');
           }
         } else {
@@ -5718,7 +5541,6 @@ function destroyEngine() {
       state.nextPreviewGroups = [];
       state.lastFrameTs = 0;
       state.lastLogicTs = 0;
-      state.lastVisualSyncTs = 0;
       state.physicsAccumulator = 0;
       resetLiveBodyRegistry();
       clearVisuals();
@@ -5734,7 +5556,6 @@ function initEngine() {
       state.forceFullVisualSync = true;
       state.lastFrameTs = 0;
       state.lastLogicTs = 0;
-      state.lastVisualSyncTs = 0;
       state.physicsAccumulator = 0;
       updateWorldBounds();
       configureRunnerPerformance();
@@ -5794,7 +5615,6 @@ function initEngine() {
       state.lastTs = 0;
       state.lastFrameTs = 0;
       state.lastLogicTs = 0;
-      state.lastVisualSyncTs = 0;
       state.physicsAccumulator = 0;
       state.topDangerTime = 0;
       state.overfillTime = 0;
@@ -5833,7 +5653,6 @@ function initEngine() {
       state.streamTime = 0;
       state.finalSpurt = false;
       state.visualTimer = 0;
-      state.lastVisualSyncTs = 0;
       state.uiTimer = 0;
       state.cleanupTimer = 0;
       state.rescueTimer = 0;
@@ -6155,17 +5974,6 @@ function initEngine() {
       const body = makeBody(x, spawnY, idx2, false);
       state.boardStatsCache = null;
       body.spawnSerial = state.dropSerial;
-      body.plugin = body.plugin || {};
-      body.plugin.spawnVisualUntil = performance.now() + 56;
-      attachLaunchBridge(body, x, spawnY, idx2, false);
-      kickstartFreshBody(body);
-      state.forceFullVisualSync = true;
-      state.lastVisualSyncTs = 0;
-      syncBodyVisuals();
-      requestAnimationFrame(() => {
-        state.forceFullVisualSync = true;
-        syncBodyVisuals();
-      });
       ensureQueueLength(3);
       state.idle = 0;
       state.tension = clamp(state.tension - 0.18, 0, 100);
@@ -6307,11 +6115,10 @@ function stepPhysics(frameDt) {
   const now = performance.now();
   const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
   const highPrecision = needsHighPrecisionPhysics(now);
-  const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 64) : baseFixedDeltaMs;
+  const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 60) : baseFixedDeltaMs;
   const maxSteps = highPrecision ? Math.max(3, state.maxPhysicsSteps || 1) : 1;
   applyPhysicsQuality(highPrecision);
-  state.lastPhysicsHighPrecision = highPrecision;
-  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 0.95));
+  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.35));
   let steps = 0;
   while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
     Engine.update(engine, fixedDeltaMs);
@@ -6333,25 +6140,30 @@ function requestLoop(ts) {
       if (!state.lastFrameTs) {
         state.lastFrameTs = ts;
         state.lastLogicTs = ts;
-        state.lastVisualSyncTs = ts;
         return;
       }
       const frameDt = clamp((ts - state.lastFrameTs) / 1000, 0.001, 0.05);
       state.lastFrameTs = ts;
       stepPhysics(frameDt);
 
-      const pendingVisuals = hasPendingVisualWork();
-      const fastActiveVisuals = hasFastActiveVisuals();
-      const visualSyncIntervalMs = fastActiveVisuals ? (1000 / 60) : (state.lastPhysicsHighPrecision ? (1000 / 60) : (1000 / 54));
-      if (pendingVisuals && (!state.lastVisualSyncTs || ts - state.lastVisualSyncTs >= visualSyncIntervalMs)) {
-        syncBodyVisuals();
-        state.lastVisualSyncTs = ts;
-      }
       state.visualTimer += frameDt;
-      if (state.visualTimer >= perfSettings.visualInterval) {
-        const visualDt = state.visualTimer;
+      const activeBodies = state.activeBodies || [];
+      let fastActiveBody = false;
+      for (let i = 0; i < activeBodies.length; i += 1) {
+        const body = activeBodies[i];
+        if (!body || body.plugin?.pendingRemoval) continue;
+        if (body.speed > 1.1 || Math.abs(body.velocity?.y || 0) > 1.25 || Math.abs(body.velocity?.x || 0) > 1.0) {
+          fastActiveBody = true;
+          break;
+        }
+      }
+      const targetVisualInterval = fastActiveBody ? Math.min(perfSettings.visualInterval, 1 / 60) : perfSettings.visualInterval;
+      while (state.visualTimer >= targetVisualInterval) {
+        const visualDt = targetVisualInterval;
         if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(visualDt);
-        state.visualTimer = 0;
+        if (hasPendingVisualWork()) syncBodyVisuals();
+        state.visualTimer -= targetVisualInterval;
+        if (state.visualTimer > targetVisualInterval * 2.5) state.visualTimer = targetVisualInterval;
       }
       backgroundWatchdog(frameDt);
 
