@@ -1,4 +1,4 @@
-const CACHE_NAME = "limit-meltdown-v126-bombfire58-physics-perf";
+const CACHE_NAME = "limit-meltdown-v129-chaincolor-fire2hit-fxraise";
 const PRECACHE = [
   "./",
   "./index.html",

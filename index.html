@@ -299,7 +299,7 @@
     #board-combo-strip .combo{color:#ffe37a}
     #board-combo-strip .chain{color:#ffb7ff}
 
-        .panel-mobile{width:min(100%, 420px)}
+        .panel-compact{width:min(100%, 420px)}
     .title-panel{display:grid;gap:14px;background:linear-gradient(180deg, rgba(9,1,13,.72), rgba(9,1,13,.84));background-size:cover;background-position:center}
     .compact-copy{font-size:.92rem;line-height:1.55}
     .mood.wide{min-height:2.6em;max-width:none}
@@ -1414,28 +1414,28 @@
       -webkit-backface-visibility:hidden;
     }
 
-    body.mobile-bg-lite .panel,
-    body.mobile-bg-lite .hud-chip,
-    body.mobile-bg-lite #caption-box,
-    body.mobile-bg-lite #speech-bubble,
-    body.mobile-bg-lite .result-card,
-    body.mobile-bg-lite .daily-board-wrap,
-    body.mobile-bg-lite #pause-overlay .pause-card{
+    body.perf-lite-background .panel,
+    body.perf-lite-background .hud-chip,
+    body.perf-lite-background #caption-box,
+    body.perf-lite-background #speech-bubble,
+    body.perf-lite-background .result-card,
+    body.perf-lite-background .daily-board-wrap,
+    body.perf-lite-background #pause-overlay .pause-card{
       backdrop-filter:none !important;
       box-shadow:0 10px 24px rgba(0,0,0,.24), 0 0 0 1px rgba(255,255,255,.03) !important;
     }
-    body.mobile-bg-lite #board-glass{
+    body.perf-lite-background #board-glass{
       background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)) !important;
       box-shadow:none !important;
     }
-    body.mobile-bg-lite .board-character-layer,
-    body.mobile-bg-lite #bg-video,
-    body.mobile-bg-lite #bg-video-hype,
-    body.mobile-bg-lite #board-bg-video-hype{
+    body.perf-lite-background .board-character-layer,
+    body.perf-lite-background #bg-video,
+    body.perf-lite-background #bg-video-hype,
+    body.perf-lite-background #board-bg-video-hype{
       filter:none !important;
     }
-    body.mobile-bg-lite #bg-video,
-    body.mobile-bg-lite #bg-video-hype{
+    body.perf-lite-background #bg-video,
+    body.perf-lite-background #bg-video-hype{
       opacity:0 !important;
       visibility:hidden !important;
       display:none !important;
@@ -1475,7 +1475,7 @@
   <audio id="voice-lose" src="assets/audio/voice_mc_lose_01.m4a" preload="metadata"></audio>
 
   <div id="start-screen" class="screen" data-stage-size="1206x2144">
-    <div class="panel panel-mobile title-panel">
+    <div class="panel panel-compact title-panel">
       <div id="title-art-wrap">
         <img id="title-art" src="assets/img/title_logo.png" alt="限界メルトダウン（Limit Meltdown）" onerror="this.style.display='none';document.getElementById('title-fallback').style.display='block'">
         <div id="title-fallback" style="display:none">
@@ -1524,7 +1524,7 @@
           <div id="drop-guide"></div>
           <div id="preview-ring" class="item-chip preview-token" data-emoji="💬"><img id="preview-item" src="assets/img/item_1.png" alt="next item"></div>
           <div id="board-glass"></div>
-          <div id="big-buzz-banner" aria-hidden="true"><div class="core"><div class="title">大バズリ!!</div><div class="sub">ポイント×２</div></div></div>
+          <div id="big-buzz-banner" aria-hidden="true"><div class="core"><div class="title">大バズリ!!</div><div class="sub">2こで消える</div></div></div>
           <div id="fire-banner" aria-hidden="true"><div class="core"><div class="title">大炎上!!</div></div></div>
           <div id="superchat-banner" aria-hidden="true"><div class="card"><div class="amount">+0</div><div class="message">スパチャありがとうございます！</div></div></div>
           <video id="gameover-fx-video" src="assets/bg/overlay_gameover_glitch.mp4" playsinline muted preload="none"></video>
@@ -1694,7 +1694,7 @@
       </div>
       <div class="howto-row">
         <div class="howto-icons"><img src="assets/img/buzz.png"><img src="assets/img/buzz.png"><img src="assets/img/buzz.png"></div>
-        <div><b>5. バズりを3こつなぐと「大バズり」</b><br><span style="color:#d8ccea;line-height:1.7">バズりアイテムを3こつなげると、そのまとまりが消えて<b>+1600点</b>。さらに<b>15秒間</b>、ふつうの消し点が<b>2倍</b>になるよ。大バズり中にもう一度バズりを3こ消すと<b>+3200点</b>で時間も少しのびるよ。</span></div>
+        <div><b>5. バズりを3こつなぐと「大バズり」</b><br><span style="color:#d8ccea;line-height:1.7">バズりアイテムを3こつなげると、そのまとまりが消えて<b>+1600点</b>。さらに<b>15秒間</b>、ふつうのアイテムは<b>2こつながるだけで消える</b>よ。大バズり中にもう一度バズりを3こ消すと<b>+3200点</b>で時間も少しのびるよ。</span></div>
       </div>
       <div class="howto-row">
         <div class="howto-icons"><img src="assets/img/hazard.png"><img src="assets/img/hazard.png"><img src="assets/img/hazard.png"></div>
@@ -1702,7 +1702,7 @@
       </div>
       <div class="howto-row">
         <div class="howto-icons"><img src="assets/img/fire.png"><span style="font-weight:900;color:#ff9bb1">＋</span><img src="assets/img/item_1.png"></div>
-        <div><b>7. 炎は近くのまとまりに巻きこまれる</b><br><span style="color:#d8ccea;line-height:1.7">炎アイテムは、となりで消えたまとまりにふれているといっしょに消えるよ。じゃまだから、近くでまとめて消すのがおすすめ。</span></div>
+        <div><b>7. 炎は近くのまとまりに巻きこまれる</b><br><span style="color:#d8ccea;line-height:1.7">炎アイテムは、となりで消えたまとまりにふれるたびにダメージを受けるよ。1回ふれると大きさが75%になって、2回目で消えるよ。じゃまだから、近くで2回消して片づけるのがおすすめ。</span></div>
       </div>
       <div class="howto-row">
         <div class="howto-icons"><span style="color:#ff9bb1;font-weight:900">限界ライン</span></div>
@@ -1713,7 +1713,7 @@
       <strong>点数のしくみ（今のルール）</strong><br>
       ・ふつうの消し点は<b>コンボ数</b>で決まるよ。式は <b>280 + 240×コンボ + 140×コンボ²</b>。<br>
       ・最初の目安は <b>1コンボ=660点</b>、<b>2コンボ=1320点</b>、<b>3コンボ=2260点</b>、<b>4コンボ=3480点</b>、<b>5コンボ=4980点</b>。<br>
-      ・<b>大バズり中</b>は、ふつうの消し点が<b>ぜんぶ2倍</b>になるよ。<br>
+      ・<b>大バズり中</b>は、ふつうのアイテムが<b>2こつながると消える</b>よ。爆弾・炎上・バズりはこれまで通り3こ必要だよ。<br>
       ・<b>バズり3こ</b>で <b>+1600点</b> ＆ 大バズりスタート。大バズり中にもう一度バズり3こで <b>+3200点</b>。<br>
       ・<b>爆弾3こ</b>で <b>+1200点</b> ＆ 大炎上スタート。炎アイテムは<b>5〜8こ</b>落ちてくるよ。大バズり中に爆弾3こで <b>+2400点</b>。<br>
       ・<b>連鎖</b>は「1回落としたあとに続けて消えた回数」の表示だよ。今のルールでは、連鎖専用の固定点よりも<b>その間に伸びるコンボ点</b>が主役だよ。<br>
@@ -1999,7 +1999,7 @@
         '先読み上手！','その形すごくいい！','次もすぐ取れそう！','きれいにつながってる！','その読みあたり！'
       ],
       bigbuzz:[
-        '大バズり中！いまは点が2倍！','いまがまとめ取りチャンス！','いまのうちにどんどん消したい！','この時間に点をのばそう！','大バズりが続いてる！'
+        '大バズり中！いまは2こで消える！','いまがまとめ取りチャンス！','いまのうちにどんどん消したい！','2こつなぐだけで消せる！','大バズりが続いてる！'
       ],
       rescue:[
         'まずは炎の近くを消したい！','いまは立て直しが大事！','炎を巻きこみながら消そう！','あせらず安全にいこう！','まだ戻せるよ！'
@@ -2008,7 +2008,7 @@
         '爆弾が2こある！もう1こで大炎上！','爆弾は近づけすぎ注意！','爆弾3こで炎が広がるよ','爆弾は置き場所しだいだね','先に安全な場所を作りたい！'
       ],
       buzzPrep:[
-        'バズりが2こある！あと1こで大バズり！','バズりをもう1こ引けたら大チャンス！','バズり3こで点が2倍になるよ','バズりをそろえたい！','バズりが来たらまとめて取りたい！'
+        'バズりが2こある！あと1こで大バズり！','バズりをもう1こ引けたら大チャンス！','バズり3こで2こ消しタイムに入るよ','バズりをそろえたい！','バズりが来たらまとめて取りたい！'
       ],
       chain:[
         '連鎖つづいてる！','まだ消える！','この連鎖おいしい！','次もつながりそう！','流れいいね！'
@@ -2453,6 +2453,7 @@
       uiTimer:0,
       cleanupTimer:0,
       rescueTimer:0,
+      freezeTimer:0,
       boardStatsCache:null,
       boardStatsCacheAt:0,
       worldBodiesCache:null,
@@ -2575,6 +2576,154 @@ function applyPhysicsQuality(highPrecision = false) {
   engine.constraintIterations = 1;
 }
 
+function isFrozenBody(body) {
+  return !!(body?.plugin?.frozen);
+}
+
+function thawBody(body, now = performance.now(), opts = {}) {
+  if (!body || !isFrozenBody(body) || body.plugin?.pendingRemoval) return false;
+  body.plugin = body.plugin || {};
+  body.plugin.frozen = false;
+  body.plugin.frozenAt = 0;
+  body.plugin.restStartAt = now;
+  body.plugin.lastActiveAt = now;
+  body.plugin.lastMotionAt = now;
+  Body.setStatic(body, false);
+  Sleeping.set(body, false);
+  const nextVelocity = {
+    x: clamp(Number.isFinite(opts.vx) ? opts.vx : (body.velocity?.x || 0), -2.6, 2.6),
+    y: clamp(Number.isFinite(opts.vy) ? opts.vy : Math.max(0.06, body.velocity?.y || 0.06), -0.24, 3.6)
+  };
+  Body.setVelocity(body, nextVelocity);
+  if (Number.isFinite(opts.angularVelocity)) Body.setAngularVelocity(body, clamp(opts.angularVelocity, -0.24, 0.24));
+  body.floatStartAt = 0;
+  body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 320);
+  requestHighPrecisionPhysics(320);
+  markBodyVisualDirty(body);
+  markGroupScanDirty(body);
+  return true;
+}
+
+function freezeBody(body, now = performance.now()) {
+  if (!body || body.plugin?.pendingRemoval || body.gameType === 'wall' || body.isStatic || isFrozenBody(body)) return false;
+  body.plugin = body.plugin || {};
+  Body.setVelocity(body, { x:0, y:0 });
+  Body.setAngularVelocity(body, 0);
+  Body.setStatic(body, true);
+  Sleeping.set(body, true);
+  body.plugin.frozen = true;
+  body.plugin.frozenAt = now;
+  body.plugin.restStartAt = now;
+  body.plugin.lastActiveAt = now;
+  markBodyVisualDirty(body);
+  return true;
+}
+
+function bodyHasSupportBelow(body, hash, boardH = 0, slack = 16) {
+  if (!body) return false;
+  const radius = body.circleRadius || 0;
+  if (!radius) return false;
+  if (boardH > 0 && body.position.y >= boardH - radius - 6) return true;
+  let hasSupportBelow = false;
+  visitNearbyFromHash(hash, body, 1, other => {
+    if (!other || other.id === body.id || other.plugin?.pendingRemoval) return false;
+    const dx = Math.abs(other.position.x - body.position.x);
+    const dy = other.position.y - body.position.y;
+    const supportDx = radius + (other.circleRadius || 0) - 6;
+    if (dx > supportDx || dy < 0) return false;
+    if (dy <= radius + (other.circleRadius || 0) + slack) {
+      hasSupportBelow = true;
+      return true;
+    }
+    return false;
+  });
+  return hasSupportBelow;
+}
+
+function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVelocityY = 0.08) {
+  if (!seedBody || !isFrozenBody(seedBody)) return 0;
+  const thawedIds = new Set();
+  const stack = [seedBody];
+  let count = 0;
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || thawedIds.has(current.id) || !isFrozenBody(current)) continue;
+    thawedIds.add(current.id);
+    if (thawBody(current, now, { vy:Math.max(0.08, seedVelocityY) })) count += 1;
+    visitNearbyFromHash(frozenHash, current, 1, other => {
+      if (!other || thawedIds.has(other.id) || !isFrozenBody(other)) return false;
+      const dx = other.position.x - current.position.x;
+      const dy = other.position.y - current.position.y;
+      const reach = (current.circleRadius || 0) + (other.circleRadius || 0) + 6;
+      if (dx * dx + dy * dy > reach * reach) return false;
+      stack.push(other);
+      return false;
+    });
+  }
+  return count;
+}
+
+function thawFrozenBodiesNearActive(now = performance.now()) {
+  const activeBodies = getActiveBodies().filter(body => body && !body.plugin?.pendingRemoval && !isFrozenBody(body));
+  if (!activeBodies.length) return 0;
+  const frozenBodies = worldBodies().filter(body => body && isFrozenBody(body) && state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval);
+  if (!frozenBodies.length) return 0;
+  const hash = buildSpatialHash(frozenBodies);
+  let thawed = 0;
+  for (const body of activeBodies) {
+    const moving = !body.isSleeping
+      || body.speed > 0.12
+      || Math.abs(body.velocity?.x || 0) > 0.1
+      || Math.abs(body.velocity?.y || 0) > 0.14
+      || Math.abs(body.angularVelocity || 0) > 0.05;
+    const age = now - (body.spawnAt || 0);
+    if (!moving && age > 760) continue;
+    const wakePad = (perfSettings.freezeWakePad || 16) + Math.min(22, Math.max(Math.abs(body.velocity?.x || 0), Math.abs(body.velocity?.y || 0)) * 2.4);
+    visitNearbyFromHash(hash, body, 1, frozen => {
+      if (!frozen || !isFrozenBody(frozen)) return false;
+      const dx = frozen.position.x - body.position.x;
+      const dy = frozen.position.y - body.position.y;
+      const reach = (body.circleRadius || 0) + (frozen.circleRadius || 0) + wakePad;
+      if (dx * dx + dy * dy > reach * reach) return false;
+      thawed += thawFrozenCluster(frozen, hash, now, body.velocity?.y || 0.1);
+      return false;
+    });
+  }
+  return thawed;
+}
+
+function freezeRestedBodies(now = performance.now()) {
+  if (!engine || !dom.board) return 0;
+  const bodies = worldBodies().filter(body => body && !body.plugin?.pendingRemoval && state.liveBodyIds?.has(body.id) && body.gameType !== 'wall');
+  if (!bodies.length) return 0;
+  const boardH = dom.board.clientHeight || 0;
+  const hash = buildSpatialHash(bodies);
+  let frozenCount = 0;
+  for (const body of bodies) {
+    const age = now - (body.spawnAt || 0);
+    if (age < 460) continue;
+    body.plugin = body.plugin || {};
+    const moving = !body.isSleeping
+      || body.speed > (perfSettings.freezeLinearThreshold || 0.03)
+      || Math.abs(body.velocity?.x || 0) > (perfSettings.freezeLinearThreshold || 0.03)
+      || Math.abs(body.velocity?.y || 0) > (perfSettings.freezeLinearThreshold || 0.03)
+      || Math.abs(body.angularVelocity || 0) > (perfSettings.freezeAngularThreshold || 0.02);
+    if (moving) {
+      body.plugin.restStartAt = 0;
+      body.plugin.lastMotionAt = now;
+      if (isFrozenBody(body)) thawBody(body, now, { vy:Math.max(0.06, body.velocity?.y || 0.06) });
+      continue;
+    }
+    if (isFrozenBody(body)) continue;
+    if (!bodyHasSupportBelow(body, hash, boardH, 18)) continue;
+    if (!body.plugin.restStartAt) body.plugin.restStartAt = now;
+    const settledFor = now - body.plugin.restStartAt;
+    if (settledFor < (perfSettings.freezeSettleMs || 980)) continue;
+    if (freezeBody(body, now)) frozenCount += 1;
+  }
+  return frozenCount;
+}
+
 function stabilizeActiveBodies(now = performance.now()) {
   const activeBodies = getActiveBodies();
   const boardW = boardWidth;
@@ -2619,7 +2768,12 @@ function refreshActiveBodies(now = performance.now()) {
       || Math.abs(body.velocity?.x || 0) > 0.04
       || Math.abs(body.velocity?.y || 0) > 0.04
       || Math.abs(body.angularVelocity || 0) > 0.02;
-    if (moving) body.plugin.lastActiveAt = now;
+    if (moving) {
+      body.plugin.lastActiveAt = now;
+      body.plugin.lastMotionAt = now;
+      body.plugin.restStartAt = 0;
+      if (isFrozenBody(body)) thawBody(body, now, { vy:Math.max(0.06, body.velocity?.y || 0.06) });
+    }
     const activeWindowMs = (state.liveBodies?.length || 0) >= 26 ? 220 : 320;
     const recentlyActive = moving || (body.plugin.lastActiveAt && now - body.plugin.lastActiveAt < activeWindowMs);
     if (!recentlyActive) continue;
@@ -2868,81 +3022,45 @@ function unregisterLiveBody(body) {
     const UNIFIED_BODY_RADIUS = Math.round(31 * BOARD_BODY_ITEM_SCALE);
     
 const PERF_PRESET_DEFAULT = Object.freeze({
-      mobileLowPower:false,
-      physicsFps:40,
-      runnerMaxUpdates:2,
-      logicFrameMs:24,
-      scanInterval:0.62,
-      visualInterval:1 / 45,
-      uiInterval:0.58,
-      cleanupInterval:1.55,
-      rescueInterval:1.72,
-      boardStatsCacheMs:1450,
-      particleBudget:16,
-      particleScale:0.32,
-      particleFadeRate:1.85,
-      particleLife:0.96,
-      particleSizeScale:1.04,
-      ringBudget:12,
-      minorRingThreshold:0,
-      majorRingThreshold:92,
-      popTextMax:6,
-      popTextMinGapMs:40,
-      popTextScale:1.06,
-      commentCooldownScale:1.08,
-      commentIntervalScale:1.18,
-      commentDropChance:0.02,
-      commentLaneMax:3,
-      specialCommentLaneMax:3,
-      superchatMinGapMs:900,
-      videoPreload:'metadata',
-      fxResolutionScale:0.44,
-      transformPositionThreshold:0.68,
-      transformAngleThreshold:0.04,
-      motionThreshold:0.07,
-      motionAngularThreshold:0.03,
-      newBodyVisualMs:220,
-      backgroundWatchdogInterval:1.6,
-      bgmNormalVolume:0.28,
-      bgmHyperVolume:0.34
-    });
-
-    const PERF_PRESET_MOBILE = Object.freeze({
-      ...PERF_PRESET_DEFAULT,
-      mobileLowPower:true,
       physicsFps:36,
       runnerMaxUpdates:2,
       logicFrameMs:30,
-      scanInterval:0.78,
-      visualInterval:1 / 30,
-      uiInterval:0.72,
-      cleanupInterval:1.8,
-      rescueInterval:0.96,
-      boardStatsCacheMs:1700,
-      particleBudget:10,
-      particleScale:0.22,
-      particleFadeRate:2.04,
-      particleLife:0.78,
-      particleSizeScale:0.92,
-      ringBudget:8,
-      minorRingThreshold:24,
-      majorRingThreshold:120,
-      popTextMax:4,
-      popTextMinGapMs:65,
-      popTextScale:0.94,
-      commentCooldownScale:1.22,
-      commentIntervalScale:1.45,
-      commentDropChance:0.08,
+      scanInterval:0.82,
+      visualInterval:1 / 28,
+      uiInterval:0.84,
+      cleanupInterval:2.05,
+      rescueInterval:0.72,
+      freezeCheckInterval:0.42,
+      freezeSettleMs:980,
+      freezeLinearThreshold:0.028,
+      freezeAngularThreshold:0.018,
+      freezeWakePad:16,
+      boardStatsCacheMs:2200,
+      particleBudget:6,
+      particleScale:0.18,
+      particleFadeRate:2.05,
+      particleLife:0.64,
+      particleSizeScale:0.84,
+      ringBudget:5,
+      minorRingThreshold:40,
+      majorRingThreshold:150,
+      popTextMax:3,
+      popTextMinGapMs:90,
+      popTextScale:0.9,
+      commentCooldownScale:1.46,
+      commentIntervalScale:1.9,
+      commentDropChance:0.12,
       commentLaneMax:2,
       specialCommentLaneMax:2,
-      superchatMinGapMs:1500,
-      fxResolutionScale:0.34,
-      transformPositionThreshold:0.9,
-      transformAngleThreshold:0.06,
-      motionThreshold:0.1,
-      motionAngularThreshold:0.05,
+      superchatMinGapMs:1200,
+      videoPreload:'metadata',
+      fxResolutionScale:0.36,
+      transformPositionThreshold:1.05,
+      transformAngleThreshold:0.08,
+      motionThreshold:0.12,
+      motionAngularThreshold:0.06,
       newBodyVisualMs:260,
-      backgroundWatchdogInterval:2.2,
+      backgroundWatchdogInterval:2.8,
       bgmNormalVolume:0.24,
       bgmHyperVolume:0.28
     });
@@ -2956,27 +3074,11 @@ const PERF_PRESET_DEFAULT = Object.freeze({
     let activePopTextCount = 0;
     let lastPopTextAt = 0;
     let lastSuperchatBannerAt = 0;
+    let lastSuperchatTier = 0;
     let pauseRequestedByVisibility = false;
 
     function detectPerformanceProfile() {
-      const ua = navigator.userAgent || '';
-      const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
-      const touchPoints = Number(navigator.maxTouchPoints || 0);
-      const narrowViewport = Math.min(window.innerWidth || 9999, window.innerHeight || 9999) <= 900;
-      const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-      const lowRam = Number.isFinite(Number(navigator.deviceMemory)) && Number(navigator.deviceMemory) <= 4;
-      const lowCpu = Number.isFinite(Number(navigator.hardwareConcurrency)) && Number(navigator.hardwareConcurrency) <= 6;
-      const mobileLike = mobileUa || coarsePointer || touchPoints >= 2 || narrowViewport;
-      if (!mobileLike) return { ...PERF_PRESET_DEFAULT };
-      return {
-        ...PERF_PRESET_MOBILE,
-        runnerMaxUpdates: lowRam || lowCpu ? 1 : PERF_PRESET_MOBILE.runnerMaxUpdates,
-        visualInterval: lowRam || lowCpu ? (1 / 24) : PERF_PRESET_MOBILE.visualInterval,
-        fxResolutionScale: lowRam || lowCpu ? 0.28 : PERF_PRESET_MOBILE.fxResolutionScale,
-        particleBudget: lowRam || lowCpu ? 8 : PERF_PRESET_MOBILE.particleBudget,
-        ringBudget: lowRam || lowCpu ? 6 : PERF_PRESET_MOBILE.ringBudget,
-        boardStatsCacheMs: lowRam || lowCpu ? 1900 : PERF_PRESET_MOBILE.boardStatsCacheMs
-      };
+      return { ...PERF_PRESET_DEFAULT };
     }
 
     function resolveAudioAsset(path) {
@@ -3005,25 +3107,23 @@ const PERF_PRESET_DEFAULT = Object.freeze({
     }
 
     function applyMediaProfile() {
-      applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), perfSettings.mobileLowPower ? 'metadata' : 'auto');
-      applyElementSource(dom.bgVideoHype, resolveVideoAsset(dom.bgVideoHype), perfSettings.mobileLowPower ? 'metadata' : 'auto');
+      applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'metadata');
+      applyElementSource(dom.bgVideoHype, resolveVideoAsset(dom.bgVideoHype), 'none');
       if (dom.bgVideo) {
         const bgSrc = resolveVideoAsset(dom.bgVideo);
-        if (bgSrc) applyElementSource(dom.bgVideo, bgSrc, perfSettings.mobileLowPower ? 'none' : 'metadata');
-        if (perfSettings.mobileLowPower) {
-          stopLoopVideo(dom.bgVideo, { reset:false });
-          try { dom.bgVideo.pause?.(); } catch (_) {}
-          dom.bgVideo.style.opacity = '0';
-          dom.bgVideo.style.visibility = 'hidden';
-          dom.bgVideo.style.display = 'none';
-        } else {
-          dom.bgVideo.style.display = 'block';
-          dom.bgVideo.style.visibility = 'visible';
-        }
+        if (bgSrc) applyElementSource(dom.bgVideo, bgSrc, 'metadata');
+        dom.bgVideo.style.display = 'block';
+        dom.bgVideo.style.visibility = 'visible';
       }
-      if (perfSettings.mobileLowPower && dom.bgVideoHype) {
+      if (dom.bgVideoHype) {
         stopLoopVideo(dom.bgVideoHype, { reset:false });
         try { dom.bgVideoHype.pause?.(); } catch (_) {}
+        dom.bgVideoHype.removeAttribute('src');
+        dom.bgVideoHype.dataset.assignedSrc = '';
+        try { dom.bgVideoHype.load?.(); } catch (_) {}
+        dom.bgVideoHype.style.opacity = '0';
+        dom.bgVideoHype.style.visibility = 'hidden';
+        dom.bgVideoHype.style.display = 'none';
       }
       [dom.bgmNormal, dom.bgmHyper, dom.audioMerge, dom.voiceStart, dom.voiceFire, dom.voiceWin, dom.voiceLose].forEach(audio => {
         if (!audio) return;
@@ -3046,7 +3146,6 @@ function applyPerformanceProfile() {
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
       perfSettings = next;
-      document.body.classList.toggle('mobile-bg-lite', !!perfSettings.mobileLowPower);
       applyMediaProfile();
       configureRunnerPerformance();
       return changed;
@@ -3136,7 +3235,7 @@ function applyPerformanceProfile() {
           return commentPack(choice([
             `あと${fmt(crownGap)}で今日の1位！`,
             '大バズり中に王冠を取りたい！',
-            'いまの2倍タイムで決めたい！',
+            'いまの2こ消しタイムで決めたい！',
             ...COMMENT_BANK.crown
           ]), 'super', '👑', nowTopic);
         }
@@ -3144,7 +3243,7 @@ function applyPerformanceProfile() {
           return commentPack(choice([
             `あと1こで${trend.name}がまた消せる！`,
             `${trend.name}を続けて取れそう！`,
-            'この2倍タイムで連続で行きたい！',
+            'この2こ消しタイムで連続で行きたい！',
             ...COMMENT_BANK.bigbuzz
           ]), 'super', '✨', nowTopic);
         }
@@ -3174,7 +3273,7 @@ function applyPerformanceProfile() {
         return commentPack(choice([
           `バズりが${buzzCount}こある！`,
           'あと1こで大バズりに入りたい！',
-          'バズり3こで点が2倍になるよ！',
+          'バズり3こで2こ消しタイムに入るよ！',
           ...COMMENT_BANK.buzzPrep
         ]), 'super', '✨', nowTopic);
       }
@@ -3382,10 +3481,13 @@ function wakeBodiesNearRemoval(removedBodies) {
           const reachUp = Math.max(24, (body.circleRadius || 0) + 10);
           const reachDown = (body.circleRadius || 0) + (spot.circleRadius || 0) + 46;
           if (dx > reachX || dy < -reachUp || dy > reachDown) return false;
+          if (isFrozenBody(body)) thawBody(body, now, { vy:0.2 });
           Sleeping.set(body, false);
           body.floatStartAt = 0;
           body.plugin = body.plugin || {};
           body.plugin.lastActiveAt = now;
+          body.plugin.lastMotionAt = now;
+          body.plugin.restStartAt = 0;
           body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 380);
           markBodyVisualDirty(body);
           markGroupScanDirty(body);
@@ -3760,7 +3862,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v126_bombfire58_physics_perf";
+    const BUILD_ID = "v129_chaincolor_fire2hit_fxraise";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4058,7 +4160,7 @@ function syncBodyVisuals() {
       if (!force && mode === previousMode) return;
       lastBackgroundMode = mode;
       const hype = mode === 'bigbuzz';
-      const allowOuterHypeVideo = !perfSettings.mobileLowPower;
+      const allowOuterHypeVideo = false;
       dom.gameScreen?.classList.toggle('bigbuzz', hype);
       dom.gameShell?.classList.toggle('bigbuzz', hype);
       if (dom.boardBgVideoHype) {
@@ -4077,11 +4179,11 @@ function syncBodyVisuals() {
       } else if (mode === 'bigbuzz') {
         primeBigBuzzVisuals();
         if (dom.boardBgVideoHype) {
-          applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), perfSettings.mobileLowPower ? 'metadata' : 'auto');
-          setupLoopVideo(dom.boardBgVideoHype, perfSettings.mobileLowPower ? 'metadata' : 'auto');
-          playLoopVideo(dom.boardBgVideoHype, { reset:previousMode !== 'bigbuzz', preload:perfSettings.mobileLowPower ? 'metadata' : 'auto' });
-          setTimeout(() => playLoopVideo(dom.boardBgVideoHype, { preload:perfSettings.mobileLowPower ? 'metadata' : 'auto' }), 120);
-          setTimeout(() => playLoopVideo(dom.boardBgVideoHype, { preload:perfSettings.mobileLowPower ? 'metadata' : 'auto' }), 420);
+          applyElementSource(dom.boardBgVideoHype, resolveVideoAsset(dom.boardBgVideoHype), 'metadata');
+          setupLoopVideo(dom.boardBgVideoHype, 'metadata');
+          playLoopVideo(dom.boardBgVideoHype, { reset:previousMode !== 'bigbuzz', preload:'metadata' });
+          setTimeout(() => playLoopVideo(dom.boardBgVideoHype, { preload:'metadata' }), 120);
+          setTimeout(() => playLoopVideo(dom.boardBgVideoHype, { preload:'metadata' }), 420);
         }
         if (dom.bgVideoHype) {
           if (allowOuterHypeVideo) {
@@ -4110,14 +4212,14 @@ function syncBodyVisuals() {
       if (document.hidden || state.paused) return;
       const mode = currentBackgroundMode();
       if (mode === 'bigbuzz') {
-        if (dom.boardBgVideoHype?.paused) playLoopVideo(dom.boardBgVideoHype, { preload:perfSettings.mobileLowPower ? 'metadata' : 'auto' });
-        if (!perfSettings.mobileLowPower && dom.bgVideoHype?.paused) playLoopVideo(dom.bgVideoHype, { preload:'auto' });
+        if (dom.boardBgVideoHype?.paused) playLoopVideo(dom.boardBgVideoHype, { preload:'metadata' });
       }
     }
 
     function setTitleBackgroundActive(active = true) {
       titleBackgroundActive = !!active;
       if (!active) { /* delayed bigbuzz video setup */ }
+      state.lastFullGroupScanAt = 0;
       updateBackgroundState(true);
     }
 
@@ -4228,7 +4330,7 @@ function syncBodyVisuals() {
       return played;
     }
 
-    function showBigBuzzBanner(text = '大バズリ!!', sub = 'ポイント×２') {
+    function showBigBuzzBanner(text = '大バズリ!!', sub = '2こで消える') {
       if (!dom.bigBuzzBanner) return;
       const title = dom.bigBuzzBanner.querySelector('.title');
       const subtitle = dom.bigBuzzBanner.querySelector('.sub');
@@ -5138,15 +5240,42 @@ function syncBodyVisuals() {
     }
 
     const SUPERCHAT_CHAIN_THEME = {
-      1:{ border:'#2b7cff', fill:'rgba(43,124,255,.92)' },
-      2:{ border:'#63e6ff', fill:'rgba(99,230,255,.92)' },
-      3:{ border:'#b8ff52', fill:'rgba(184,255,82,.92)' },
-      4:{ border:'#ffe35a', fill:'rgba(255,227,90,.92)' },
-      5:{ border:'#ffab47', fill:'rgba(255,171,71,.92)' },
-      6:{ border:'#ff5ce6', fill:'rgba(255,92,230,.92)' },
-      7:{ border:'#ff5b73', fill:'rgba(255,91,115,.92)' }
+      1:{ border:'#2b7cff', fill:'rgba(43,124,255,.92)', glow:'#7ab5ff', accent:'#eef5ff' },
+      2:{ border:'#63e6ff', fill:'rgba(99,230,255,.92)', glow:'#9af1ff', accent:'#effcff' },
+      3:{ border:'#58ff8d', fill:'rgba(88,255,141,.90)', glow:'#b7ffd0', accent:'#f4fff7' },
+      4:{ border:'#ffe35a', fill:'rgba(255,227,90,.92)', glow:'#fff0a3', accent:'#fffbea' },
+      5:{ border:'#ffab47', fill:'rgba(255,171,71,.92)', glow:'#ffd08d', accent:'#fff5ea' },
+      6:{ border:'#ff5ce6', fill:'rgba(255,92,230,.92)', glow:'#ffb6f6', accent:'#fff0fe' },
+      7:{ border:'#ff4d4d', fill:'rgba(255,77,77,.94)', glow:'#ffb3b3', accent:'#fff3f3' }
     };
     const SUPERCHAT_CHAIN_MESSAGES = ["ありがとう！","今のナイス！","そのままいこう！","見てて楽しい！","いい流れ！","すごく上手！","次も見たい！","がんばれ！"];
+
+    function chainTierPresentation(chainTier = 1, comboCount = 1) {
+      const actualChain = Math.max(1, Math.floor(chainTier || 1));
+      const tier = actualChain <= 1 ? 1 : clamp(actualChain - 1, 1, 7);
+      const comboTier = clamp(Math.max(1, Math.floor(comboCount || 1)), 1, 10);
+      const theme = SUPERCHAT_CHAIN_THEME[tier] || SUPERCHAT_CHAIN_THEME[1];
+      const redSuper = actualChain >= 8;
+      return {
+        tier,
+        actualChain,
+        comboTier,
+        theme,
+        primary:theme.border,
+        secondary:redSuper ? '#fff0a3' : theme.glow,
+        amountColor:theme.accent,
+        label:redSuper ? '赤スパ!' : `${actualChain}連鎖!`,
+        subLabel:redSuper ? 'RED SUPER CHAT!!' : `${actualChain} CHAIN!`,
+        bannerScale:0.8 + Math.min(1.08, (tier - 1) * 0.14) + Math.min(0.3, (comboTier - 1) * 0.03),
+        amountScale:1 + Math.min(1.42, (tier - 1) * 0.18) + Math.min(0.26, (comboTier - 1) * 0.026),
+        messageScale:1 + Math.min(1.1, (tier - 1) * 0.13) + Math.min(0.22, (comboTier - 1) * 0.02),
+        particleCount:14 + tier * 3,
+        ringRadius:18 + tier * 5,
+        ringSpeed:220 + tier * 34,
+        textSize:22 + tier * 2,
+        chainSize:redSuper ? 32 : (24 + tier * 2)
+      };
+    }
 
     function showFireBanner(text = '大炎上!!') {
       if (!dom.fireBanner) return;
@@ -5159,37 +5288,50 @@ function syncBodyVisuals() {
       state.fireBannerTimer = setTimeout(() => dom.fireBanner?.classList.remove('show'), 4080);
     }
 
-    function showSuperchatBanner(chainTier, gain, comboCount = 1) {
+    function showSuperchatBanner(chainTier, gain, comboCount = 1, options = {}) {
       if (!dom.superchatBanner) return;
       const now = performance.now();
-      if (now - lastSuperchatBannerAt < (perfSettings.superchatMinGapMs || 0)) return;
+      const view = chainTierPresentation(chainTier, comboCount);
+      const force = !!options.force;
+      const tierImproved = view.tier > (lastSuperchatTier || 0);
+      if (!force && !tierImproved && now - lastSuperchatBannerAt < (perfSettings.superchatMinGapMs || 0)) return;
       lastSuperchatBannerAt = now;
-      const tier = clamp(Math.max(1, Math.floor(chainTier || 1)), 1, 7);
-      const comboTier = clamp(Math.max(1, Math.floor(comboCount || 1)), 1, 10);
-      const theme = SUPERCHAT_CHAIN_THEME[tier] || SUPERCHAT_CHAIN_THEME[1];
+      lastSuperchatTier = view.tier;
       const card = dom.superchatBanner.querySelector('.card');
       const amount = dom.superchatBanner.querySelector('.amount');
       const message = dom.superchatBanner.querySelector('.message');
-      const scale = 0.72 + Math.min(1.02, (tier - 1) * 0.13) + Math.min(0.26, (comboTier - 1) * 0.024);
+      dom.superchatBanner.dataset.chainTier = String(view.tier);
+      dom.superchatBanner.style.filter = `drop-shadow(0 0 ${12 + view.tier * 5}px ${view.theme.border}66)`;
       if (card) {
-        card.style.borderColor = theme.border;
-        card.style.boxShadow = `0 0 0 1px ${theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${26 + comboTier * 5}px ${theme.fill}`;
-        card.style.transform = `scale(${scale})`;
+        const glowPx = 26 + view.tier * 7 + view.comboTier * 3;
+        card.style.borderColor = view.theme.border;
+        card.style.background = `linear-gradient(180deg, ${view.theme.fill.replace(/\.9\d\)/, '.28)')}, rgba(18,10,30,.92) 68%)`;
+        card.style.boxShadow = `0 0 0 1px ${view.theme.border}44, 0 18px 44px rgba(0,0,0,.34), 0 0 ${glowPx}px ${view.theme.fill}`;
+        card.style.transform = `scale(${view.bannerScale})`;
       }
       if (amount) {
         amount.textContent = `+${fmt(Math.max(0, Math.round(gain || 0)))}`;
-        amount.style.color = theme.border;
-        amount.style.fontSize = `${(0.76 + Math.min(1.18, (tier - 1) * 0.16) + Math.min(0.28, (comboTier - 1) * 0.026)) * 2}rem`;
+        amount.style.color = view.amountColor;
+        amount.style.fontSize = `${(0.78 + view.amountScale * 0.52) * 2}rem`;
+        amount.style.textShadow = `0 0 ${10 + view.tier * 4}px ${view.theme.border}`;
       }
       if (message) {
-        message.textContent = choice(SUPERCHAT_CHAIN_MESSAGES);
-        message.style.fontSize = `${0.82 + Math.min(1.34, (tier - 1) * 0.18) + Math.min(0.28, (comboTier - 1) * 0.024)}rem`;
+        const chainText = view.actualChain >= 8 ? '赤スパ固定!' : `${view.actualChain}連鎖でスパチャ強化!`;
+        message.textContent = force ? `${view.label} ${chainText}` : choice(SUPERCHAT_CHAIN_MESSAGES);
+        message.style.color = view.theme.accent;
+        message.style.fontSize = `${0.84 + view.messageScale * 0.42}rem`;
+        message.style.textShadow = `0 0 ${6 + view.tier * 2}px ${view.theme.border}88`;
       }
       dom.superchatBanner.classList.remove('show');
       void dom.superchatBanner.offsetWidth;
       dom.superchatBanner.classList.add('show');
       clearTimeout(state.superchatBannerTimer);
-      state.superchatBannerTimer = setTimeout(() => dom.superchatBanner?.classList.remove('show'), (4000 + tier * 520 + comboTier * 150) * 2);
+      state.superchatBannerTimer = setTimeout(() => {
+        if (dom.superchatBanner) {
+          dom.superchatBanner.classList.remove('show');
+          if (lastSuperchatTier === view.tier) lastSuperchatTier = 0;
+        }
+      }, Math.round((2600 + view.tier * 420 + view.comboTier * 120) * (force ? 1.18 : 1)));
     }
 
     
@@ -5207,7 +5349,7 @@ function makeBody(x, y, index, specialType = false) {
         frictionStatic:0.008,
         frictionAir:0.0032,
         density:isBomb ? 0.00245 : (isFire ? 0.00255 : (isBuzz ? 0.0022 : 0.002)),
-        slop:0.009,
+        slop:0.0045,
         label:isBomb ? 'hazard' : (isFire ? 'fire' : (isBuzz ? 'buzz' : 'content')),
         render:{
           opacity,
@@ -5218,9 +5360,14 @@ function makeBody(x, y, index, specialType = false) {
       body.contentIndex = index;
       body.spawnAt = performance.now();
       body.displayScale = scale;
-      body.sleepThreshold = isBomb ? 24 : (isFire ? 22 : (isBuzz ? 20 : 18));
+      body.sleepThreshold = isBomb ? 24 : (isFire ? 22 : (isBuzz ? 21 : 20));
       body.plugin = body.plugin || {};
       body.plugin.highPrecisionUntil = performance.now() + (isBomb ? 900 : (isFire ? 840 : (isBuzz ? 820 : 760)));
+      body.plugin.lastMotionAt = body.spawnAt;
+      body.plugin.restStartAt = 0;
+      body.plugin.frozen = false;
+      body.plugin.fireScale = isFire ? 1 : null;
+      body.plugin.adjacentClearHits = isFire ? 0 : null;
       requestHighPrecisionPhysics(isBomb ? 900 : 760);
       Composite.add(engine.world, body);
       registerLiveBody(body);
@@ -5399,6 +5546,10 @@ function rescueFloatingBodies() {
           continue;
         }
         if (!body.floatStartAt) body.floatStartAt = body.isSleeping ? (now - 140) : now;
+        if (isFrozenBody(body)) {
+          thawBody(body, now, { vy:0.62 });
+          body.floatStartAt = now - 24;
+        }
         if (body.isSleeping) {
           Sleeping.set(body, false);
           Body.setVelocity(body, {
@@ -5407,10 +5558,12 @@ function rescueFloatingBodies() {
           });
           body.plugin = body.plugin || {};
           body.plugin.lastActiveAt = now;
+          body.plugin.lastMotionAt = now;
+          body.plugin.restStartAt = 0;
           body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 420);
           requestHighPrecisionPhysics(420);
         }
-        if (now - body.floatStartAt < 24) continue;
+        if (now - body.floatStartAt < 14) continue;
         requestHighPrecisionPhysics(420);
         repairBodyPosition(body, boardWidth, boardHeight, 'floating-rescue');
         body.floatStartAt = now;
@@ -5444,14 +5597,14 @@ function rescueFloatingBodies() {
           if (distSq >= minDist * minDist) return false;
           const dist = Math.sqrt(Math.max(0.0001, distSq));
           const overlap = minDist - dist;
-          if (overlap < 4.5) return false;
+          if (overlap < 2.6) return false;
           let nx = dx / dist;
           let ny = dy / dist;
           if (!Number.isFinite(nx) || !Number.isFinite(ny)) {
             nx = 0;
             ny = 1;
           }
-          const push = Math.min(9, overlap * 0.52);
+          const push = Math.min(11, overlap * 0.68);
           const bodyIsUpper = body.position.y <= other.position.y;
           const bodyShare = bodyIsUpper ? 0.72 : 0.28;
           const otherShare = 1 - bodyShare;
@@ -5463,6 +5616,8 @@ function rescueFloatingBodies() {
             x: clamp(other.position.x + nx * push * otherShare, (other.circleRadius || 0) + 2, boardWidth - (other.circleRadius || 0) - 2),
             y: clamp(other.position.y + ny * push * otherShare, (other.circleRadius || 0) + 2, boardHeight - (other.circleRadius || 0) - 2)
           };
+          if (isFrozenBody(body)) thawBody(body, now, { vy:0.18 });
+          if (isFrozenBody(other)) thawBody(other, now, { vy:0.12 });
           Body.setPosition(body, nextA);
           Body.setPosition(other, nextB);
           Sleeping.set(body, false);
@@ -5491,7 +5646,7 @@ function rescueFloatingBodies() {
           return false;
         });
       }
-      if (corrected > 0) requestHighPrecisionPhysics(340);
+      if (corrected > 0) requestHighPrecisionPhysics(420);
       return corrected;
     }
 
@@ -5601,6 +5756,13 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null) {
 
 
     function scanGroups() {
+      if (state.clipTime > 0) {
+        const preview = [];
+        for (let idx = 0; idx < CONTENTS.length; idx += 1) preview.push(...buildTouchGroupsForIndex(idx));
+        state.previewGroups = preview.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
+        state.nextPreviewGroups = [];
+        return preview.filter(g => g.length >= 2 && g.every(body => body.speed < 4.2));
+      }
       const groups = buildTouchGroupsForIndex(state.trendIndex);
       state.previewGroups = groups.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
       const nextGroups = buildTouchGroupsForIndex(state.nextTrendIndex);
@@ -5640,23 +5802,38 @@ function scanAllClearableGroups() {
       const periodicFullScan = now - (state.lastFullGroupScanAt || 0) > 2.4 * 1000;
       const tooManySeeds = seedBodies.length >= Math.max(12, (state.liveBodies?.length || 0) * 0.45);
       const groups = [];
+      const bigBuzzPairs = state.clipTime > 0;
+      const contentMinLen = bigBuzzPairs ? 2 : 3;
       if (!seedBodies.length && !periodicFullScan) {
         return groups;
       }
-      if (!seedBodies.length || periodicFullScan || tooManySeeds) {
+      const scanAllContent = !seedBodies.length || periodicFullScan || tooManySeeds;
+      if (bigBuzzPairs) {
+        if (scanAllContent) {
+          for (let idx = 0; idx < CONTENTS.length; idx += 1) groups.push(...buildTouchGroupsForIndex(idx));
+        } else {
+          const contentIndices = Array.from(new Set(seedBodies.filter(body => body?.gameType === 'content').map(body => body.contentIndex).filter(Number.isInteger)));
+          for (const idx of contentIndices) groups.push(...buildTouchGroupsForIndex(idx, seedBodies));
+        }
+      } else if (scanAllContent) {
         groups.push(...buildTouchGroupsForIndex(state.trendIndex));
+      } else {
+        groups.push(...buildTouchGroupsForIndex(state.trendIndex, seedBodies));
+      }
+      if (scanAllContent) {
         groups.push(...buildTouchGroupsForType('hazard'));
         groups.push(...buildTouchGroupsForType('buzz'));
         state.lastFullGroupScanAt = now;
       } else {
-        groups.push(...buildTouchGroupsForIndex(state.trendIndex, seedBodies));
         groups.push(...buildTouchGroupsForType('hazard', null, seedBodies));
         groups.push(...buildTouchGroupsForType('buzz', null, seedBodies));
       }
       state.groupScanDirtyIds?.clear();
       return groups.filter(g => {
-        const special = g[0]?.gameType === 'hazard' || g[0]?.gameType === 'buzz';
-        return g.length >= 3 && g.every(body => body.speed < (special ? 6.4 : 4.8));
+        const type = g[0]?.gameType;
+        const special = type === 'hazard' || type === 'buzz';
+        const minLen = special ? 3 : contentMinLen;
+        return g.length >= minLen && g.every(body => body.speed < (special ? 6.4 : 4.8));
       });
     }
 
@@ -5740,14 +5917,65 @@ function scanAllClearableGroups() {
 
     function collectAdjacentFireBodies(seedBodies = []) {
       if (!seedBodies.length) return [];
-      const allowFireCascade = seedBodies.some(body => {
-        const type = body?.gameType || 'content';
-        return type !== 'hazard' && type !== 'buzz';
-      });
-      if (!allowFireCascade) return [];
       const fireBodies = worldBodiesByType('fire').filter(body => state.liveBodyIds?.has(body.id) && !body.plugin?.pendingRemoval);
       if (!fireBodies.length) return [];
       return fireBodies.filter(fire => seedBodies.some(body => touching(fire, body)));
+    }
+
+
+    function syncBodyVisualSize(body) {
+      if (!body) return;
+      const radius = body.circleRadius || contentBodyRadius(body.contentIndex, body.gameType);
+      const diameter = visualDiameter(radius, body.gameType);
+      const node = ensureBodyVisual(body);
+      if (node) {
+        node._diameter = diameter;
+        node.style.width = `${diameter}px`;
+        node.style.height = `${diameter}px`;
+      }
+      markBodyVisualDirty(body);
+      markGroupScanDirty(body);
+      state.forceFullVisualSync = true;
+    }
+
+    function weakenFireBody(body, now = performance.now()) {
+      if (!body || body.gameType !== 'fire' || body.plugin?.pendingRemoval) return false;
+      body.plugin = body.plugin || {};
+      const currentScale = Number.isFinite(body.plugin.fireScale) ? body.plugin.fireScale : 1;
+      const targetScale = 0.75;
+      if (Math.abs(currentScale - targetScale) <= 0.001) return false;
+      const scaleFactor = clamp(targetScale / Math.max(0.0001, currentScale), 0.2, 1.2);
+      if (!Number.isFinite(scaleFactor) || scaleFactor <= 0) return false;
+      if (isFrozenBody(body)) thawBody(body, now, { vy:Math.max(0.04, body.velocity?.y || 0.04) });
+      Sleeping.set(body, false);
+      Body.scale(body, scaleFactor, scaleFactor);
+      body.plugin.fireScale = targetScale;
+      body.plugin.lastActiveAt = now;
+      body.plugin.lastMotionAt = now;
+      body.plugin.restStartAt = 0;
+      body.plugin.highPrecisionUntil = Math.max(body.plugin.highPrecisionUntil || 0, now + 320);
+      syncBodyVisualSize(body);
+      return true;
+    }
+
+    function processAdjacentFireBodies(adjacentFire = []) {
+      const unique = Array.from(new Map((adjacentFire || []).filter(Boolean).map(body => [body.id, body])).values());
+      const weakened = [];
+      const cleared = [];
+      if (!unique.length) return { weakened, cleared };
+      const now = performance.now();
+      for (const fire of unique) {
+        fire.plugin = fire.plugin || {};
+        const nextHits = Math.max(0, Math.floor(fire.plugin.adjacentClearHits || 0)) + 1;
+        fire.plugin.adjacentClearHits = nextHits;
+        if (nextHits >= 2) {
+          cleared.push(fire);
+          continue;
+        }
+        if (weakenFireBody(fire, now)) weakened.push(fire);
+      }
+      if (cleared.length) hardRemoveBodies(cleared);
+      return { weakened, cleared };
     }
 
     function comboScoreValue(comboCount = 1) {
@@ -5757,12 +5985,11 @@ function scanAllClearableGroups() {
 
     function applyComboGain({ center, accent = '#ffffff', chainTier = 1, comboCount = 1, noteText = '', baseOnly = false } = {}) {
       const baseGain = comboScoreValue(comboCount);
-      const multiplier = state.clipTime > 0 ? 2 : 1;
-      const gain = Math.round(baseGain * multiplier);
+      const gain = Math.round(baseGain);
       state.score += gain;
       if (center) {
         popText(center.x, center.y, `+${fmt(gain)}`, accent, comboCount >= 4 ? 30 : 24);
-        if (state.clipTime > 0) popText(center.x, center.y + 42, '大バズり中 2倍', '#fff0a3', 18);
+        if (state.clipTime > 0) popText(center.x, center.y + 42, '大バズり中 2こ消し', '#fff0a3', 18);
         if (noteText) popText(center.x, center.y - 42, noteText, '#ffffff', 18);
       }
       showSuperchatBanner(chainTier, gain, comboCount);
@@ -5781,8 +6008,8 @@ function scanAllClearableGroups() {
       center.x /= group.length;
       center.y /= group.length;
       const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
-      hardRemoveBodies(removed);
+      hardRemoveBodies(group);
+      const fireResult = processAdjacentFireBodies(adjacentFire);
       state.boardStatsCache = null;
       state.clearCount += 1;
       state.heat = clamp(state.heat + 20, 0, 100);
@@ -5797,7 +6024,12 @@ function scanAllClearableGroups() {
         addRing(body.position.x, body.position.y, '#ffd84c', 22, 240);
         addRing(body.position.x, body.position.y, '#ff6f3d', 32, 300);
       }
-      for (const body of adjacentFire) {
+      for (const body of fireResult.weakened) {
+        addParticles(body.position.x, body.position.y, 'rgba(255,150,170,.78)', 8, 4.9);
+        addRing(body.position.x, body.position.y, '#ff8fa8', 14, 180);
+        popText(body.position.x, body.position.y - 16, '炎上弱体化', '#ffd3dc', 16);
+      }
+      for (const body of fireResult.cleared) {
         addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
         addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
       }
@@ -5806,10 +6038,11 @@ function scanAllClearableGroups() {
       flashScreen('#ff7b5b');
       popText(center.x, center.y - 18, 'BOMB!!', '#fff4a3', 32);
       playAssetSfx('bomb_clear', 0.98);
-      const gain = Math.round((state.clipTime > 0 ? 2400 : 1200));
+      const gain = 1200;
       state.score += gain;
       popText(center.x, center.y + 24, `+${fmt(gain)}`, '#ffd84c', 24);
-      if (adjacentFire.length) popText(center.x, center.y + 64, `炎まきこみ x${adjacentFire.length}`, '#ffb7c5', 18);
+      if (fireResult.cleared.length) popText(center.x, center.y + 64, `炎消し x${fireResult.cleared.length}`, '#ffb7c5', 18);
+      if (fireResult.weakened.length) popText(center.x, center.y + 92, `炎弱体化 x${fireResult.weakened.length}`, '#ffd3dc', 17);
       spawnComment(false, `爆弾が${group.length}こつながって大炎上！`, 'low', '💣');
       triggerFire('bomb_chain');
       const fireCount = 5 + Math.floor(rand() * 4);
@@ -5817,7 +6050,7 @@ function scanAllClearableGroups() {
       popText(dom.board.clientWidth / 2, dom.board.clientHeight * 0.34, '大炎上!!', '#fff0f0', 42);
       showFireBanner();
       spawnComment(false, `炎アイテムが${dropped}こ落ちてきた！`, 'low', '🔥');
-      if (adjacentFire.length) state.fireMode = Math.max(state.fireMode, 999);
+      if (fireResult.cleared.length || fireResult.weakened.length) state.fireMode = Math.max(state.fireMode, 999);
       return gain;
     }
 
@@ -5831,8 +6064,8 @@ function scanAllClearableGroups() {
       center.x /= group.length;
       center.y /= group.length;
       const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
-      hardRemoveBodies(removed);
+      hardRemoveBodies(group);
+      const fireResult = processAdjacentFireBodies(adjacentFire);
       state.boardStatsCache = null;
       state.clearCount += 1;
       state.tension = clamp(state.tension + 14, 0, 100);
@@ -5845,7 +6078,12 @@ function scanAllClearableGroups() {
         addRing(body.position.x, body.position.y, '#ffe37a', 24, 260);
         addRing(body.position.x, body.position.y, '#ff63d6', 34, 300);
       }
-      for (const body of adjacentFire) {
+      for (const body of fireResult.weakened) {
+        addParticles(body.position.x, body.position.y, 'rgba(255,150,170,.78)', 8, 4.9);
+        addRing(body.position.x, body.position.y, '#ff8fa8', 14, 180);
+        popText(body.position.x, body.position.y - 16, '炎上弱体化', '#ffd3dc', 16);
+      }
+      for (const body of fireResult.cleared) {
         addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
         addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
       }
@@ -5860,7 +6098,11 @@ function scanAllClearableGroups() {
       spawnComment(false, 'バズりが3こつながって大バズりスタート！', 'super', '✨');
       triggerVoiceCue('hype', 2, { force:true });
       activateClipTime('buzz_item');
-      if (adjacentFire.length) popText(center.x, center.y + 96, `炎まきこみ x${adjacentFire.length}`, '#ffb7c5', 18);
+      if (fireResult.cleared.length) popText(center.x, center.y + 96, `炎消し x${fireResult.cleared.length}`, '#ffb7c5', 18);
+      if (fireResult.weakened.length) popText(center.x, center.y + 126, `炎弱体化 x${fireResult.weakened.length}`, '#ffd3dc', 17);
+      if (state.fireMode > 0 && !worldBodiesByType('fire').length) {
+        handleFireResolved('clear');
+      }
       return gain;
     }
 
@@ -5885,8 +6127,8 @@ function scanAllClearableGroups() {
       center.y /= group.length;
 
       const adjacentFire = collectAdjacentFireBodies(group);
-      const removed = Array.from(new Map([...group, ...adjacentFire].map(body => [body.id, body])).values());
-      hardRemoveBodies(removed);
+      hardRemoveBodies(group);
+      const fireResult = processAdjacentFireBodies(adjacentFire);
       state.boardStatsCache = null;
       const sameDropCascade = state.currentChainDropSerial === state.dropSerial && state.chainDecay > 0;
       state.chainCount = sameDropCascade ? state.chainCount + 1 : 1;
@@ -5909,16 +6151,31 @@ function scanAllClearableGroups() {
       addParticles(center.x, center.y, accent, 18, 7.4);
       addRing(center.x, center.y, accent, 18, state.clipTime > 0 ? 280 : 200);
       flashScreen(accent);
-      if (adjacentFire.length) {
-        adjacentFire.forEach(body => {
+      if (fireResult.weakened.length) {
+        fireResult.weakened.forEach(body => {
+          addParticles(body.position.x, body.position.y, 'rgba(255,150,170,.78)', 8, 4.9);
+          addRing(body.position.x, body.position.y, '#ff8fa8', 14, 180);
+          popText(body.position.x, body.position.y - 16, '炎上弱体化', '#ffd3dc', 16);
+        });
+        popText(center.x, center.y + 66, `炎弱体化 x${fireResult.weakened.length}`, '#ffd3dc', 18);
+      }
+      if (fireResult.cleared.length) {
+        fireResult.cleared.forEach(body => {
           addParticles(body.position.x, body.position.y, 'rgba(255,110,120,.88)', 10, 5.8);
           addRing(body.position.x, body.position.y, '#ff5b73', 18, 220);
         });
-        popText(center.x, center.y + 66, `炎まきこみ x${adjacentFire.length}`, '#ffb7c5', 18);
+        popText(center.x, center.y + 96, `炎消し x${fireResult.cleared.length}`, '#ffb7c5', 18);
       }
+      const chainFx = chainTierPresentation(chainTier, state.combo);
       const gain = applyComboGain({ center, accent, chainTier, comboCount:state.combo, noteText:state.combo >= 2 ? `COMBO x${state.combo}` : '' });
-      if (chainTier >= 2) popText(center.x, center.y - 78, `${chainTier}連鎖`, '#ffb7ff', 22);
-      if (state.clipTime > 0) spawnComment(false, '大バズり中！いまは点が2倍！', 'super', '✨');
+      if (chainTier >= 2) {
+        addParticles(center.x, center.y, chainFx.primary, chainFx.particleCount, 8.2 + chainTier * 0.35);
+        addParticles(center.x, center.y, chainFx.secondary, Math.max(8, chainFx.particleCount - 5), 7.2 + chainTier * 0.24);
+        addRing(center.x, center.y, chainFx.primary, chainFx.ringRadius, chainFx.ringSpeed);
+        addRing(center.x, center.y, chainFx.secondary, chainFx.ringRadius + 18 + chainTier * 2, chainFx.ringSpeed + 56);
+        popText(center.x, center.y - 78, chainFx.label, chainFx.primary, chainFx.textSize);
+      }
+      if (state.clipTime > 0) spawnComment(false, '大バズり中！いまは2こで消える！', 'super', '✨');
       const topGapAfter = Math.max(0, crownTargetScore(state.seed) - Math.floor(state.score));
       const tookCrown = topGapBefore > 0 && topGapAfter <= 0 && crownTargetScore(state.seed) > 0;
 
@@ -5937,13 +6194,13 @@ function scanAllClearableGroups() {
       }
 
       if (chainTier >= 2) {
-        popText(center.x, center.y - 78, `${chainTier}連鎖`, '#ffb7ff', 22);
         if (chainTier >= 4) {
-          popText(center.x, center.y + 88, `${chainTier} CHAIN!`, '#fff0ff', 24);
-          spawnComment(false, '連鎖つづいてる！', 'super', '💥');
+          popText(center.x, center.y + 88, chainFx.subLabel, chainFx.secondary, chainFx.chainSize);
+          spawnComment(false, chainTier >= 8 ? '赤スパ固定まで来た！' : '連鎖つづいてる！', 'super', chainTier >= 8 ? '🟥' : '💥');
           triggerVoiceCue('chain', chainTier);
         }
-        playChainTierSfx(chainTier, Math.min(1, 0.84 + chainTier * 0.03));
+        showSuperchatBanner(chainTier, gain, state.combo, { force:true });
+        playChainTierSfx(chainTier, Math.min(1, 0.9 + chainTier * 0.035));
       } else if (state.combo >= 4) {
         triggerVoiceCue('big', state.combo);
         playAssetSfx('big', Math.min(1, 0.9 + state.combo * 0.04));
@@ -6096,6 +6353,7 @@ function initEngine() {
       state.uiTimer = 0;
       state.cleanupTimer = 0;
       state.rescueTimer = 0;
+      state.freezeTimer = 0;
       state.fxNeedsClear = false;
       state.backgroundWatchdogTimer = 0;
       state.boardStatsCache = null;
@@ -6113,6 +6371,7 @@ function initEngine() {
       state.shiftGlowIds = [];
       state.shiftGlowTimer = 0;
       state.finishing = false;
+      lastSuperchatTier = 0;
       state.paused = false;
       state.resultVoicePlayed = false;
       avatarLockUntil = 0;
@@ -6135,12 +6394,13 @@ function initEngine() {
       state.clipTime = Math.max(state.clipTime, fresh ? 15 : state.clipTime + 3.5);
       state.clipCooldown = 999;
       if (fresh) state.clipActivations += 1;
-      setCaption(reason === 'buzz_item' ? 'バズりが3つつながって大バズリスタート！しばらくポイントが2倍。' : '大バズリ中！いまはポイントが2倍。', 2.6);
+      setCaption(reason === 'buzz_item' ? 'バズりが3つつながって大バズリスタート！15秒間、ふつうのアイテムは2こで消える。' : '大バズリ中！いまはふつうのアイテムが2こで消える。', 2.6);
       spawnComment(false, reason === 'buzz_item' ? 'バズり3こで大バズリ！' : '大バズリつづき中！', 'super', '✨');
       triggerVoiceCue('hype', 2, { force:fresh });
       flashScreen('#ffe37a');
-      showBigBuzzBanner('大バズリ!!', 'ポイント×２');
+      showBigBuzzBanner('大バズリ!!', '2こで消える');
       setHyperMix(1);
+      state.lastFullGroupScanAt = 0;
       updateBackgroundState(true);
       const cx = dom.board.clientWidth / 2;
       const cy = dom.board.clientHeight * 0.4;
@@ -6206,7 +6466,8 @@ function initEngine() {
         state.lastLogicTs = 0;
         state.physicsAccumulator = 0;
       } else {
-        updateBackgroundState(true);
+        state.lastFullGroupScanAt = 0;
+      updateBackgroundState(true);
         setHyperMix(state.clipTime > 0 ? 1 : 0);
         state.lastTs = 0;
         state.lastFrameTs = 0;
@@ -6241,11 +6502,13 @@ function initEngine() {
       primeBigBuzzVisuals();
       state.avatarMood = 'normal';
       state.avatarVisualMood = 'normal';
+      state.lastFullGroupScanAt = 0;
       updateBackgroundState(true);
       dom.gameShell.classList.remove('shake');
       dom.dangerFog.classList.remove('show');
       dom.topDangerLine.classList.remove('show');
       resetState();
+      state.lastFullGroupScanAt = 0;
       updateBackgroundState(true);
       destroyEngine();
       resizeCanvas();
@@ -6285,7 +6548,7 @@ function initEngine() {
       state.hazardTimer = Math.max(state.hazardTimer, 3.6);
       dom.dangerFog.classList.add('show');
       dom.gameShell.classList.add('shake');
-      setCaption(reason === 'bomb_chain' ? '爆弾が3こつながって大炎上。炎アイテムが5〜8こ落ちてくる。' : '大炎上中。炎を巻きこみながら立て直そう。', 2.2);
+      setCaption(reason === 'bomb_chain' ? '爆弾が3こつながって大炎上。炎アイテムが5〜8こ落ちてくる。' : '大炎上中。炎はとなりで2回消すと消える。1回で小さくなる。', 2.2);
       spawnComment(false, '炎が広がった！まずは立て直したい！', 'low', '🔥');
       triggerVoiceCue('fire');
       flashScreen('#ff5b73');
@@ -6359,7 +6622,7 @@ function initEngine() {
       const hazards = worldBodiesByType('fire');
       if (!hazards.length) {
         if (fromBurst) {
-          setCaption('今いっしょに消せる炎はないみたい。', 1.4);
+          setCaption('今となりで当てられる炎はないみたい。', 1.4);
           playAssetSfx('drop_blocked', 0.62);
         }
         return 0;
@@ -6500,7 +6763,7 @@ function initEngine() {
       if (state.showCaptionTimer <= 0 && state.active) {
         let caption = '';
         if (state.clipTime > 0) {
-          caption = `大バズり中。『${currentTrend().name}』を取ると点が2倍。`;
+          caption = '大バズり中。ふつうのアイテムは2こつながると消える。';
         } else if (state.rushWindow > 0) {
           caption = previewLen >= 2
             ? `先読みGO。『${currentTrend().name}』あと1つ。`
@@ -6596,6 +6859,7 @@ function stepPhysics(frameDt) {
   const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 48) : baseFixedDeltaMs;
   const maxSteps = highPrecision ? Math.max(2, state.maxPhysicsSteps || 1) : 1;
   applyPhysicsQuality(highPrecision);
+  thawFrozenBodiesNearActive(now);
   state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + 1.35));
   let steps = 0;
   while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
@@ -6655,7 +6919,8 @@ function requestLoop(ts) {
         const wasClipActive = state.clipTime > 0;
         state.clipTime = Math.max(0, state.clipTime - dt);
         if (wasClipActive && state.clipTime <= 0) {
-          updateBackgroundState(true);
+          state.lastFullGroupScanAt = 0;
+      updateBackgroundState(true);
           setHyperMix(0);
           setCaption('大バズりおわり。次のチャンスまで盤面を整えよう。', 1.8);
         }
@@ -6759,6 +7024,12 @@ function requestLoop(ts) {
       state.uiTimer += dt;
       state.cleanupTimer += dt;
       state.rescueTimer += dt;
+      state.freezeTimer += dt;
+      if (state.freezeTimer >= (perfSettings.freezeCheckInterval || 0.42) * Math.min(1.12, 0.94 + (crowdFactor - 1) * 0.08)) {
+        state.freezeTimer = 0;
+        thawFrozenBodiesNearActive(performance.now());
+        freezeRestedBodies(performance.now());
+      }
       if (state.cleanupTimer >= perfSettings.cleanupInterval * crowdFactor) {
         state.cleanupTimer = 0;
         cleanupOffscreenBodies();
@@ -6989,7 +7260,8 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
           pauseRequestedByVisibility = false;
           togglePause(false);
         }
-        updateBackgroundState(true);
+        state.lastFullGroupScanAt = 0;
+      updateBackgroundState(true);
       }
     });
 
