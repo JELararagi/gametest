@@ -2055,6 +2055,7 @@
     let appHeight = window.innerHeight;
     let audioCtx = null;
     let muted = !!save.muted;
+    let lastAppliedAudioSessionType = '';
     save.bestScore = save.bestScore || 0;
     save.dailyBest = save.dailyBest || {};
     save.dailyRankings = save.dailyRankings || {};
@@ -4176,7 +4177,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v136_perfmax_crowdkeepvisuals";
+    const BUILD_ID = "v137_mannersilent_ambient";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -4277,6 +4278,45 @@ function syncBodyVisuals() {
       voiceCache.forEach(audio => { try { audio.pause(); audio.currentTime = 0; } catch (_) {} });
     }
 
+    function audioSessionHandle() {
+      try {
+        const session = navigator?.audioSession;
+        return session && typeof session === 'object' ? session : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function desiredAudioSessionType() {
+      if (muted || document.hidden) return 'auto';
+      return 'ambient';
+    }
+
+    function syncAudioSession(force = false) {
+      const session = audioSessionHandle();
+      if (!session) return false;
+      const nextType = desiredAudioSessionType();
+      if (!force && lastAppliedAudioSessionType === nextType) return true;
+      let appliedType = nextType;
+      try {
+        if (session.type !== nextType) session.type = nextType;
+        appliedType = String(session.type || nextType);
+      } catch (_) {
+        if (nextType !== 'auto') {
+          try {
+            session.type = 'auto';
+            appliedType = String(session.type || 'auto');
+          } catch (_) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+      lastAppliedAudioSessionType = appliedType;
+      return appliedType === nextType || appliedType === 'auto';
+    }
+
     function updateMuteButtons() {
       const label = muted ? '🔇 サウンドOFF' : '🔊 サウンドON/OFF';
       dom.muteBtn.textContent = label;
@@ -4309,6 +4349,7 @@ function syncBodyVisuals() {
       persistSave();
       allManagedAudioElements().forEach(a => { if (a) a.muted = muted; });
       if (resultStingerAudio) resultStingerAudio.muted = muted;
+      syncAudioSession(true);
       updateMuteButtons();
     }
 
@@ -4401,9 +4442,12 @@ function syncBodyVisuals() {
       }
     }
 
-    function ensureAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+    function ensureAudio(options = null) {
+      syncAudioSession(false);
+      const requireContext = !!(options && options.requireContext);
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (requireContext && !audioCtx && AudioContextCtor) audioCtx = new AudioContextCtor();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
       allManagedAudioElements().forEach(a => { if (a) a.muted = muted; });
       if (resultStingerAudio) resultStingerAudio.muted = muted;
     }
@@ -4423,6 +4467,7 @@ function syncBodyVisuals() {
         if (audio !== intended) return;
         try {
           if (audio.paused) {
+            syncAudioSession(false);
             const p = audio.play();
             if (p && typeof p.catch === 'function') p.catch(() => {});
           }
@@ -4451,6 +4496,7 @@ function syncBodyVisuals() {
       try { active.loop = true; } catch (_) {}
       if (force || active.paused) {
         try {
+          syncAudioSession(false);
           const p = active.play();
           if (p && typeof p.catch === 'function') p.catch(() => {});
         } catch (_) {}
@@ -4643,6 +4689,7 @@ function syncBodyVisuals() {
         audio.currentTime = 0;
       } catch (_) {}
       audio.volume = volume;
+      syncAudioSession(false);
       audio.play().catch(() => {});
       return true;
     }
@@ -4658,6 +4705,7 @@ function syncBodyVisuals() {
       stopAllVoiceAudio();
       audio.currentTime = 0;
       audio.volume = kind === 'lose' ? 0.84 : 0.72;
+      syncAudioSession(false);
       audio.play().catch(() => {});
       return true;
     }
@@ -4683,10 +4731,12 @@ function syncBodyVisuals() {
       try { audio.currentTime = 0; } catch (_) {}
       try { audio.volume = muted ? 0 : 0.62; } catch (_) {}
       try { audio.muted = muted; } catch (_) {}
+      syncAudioSession(false);
       const attemptPlay = () => {
         if (audio.dataset.wantPlay !== '1') return;
         if (dom.resultScreen?.classList.contains('hidden')) return;
         try {
+          syncAudioSession(false);
           const p = audio.play?.();
           if (p && typeof p.catch === 'function') p.catch(() => {});
         } catch (_) {}
@@ -4812,6 +4862,7 @@ function syncBodyVisuals() {
         audio.preservesPitch = true;
       } catch (_) {}
       audio.volume = clamp(volume, 0, 1);
+      syncAudioSession(false);
       audio.play().catch(() => {});
       if (kind === 'clear' || kind === 'big' || kind === 'chain' || kind === 'chain_2' || kind === 'chain_3' || kind === 'chain_4' || kind === 'chain_5' || kind === 'chain_6' || kind === 'chain_red' || kind === 'bomb_clear' || kind === 'buzz_clear' || kind === 'fire_clear') {
         lastClearLikeSfxAt = performance.now();
@@ -4883,7 +4934,8 @@ function syncBodyVisuals() {
     function sfx(type, intensity = 1) {
       if (muted) return;
       persistPlayerName();
-      ensureAudio();
+      ensureAudio({ requireContext:true });
+      if (!audioCtx) return;
       const now = audioCtx.currentTime;
       const gain = audioCtx.createGain();
       gain.connect(audioCtx.destination);
@@ -7859,6 +7911,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
         if (state.active) togglePause(true);
         setHyperMix(0);
         stopResultBgm();
+        syncAudioSession(true);
       } else {
         applyPerformanceProfile();
         refreshBoardLayoutCache(true);
@@ -7867,7 +7920,8 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
           togglePause(false);
         }
         state.lastFullGroupScanAt = 0;
-      updateBackgroundState(true);
+        updateBackgroundState(true);
+        syncAudioSession(true);
       }
     });
 
@@ -7900,6 +7954,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     applyPerformanceProfile();
     preloadAllAvatars();
     updateMuteButtons();
+    syncAudioSession(true);
     document.body.classList.add('title-mode');
     setTitleBackgroundActive(true);
     applyAppHeight(true);
