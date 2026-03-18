@@ -1,4 +1,4 @@
-const CACHE_NAME = "limit-meltdown-v129-chaincolor-fire2hit-fxraise";
+const CACHE_NAME = "limit-meltdown-v134-perfmax-keepvisuals-v133base";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -10,12 +10,16 @@ const PRECACHE = [
   "./assets/audio/bgm_result_lose.m4a",
   "./assets/audio/se_clear_small_01.m4a",
   "./assets/audio/se_clear_big_01.m4a",
+  "./assets/audio/se_chain_02.m4a",
+  "./assets/audio/se_chain_03.m4a",
+  "./assets/audio/se_chain_04.m4a",
   "./assets/audio/se_drop_soft_01.m4a",
   "./assets/audio/se_trend_warning.m4a",
   "./assets/audio/se_hazard_spawn.m4a",
   "./assets/audio/se_apology_ready.m4a",
   "./assets/audio/se_apology_fire.m4a",
   "./assets/audio/se_timer_hurry.m4a",
+  "./assets/audio/se_gameover_blast.m4a",
   "./assets/audio/se_ui_item_select.m4a",
   "./assets/audio/se_ui_start_stream.m4a",
   "./assets/audio/se_ui_open_panel.m4a",
