@@ -1,4 +1,4 @@
-const CACHE_NAME = "limit-meltdown-v134-perfmax-keepvisuals-v133base";
+const CACHE_NAME = "limit-meltdown-v135-perfmax-halfbuzz-keepvisuals";
 const PRECACHE = [
   "./",
   "./index.html",

@@ -2073,6 +2073,12 @@
     let recentTouchPairsNextPruneAt = 0;
     let pointerPreviewRaf = 0;
     let pendingPointerClientX = 0;
+    let pendingClearVisualIds = [];
+    const EMPTY_ID_ARRAY = Object.freeze([]);
+    const EMPTY_LOOKUP_MAP = new Map();
+    const scratchEligibleBodies = [];
+    const scratchFrozenBodies = [];
+    const scratchActiveBodies = [];
 
     function spatialHashKey(cx, cy) {
       if (cx <= -SPATIAL_HASH_OFFSET || cx >= SPATIAL_HASH_OFFSET || cy <= -SPATIAL_HASH_OFFSET || cy >= SPATIAL_HASH_OFFSET) {
@@ -2426,6 +2432,13 @@
       rings:[],
       previewGroups:[],
       nextPreviewGroups:[],
+      previewBodyLens:new Map(),
+      nextPreviewBodyLens:new Map(),
+      previewBodyIds:[],
+      nextPreviewBodyIds:[],
+      previewPeakLen:0,
+      nextPreviewPeakLen:0,
+      previewVisualsDirty:false,
       lastTs:0,
       lastFrameTs:0,
       lastLogicTs:0,
@@ -2491,6 +2504,9 @@
       liveContentBodiesByIndex:Array.from({ length:CONTENTS.length }, () => []),
       activeBodies:[],
       activeBodyIds:new Set(),
+      activeMovingCount:0,
+      visualHotBodiesCount:0,
+      fastMovingBodiesCount:0,
       repairQueueIds:new Set(),
       groupScanDirtyIds:new Set(),
       lastFullGroupScanAt:0,
@@ -2542,6 +2558,9 @@
       state.liveContentBodiesByIndex = createLiveIndexBuckets();
       state.activeBodies = [];
       state.activeBodyIds = new Set();
+      state.activeMovingCount = 0;
+      state.visualHotBodiesCount = 0;
+      state.fastMovingBodiesCount = 0;
       state.repairQueueIds = new Set();
       state.groupScanDirtyIds = new Set();
       state.lastFullGroupScanAt = 0;
@@ -2552,6 +2571,18 @@
       state.visualGlowIds = [];
       state.visualTrendIndex = -1;
       state.visualNextTrendIndex = -1;
+      state.previewGroups = [];
+      state.nextPreviewGroups = [];
+      if (!(state.previewBodyLens instanceof Map)) state.previewBodyLens = new Map();
+      if (!(state.nextPreviewBodyLens instanceof Map)) state.nextPreviewBodyLens = new Map();
+      state.previewBodyLens.clear();
+      state.nextPreviewBodyLens.clear();
+      state.previewBodyIds = [];
+      state.nextPreviewBodyIds = [];
+      state.previewPeakLen = 0;
+      state.nextPreviewPeakLen = 0;
+      state.previewVisualsDirty = false;
+      pendingClearVisualIds = [];
       invalidateWorldBodiesCache();
       invalidateBoardStatsCache();
     }
@@ -2690,13 +2721,27 @@ function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVe
 }
 
 function thawFrozenBodiesNearActive(now = performance.now()) {
-  const activeBodies = getActiveBodies().filter(body => body && !body.plugin?.pendingRemoval && !isFrozenBody(body));
+  const activeBodies = getActiveBodies();
   if (!activeBodies.length) return 0;
-  const frozenBodies = worldBodies().filter(body => body && isFrozenBody(body) && !body.plugin?.pendingRemoval);
-  if (!frozenBodies.length) return 0;
-  const hash = buildSpatialHash(frozenBodies);
+  scratchActiveBodies.length = 0;
+  for (let i = 0; i < activeBodies.length; i += 1) {
+    const body = activeBodies[i];
+    if (!body || body.plugin?.pendingRemoval || isFrozenBody(body)) continue;
+    scratchActiveBodies.push(body);
+  }
+  if (!scratchActiveBodies.length) return 0;
+  const bodies = worldBodies();
+  scratchFrozenBodies.length = 0;
+  for (let i = 0; i < bodies.length; i += 1) {
+    const body = bodies[i];
+    if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) continue;
+    scratchFrozenBodies.push(body);
+  }
+  if (!scratchFrozenBodies.length) return 0;
+  const hash = buildSpatialHash(scratchFrozenBodies);
   let thawed = 0;
-  for (const body of activeBodies) {
+  for (let i = 0; i < scratchActiveBodies.length; i += 1) {
+    const body = scratchActiveBodies[i];
     const moving = !body.isSleeping
       || body.speed > 0.12
       || Math.abs(body.velocity?.x || 0) > 0.1
@@ -2720,12 +2765,20 @@ function thawFrozenBodiesNearActive(now = performance.now()) {
 
 function freezeRestedBodies(now = performance.now()) {
   if (!engine || !dom.board) return 0;
-  const bodies = worldBodies().filter(body => body && !body.plugin?.pendingRemoval);
+  const bodies = worldBodies();
   if (!bodies.length) return 0;
-  const boardH = dom.board.clientHeight || 0;
-  const hash = buildSpatialHash(bodies);
+  scratchEligibleBodies.length = 0;
+  for (let i = 0; i < bodies.length; i += 1) {
+    const body = bodies[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    scratchEligibleBodies.push(body);
+  }
+  if (!scratchEligibleBodies.length) return 0;
+  const boardH = boardLogicalRect().height || 0;
+  const hash = buildSpatialHash(scratchEligibleBodies);
   let frozenCount = 0;
-  for (const body of bodies) {
+  for (let i = 0; i < scratchEligibleBodies.length; i += 1) {
+    const body = scratchEligibleBodies[i];
     const age = now - (body.spawnAt || 0);
     if (age < 460) continue;
     body.plugin = body.plugin || {};
@@ -2789,29 +2842,42 @@ function refreshActiveBodies(now = performance.now()) {
   nextIds.clear();
   const liveBodies = state.liveBodies || [];
   const activeWindowMs = liveBodies.length >= 26 ? 220 : 320;
+  let movingCount = 0;
+  let visualHotBodiesCount = 0;
+  let fastMovingBodiesCount = 0;
   for (let i = 0; i < liveBodies.length; i += 1) {
     const body = liveBodies[i];
     if (!body || body.plugin?.pendingRemoval) continue;
     body.plugin = body.plugin || {};
+    const vx = Math.abs(body.velocity?.x || 0);
+    const vy = Math.abs(body.velocity?.y || 0);
+    const av = Math.abs(body.angularVelocity || 0);
     const moving = !body.isSleeping
-      || body.speed > 0.04
-      || Math.abs(body.velocity?.x || 0) > 0.04
-      || Math.abs(body.velocity?.y || 0) > 0.04
-      || Math.abs(body.angularVelocity || 0) > 0.02;
+      || (body.speed || 0) > 0.04
+      || vx > 0.04
+      || vy > 0.04
+      || av > 0.02;
     if (moving) {
+      movingCount += 1;
       body.plugin.lastActiveAt = now;
       body.plugin.lastMotionAt = now;
       body.plugin.restStartAt = 0;
       if (isFrozenBody(body)) thawBody(body, now, { vy:Math.max(0.06, body.velocity?.y || 0.06) });
+      if ((body.speed || 0) > 0.18 || vy > 0.16 || vx > 0.12) fastMovingBodiesCount += 1;
     }
     const recentlyActive = moving || (body.plugin.lastActiveAt && now - body.plugin.lastActiveAt < activeWindowMs);
     if (!recentlyActive) continue;
     nextBodies.push(body);
     nextIds.add(body.id);
+    const age = now - (body.spawnAt || 0);
+    if (age < perfSettings.newBodyVisualMs || moving || body.outOfRangeSince || body.floatStartAt) visualHotBodiesCount += 1;
     if (moving) markGroupScanDirty(body);
   }
   state.activeBodies = nextBodies;
   state.activeBodyIds = nextIds;
+  state.activeMovingCount = movingCount;
+  state.visualHotBodiesCount = visualHotBodiesCount;
+  state.fastMovingBodiesCount = fastMovingBodiesCount;
   return nextBodies;
 }
 
@@ -2841,6 +2907,52 @@ function collectRepairCandidates() {
     function markBodiesVisualDirty(list) {
       if (!list) return;
       for (const body of list) markBodyVisualDirty(body);
+    }
+
+    function arraysEqualShallow(a = EMPTY_ID_ARRAY, b = EMPTY_ID_ARRAY) {
+      if (a === b) return true;
+      const aLen = a?.length || 0;
+      if (aLen !== (b?.length || 0)) return false;
+      for (let i = 0; i < aLen; i += 1) {
+        if (a[i] !== b[i]) return false;
+      }
+      return true;
+    }
+
+    function buildPreviewSummary(groups, minLen = 2, lensMap = new Map()) {
+      lensMap.clear();
+      const summary = [];
+      let peakLen = 0;
+      for (let i = 0; i < groups.length; i += 1) {
+        const group = groups[i];
+        const len = group?.length || 0;
+        if (len < minLen) continue;
+        const ids = new Array(len);
+        for (let j = 0; j < len; j += 1) {
+          const id = group[j].id;
+          ids[j] = id;
+          const prevLen = lensMap.get(id) || 0;
+          if (len > prevLen) lensMap.set(id, len);
+        }
+        summary.push({ ids, len });
+        if (len > peakLen) peakLen = len;
+      }
+      return { summary, ids:[...lensMap.keys()], peakLen };
+    }
+
+    function applyPreviewState(previewGroups = EMPTY_ID_ARRAY, nextGroups = EMPTY_ID_ARRAY) {
+      if (!(state.previewBodyLens instanceof Map)) state.previewBodyLens = new Map();
+      if (!(state.nextPreviewBodyLens instanceof Map)) state.nextPreviewBodyLens = new Map();
+      const previewSummary = buildPreviewSummary(previewGroups, 2, state.previewBodyLens);
+      const nextSummary = buildPreviewSummary(nextGroups, 2, state.nextPreviewBodyLens);
+      state.previewGroups = previewSummary.summary;
+      state.nextPreviewGroups = nextSummary.summary;
+      state.previewBodyIds = previewSummary.ids;
+      state.nextPreviewBodyIds = nextSummary.ids;
+      state.previewPeakLen = previewSummary.peakLen;
+      state.nextPreviewPeakLen = nextSummary.peakLen;
+      state.previewVisualsDirty = !arraysEqualShallow(state.visualPreviewIds || EMPTY_ID_ARRAY, state.previewBodyIds)
+        || !arraysEqualShallow(state.visualNextPreviewIds || EMPTY_ID_ARRAY, state.nextPreviewBodyIds);
     }
 
     function bodyById(id) {
@@ -2942,7 +3054,7 @@ function unregisterLiveBody(body) {
     }
 
 
-    function updateVisualDirtyContext(previewMap, nextPreviewMap, glowSet) {
+    function updateVisualDirtyContext(previewIds = EMPTY_ID_ARRAY, nextPreviewIds = EMPTY_ID_ARRAY, glowIds = EMPTY_ID_ARRAY) {
       const currentTrendIndex = Number.isInteger(state.trendIndex) ? state.trendIndex : -1;
       const currentNextTrendIndex = Number.isInteger(state.nextTrendIndex) ? state.nextTrendIndex : -1;
       if (state.visualTrendIndex !== currentTrendIndex) {
@@ -2955,24 +3067,25 @@ function unregisterLiveBody(body) {
         if (currentNextTrendIndex >= 0) markBodiesVisualDirty(worldContentBodiesByIndex(currentNextTrendIndex));
         state.visualNextTrendIndex = currentNextTrendIndex;
       }
-      const previewIds = [...previewMap.keys()];
-      const nextPreviewIds = [...nextPreviewMap.keys()];
-      const glowIds = glowSet ? [...glowSet] : [];
-      if ((state.visualPreviewIds || []).join(',') !== previewIds.join(',')) {
-        markBodiesVisualDirty((state.visualPreviewIds || []).map(bodyById).filter(Boolean));
+      const prevPreviewIds = state.visualPreviewIds || EMPTY_ID_ARRAY;
+      const prevNextPreviewIds = state.visualNextPreviewIds || EMPTY_ID_ARRAY;
+      const prevGlowIds = state.visualGlowIds || EMPTY_ID_ARRAY;
+      if (!arraysEqualShallow(prevPreviewIds, previewIds)) {
+        markBodiesVisualDirty(prevPreviewIds.map(bodyById).filter(Boolean));
         markBodiesVisualDirty(previewIds.map(bodyById).filter(Boolean));
-        state.visualPreviewIds = previewIds;
+        state.visualPreviewIds = previewIds.slice();
       }
-      if ((state.visualNextPreviewIds || []).join(',') !== nextPreviewIds.join(',')) {
-        markBodiesVisualDirty((state.visualNextPreviewIds || []).map(bodyById).filter(Boolean));
+      if (!arraysEqualShallow(prevNextPreviewIds, nextPreviewIds)) {
+        markBodiesVisualDirty(prevNextPreviewIds.map(bodyById).filter(Boolean));
         markBodiesVisualDirty(nextPreviewIds.map(bodyById).filter(Boolean));
-        state.visualNextPreviewIds = nextPreviewIds;
+        state.visualNextPreviewIds = nextPreviewIds.slice();
       }
-      if ((state.visualGlowIds || []).join(',') !== glowIds.join(',')) {
-        markBodiesVisualDirty((state.visualGlowIds || []).map(bodyById).filter(Boolean));
+      if (!arraysEqualShallow(prevGlowIds, glowIds)) {
+        markBodiesVisualDirty(prevGlowIds.map(bodyById).filter(Boolean));
         markBodiesVisualDirty(glowIds.map(bodyById).filter(Boolean));
-        state.visualGlowIds = glowIds;
+        state.visualGlowIds = glowIds.slice();
       }
+      state.previewVisualsDirty = false;
     }
 
     function mulberry32(a) {
@@ -3803,33 +3916,26 @@ function hasPendingVisualWork() {
       if (state.forceFullVisualSync) return true;
       if (state.fxNeedsClear || state.particles.length || state.rings.length) return true;
       if (state.shiftGlowTimer > 0) return true;
-      if (state.visualDirtyIds?.size || state.visualPreviewIds?.size || state.visualNextPreviewIds?.size || state.visualGlowIds?.size) return true;
-      return !!(state.activeBodies && state.activeBodies.length);
+      if (state.visualDirtyIds?.size || state.previewVisualsDirty || (state.visualGlowIds?.length || 0)) return true;
+      return (state.visualHotBodiesCount || 0) > 0;
     }
 
 function hasFastMovingBodies() {
-      const activeBodies = state.activeBodies || [];
-      for (const body of activeBodies) {
-        if (!body || body.isSleeping) continue;
-        if ((body.speed || 0) > 0.18) return true;
-        if (Math.abs(body.velocity?.y || 0) > 0.16) return true;
-        if (Math.abs(body.velocity?.x || 0) > 0.12) return true;
-      }
-      return false;
+      return (state.fastMovingBodiesCount || 0) > 0;
     }
 
 function syncBodyVisuals() {
       if (!engine || !dom.itemLayer) return;
       const bodies = worldBodies();
-      const previewMap = new Map();
-      const nextPreviewMap = new Map();
-      const boardW = dom.board?.clientWidth || 1;
-      const boardH = dom.board?.clientHeight || 1;
+      const previewMap = state.previewBodyLens instanceof Map ? state.previewBodyLens : EMPTY_LOOKUP_MAP;
+      const nextPreviewMap = state.nextPreviewBodyLens instanceof Map ? state.nextPreviewBodyLens : EMPTY_LOOKUP_MAP;
+      const boardInfo = boardLogicalRect();
+      const boardW = boardInfo.width || 1;
+      const boardH = boardInfo.height || 1;
       const now = performance.now();
-      const glowSet = state.shiftGlowTimer > 0 && state.shiftGlowIds.length ? new Set(state.shiftGlowIds) : null;
-      state.previewGroups.forEach(group => group.ids.forEach(id => previewMap.set(id, Math.max(previewMap.get(id) || 0, group.len))));
-      state.nextPreviewGroups.forEach(group => group.ids.forEach(id => nextPreviewMap.set(id, Math.max(nextPreviewMap.get(id) || 0, group.len))));
-      updateVisualDirtyContext(previewMap, nextPreviewMap, glowSet);
+      const glowIds = state.shiftGlowTimer > 0 && state.shiftGlowIds.length ? state.shiftGlowIds : EMPTY_ID_ARRAY;
+      const glowSet = glowIds.length ? new Set(glowIds) : null;
+      updateVisualDirtyContext(state.previewBodyIds || EMPTY_ID_ARRAY, state.nextPreviewBodyIds || EMPTY_ID_ARRAY, glowIds);
 
       const updateBodies = [];
       const queuedIds = new Set();
@@ -3973,7 +4079,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v134_perfmax_keepvisuals_v133base";
+    const BUILD_ID = "v135_perfmax_halfbuzz_keepvisuals";
 
     function applyAppHeight(force = false) {
       const viewportWidth = Math.max(window.visualViewport?.width || 0, document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -5690,13 +5796,22 @@ function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
 
     
 function rescueFloatingBodies() {
-      const bodies = worldBodies().filter(body => body && !body.plugin?.pendingRemoval);
+      const bodies = worldBodies();
       if (!bodies.length || !dom.board) return;
-      const boardHeight = dom.board.clientHeight || 0;
-      const boardWidth = dom.board.clientWidth || 0;
+      scratchEligibleBodies.length = 0;
+      for (let i = 0; i < bodies.length; i += 1) {
+        const body = bodies[i];
+        if (!body || body.plugin?.pendingRemoval) continue;
+        scratchEligibleBodies.push(body);
+      }
+      if (!scratchEligibleBodies.length) return;
+      const boardInfo = boardLogicalRect();
+      const boardHeight = boardInfo.height || 0;
+      const boardWidth = boardInfo.width || 0;
       const now = performance.now();
-      const hash = buildSpatialHash(bodies);
-      for (const body of bodies) {
+      const hash = buildSpatialHash(scratchEligibleBodies);
+      for (let i = 0; i < scratchEligibleBodies.length; i += 1) {
+        const body = scratchEligibleBodies[i];
         const age = now - (body.spawnAt || 0);
         if (age < 260) continue;
         if (body.position.y < 72 || body.position.y > boardHeight - 60) continue;
@@ -5751,15 +5866,24 @@ function rescueFloatingBodies() {
 
     
     function separateDeepOverlaps() {
-      const bodies = worldBodies().filter(body => body && !body.plugin?.pendingRemoval);
+      const bodies = worldBodies();
       if (bodies.length < 2 || !dom.board) return 0;
-      const boardWidth = dom.board.clientWidth || 0;
-      const boardHeight = dom.board.clientHeight || 0;
+      scratchEligibleBodies.length = 0;
+      for (let i = 0; i < bodies.length; i += 1) {
+        const body = bodies[i];
+        if (!body || body.plugin?.pendingRemoval) continue;
+        scratchEligibleBodies.push(body);
+      }
+      if (scratchEligibleBodies.length < 2) return 0;
+      const boardInfo = boardLogicalRect();
+      const boardWidth = boardInfo.width || 0;
+      const boardHeight = boardInfo.height || 0;
       const now = performance.now();
-      const hash = buildSpatialHash(bodies);
+      const hash = buildSpatialHash(scratchEligibleBodies);
       const seenPairs = new Set();
       let corrected = 0;
-      for (const body of bodies) {
+      for (let i = 0; i < scratchEligibleBodies.length; i += 1) {
+        const body = scratchEligibleBodies[i];
         if (now - (body.spawnAt || 0) < 220) continue;
         visitNearbyFromHash(hash, body, 1, other => {
           if (!other || other.id === body.id || other.plugin?.pendingRemoval) return false;
@@ -5993,14 +6117,12 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null) {
       if (state.clipTime > 0) {
         const preview = [];
         for (let idx = 0; idx < CONTENTS.length; idx += 1) preview.push(...buildTouchGroupsForIndex(idx));
-        state.previewGroups = preview.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
-        state.nextPreviewGroups = [];
+        applyPreviewState(preview, EMPTY_ID_ARRAY);
         return preview.filter(g => g.length >= 2 && g.every(body => body.speed < 4.2));
       }
       const groups = buildTouchGroupsForIndex(state.trendIndex);
-      state.previewGroups = groups.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
       const nextGroups = buildTouchGroupsForIndex(state.nextTrendIndex);
-      state.nextPreviewGroups = nextGroups.filter(g => g.length >= 2).map(g => ({ ids:g.map(b => b.id), len:g.length }));
+      applyPreviewState(groups, nextGroups);
       return groups.filter(g => g.length >= 3 && g.every(body => body.speed < 4.2));
     }
 
@@ -6088,11 +6210,11 @@ function scanAllClearableGroups() {
 
 
     function biggestPreviewLen() {
-      return state.previewGroups.reduce((m, group) => Math.max(m, group.len || 0), 0);
+      return state.previewPeakLen || 0;
     }
 
     function biggestNextPreviewLen() {
-      return state.nextPreviewGroups.reduce((m, group) => Math.max(m, group.len || 0), 0);
+      return state.nextPreviewPeakLen || 0;
     }
 
     function expandPendingGroup(pending) {
@@ -6122,8 +6244,21 @@ function scanAllClearableGroups() {
     }
 
     function updatePendingClearVisual(ids = []) {
-      const active = new Set(ids);
-      bodyVisuals.forEach((node, id) => node.classList.toggle('pending-clear', active.has(id)));
+      const nextIds = Array.isArray(ids) ? ids : EMPTY_ID_ARRAY;
+      const prevIds = pendingClearVisualIds || EMPTY_ID_ARRAY;
+      if (arraysEqualShallow(prevIds, nextIds)) return;
+      const nextSet = new Set(nextIds);
+      for (let i = 0; i < prevIds.length; i += 1) {
+        const id = prevIds[i];
+        if (nextSet.has(id)) continue;
+        bodyVisuals.get(id)?.classList.remove('pending-clear');
+      }
+      for (let i = 0; i < nextIds.length; i += 1) {
+        const id = nextIds[i];
+        if (prevIds.includes(id)) continue;
+        bodyVisuals.get(id)?.classList.add('pending-clear');
+      }
+      pendingClearVisualIds = nextIds.slice();
     }
 
     function queueGroupClear(group) {
@@ -6550,7 +6685,7 @@ function initEngine() {
       state.fireMode = 0;
       state.fireClearCount = 0;
       state.hazardTimer = 4.2;
-      state.buzzItemTimer = 8.8;
+      state.buzzItemTimer = 17.6;
       state.showCaptionTimer = 0;
       state.selectedDropIndex = 0;
       state.queue = [0,0,0];
@@ -6560,6 +6695,15 @@ function initEngine() {
       state.commentEventText = '';
       state.previewGroups = [];
       state.nextPreviewGroups = [];
+      if (!(state.previewBodyLens instanceof Map)) state.previewBodyLens = new Map();
+      if (!(state.nextPreviewBodyLens instanceof Map)) state.nextPreviewBodyLens = new Map();
+      state.previewBodyLens.clear();
+      state.nextPreviewBodyLens.clear();
+      state.previewBodyIds = [];
+      state.nextPreviewBodyIds = [];
+      state.previewPeakLen = 0;
+      state.nextPreviewPeakLen = 0;
+      state.previewVisualsDirty = false;
       state.lastTs = 0;
       state.lastFrameTs = 0;
       state.lastLogicTs = 0;
@@ -6605,6 +6749,9 @@ function initEngine() {
       state.cleanupTimer = 0;
       state.rescueTimer = 0;
       state.freezeTimer = 0;
+      state.activeMovingCount = 0;
+      state.visualHotBodiesCount = 0;
+      state.fastMovingBodiesCount = 0;
       state.fxNeedsClear = false;
       state.backgroundWatchdogTimer = 0;
       invalidateBoardStatsCache();
@@ -6622,6 +6769,7 @@ function initEngine() {
       state.shiftGlowIds = [];
       state.shiftGlowTimer = 0;
       state.finishing = false;
+      pendingClearVisualIds = [];
       lastSuperchatTier = 0;
       state.paused = false;
       state.resultVoicePlayed = false;
@@ -7105,8 +7253,8 @@ function initEngine() {
 
 function stepPhysics(frameDt) {
   if (!engine) return;
-  refreshActiveBodies();
   const now = performance.now();
+  refreshActiveBodies(now);
   const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
   const highPrecision = needsHighPrecisionPhysics(now);
   const fixedDeltaMs = highPrecision ? Math.min(baseFixedDeltaMs, 1000 / 48) : baseFixedDeltaMs;
@@ -7211,7 +7359,7 @@ function requestLoop(ts) {
       state.buzzItemTimer = Math.max(0, state.buzzItemTimer - dt);
       if (state.buzzItemTimer <= 0 && state.runTime >= 7.2) {
         spawnBuzzItem();
-        state.buzzItemTimer = 10.2 + rand() * 6.4;
+        state.buzzItemTimer = 20.4 + rand() * 12.8;
       }
 
       const scanInterval = currentScanInterval(crowdFactor);
