@@ -1,4 +1,4 @@
-const CACHE_NAME = "limit-meltdown-v138-androidfix-doubletap-perfmax";
+const CACHE_NAME = "limit-meltdown-v139-perfmax-crowd-androidsync";
 const PRECACHE = [
   "./",
   "./index.html",

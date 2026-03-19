@@ -376,9 +376,9 @@
       return outBodies;
     }
 
-    function buildTouchGroupsFromBodies(targetBodies, pad = 0.5) {
+    function buildTouchGroupsFromBodies(targetBodies, pad = 0.5, sourceHash = null) {
       if (!targetBodies.length) return [];
-      const hash = buildSpatialHash(targetBodies);
+      const hash = sourceHash || buildSpatialHash(targetBodies);
       const groups = [];
       const visitStamp = (state.touchGroupVisitStamp || 0) + 1;
       state.touchGroupVisitStamp = visitStamp;
@@ -813,6 +813,15 @@
       backgroundWatchdogTimer:0,
       lastFullRescueSweepAt:0,
       lastFullOverlapSweepAt:0,
+      liveRegistryRevision:0,
+      groupSourceCache:new Map(),
+      groupSourceCacheFrame:-1,
+      groupSourceCacheRevision:-1,
+      heavySweepCacheFrame:-1,
+      heavySweepCacheRevision:-1,
+      heavySweepCandidatesFull:null,
+      heavySweepCandidatesPartial:null,
+      mediaProfileApplied:false,
       paused:false
     };
 
@@ -854,6 +863,12 @@
       state.forceFullVisualSync = true;
       state.lastFullRescueSweepAt = 0;
       state.lastFullOverlapSweepAt = 0;
+      state.liveRegistryRevision = 0;
+      invalidateGroupSourceCache();
+      state.heavySweepCacheFrame = -1;
+      state.heavySweepCacheRevision = -1;
+      state.heavySweepCandidatesFull = null;
+      state.heavySweepCandidatesPartial = null;
       state.visualPreviewIds = [];
       state.visualNextPreviewIds = [];
       state.visualGlowIds = [];
@@ -1230,6 +1245,23 @@ function collectHeavySweepCandidates(fullSweep = false) {
   return candidates;
 }
 
+function getHeavySweepCandidatesCached(fullSweep = false) {
+  const frameStamp = state.frameStamp || 0;
+  const revision = state.liveRegistryRevision || 0;
+  if (state.heavySweepCacheFrame !== frameStamp || state.heavySweepCacheRevision !== revision) {
+    state.heavySweepCacheFrame = frameStamp;
+    state.heavySweepCacheRevision = revision;
+    state.heavySweepCandidatesFull = null;
+    state.heavySweepCandidatesPartial = null;
+  }
+  if (fullSweep) {
+    if (!state.heavySweepCandidatesFull) state.heavySweepCandidatesFull = collectHeavySweepCandidates(true);
+    return state.heavySweepCandidatesFull;
+  }
+  if (!state.heavySweepCandidatesPartial) state.heavySweepCandidatesPartial = collectHeavySweepCandidates(false);
+  return state.heavySweepCandidatesPartial;
+}
+
     function markBodyVisualDirty(bodyOrId) {
       const id = typeof bodyOrId === 'object' ? bodyOrId?.id : bodyOrId;
       if (id == null) return;
@@ -1356,6 +1388,7 @@ function registerLiveBody(body) {
         state.frozenBodyCount = (state.frozenBodyCount || 0) + 1;
         bumpFrozenSpatialHashRevision();
       }
+      bumpLiveRegistryRevision();
       invalidateWorldBodiesCache();
       markBodyVisualDirty(body);
       markGroupScanDirty(body);
@@ -1393,6 +1426,7 @@ function unregisterLiveBody(body) {
       body.plugin._liveRefs = null;
       body.plugin._liveType = null;
       body.plugin._liveContentIndex = null;
+      bumpLiveRegistryRevision();
       invalidateWorldBodiesCache();
     }
 
@@ -1718,11 +1752,15 @@ function configureRunnerPerformance() {
 
 
     
-function applyPerformanceProfile() {
+function applyPerformanceProfile(options = null) {
+      const forceMedia = !!options?.forceMedia;
       const next = detectPerformanceProfile();
       const changed = JSON.stringify(next) !== JSON.stringify(perfSettings);
-      perfSettings = next;
-      applyMediaProfile();
+      if (changed) perfSettings = next;
+      if (changed || forceMedia || !state.mediaProfileApplied) {
+        applyMediaProfile();
+        state.mediaProfileApplied = true;
+      }
       configureRunnerPerformance();
       return changed;
     }
@@ -2431,29 +2469,27 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v138_androidfix_doubletap_perfmax";
+    const BUILD_ID = "v139_perfmax_crowd_androidsync";
 
     function measureViewportSize() {
       const docEl = document.documentElement;
       const vv = window.visualViewport;
-      const candidatesW = [];
-      const candidatesH = [];
-      const pushPositive = (list, value) => {
-        if (Number.isFinite(value) && value > 0) list.push(value);
+      const pick = (...values) => {
+        for (let i = 0; i < values.length; i += 1) {
+          const value = values[i];
+          if (Number.isFinite(value) && value > 0) return value;
+        }
+        return 0;
       };
-      if (vv) {
-        pushPositive(candidatesW, vv.width);
-        pushPositive(candidatesH, vv.height);
-      }
-      pushPositive(candidatesW, docEl?.clientWidth);
-      pushPositive(candidatesH, docEl?.clientHeight);
-      pushPositive(candidatesW, window.innerWidth);
-      pushPositive(candidatesH, window.innerHeight);
-      const width = candidatesW.length ? Math.min(...candidatesW) : (window.innerWidth || 1);
-      const height = candidatesH.length ? Math.min(...candidatesH) : (window.innerHeight || 1);
+      let width = pick(vv?.width, docEl?.clientWidth, window.innerWidth);
+      let height = pick(vv?.height, docEl?.clientHeight, window.innerHeight);
+      const fallbackWidth = pick(docEl?.clientWidth, window.innerWidth, vv?.width);
+      const fallbackHeight = pick(docEl?.clientHeight, window.innerHeight, vv?.height);
+      if (fallbackWidth > 0 && Math.abs(fallbackWidth - width) > 72) width = Math.min(Math.max(width, fallbackWidth - 72), fallbackWidth);
+      if (fallbackHeight > 0 && Math.abs(fallbackHeight - height) > 120) height = Math.min(Math.max(height, fallbackHeight - 120), fallbackHeight);
       return {
-        width: Math.max(1, Math.round(width)),
-        height: Math.max(1, Math.round(height))
+        width: Math.max(1, Math.round(width || window.innerWidth || 1)),
+        height: Math.max(1, Math.round(height || window.innerHeight || 1))
       };
     }
 
@@ -4139,6 +4175,52 @@ function makeBody(x, y, index, specialType = false) {
       state.boardStatsCacheRevision = -1;
     }
 
+    function invalidateGroupSourceCache() {
+      if (state.groupSourceCache instanceof Map) state.groupSourceCache.clear();
+      state.groupSourceCache = new Map();
+      state.groupSourceCacheFrame = -1;
+      state.groupSourceCacheRevision = -1;
+    }
+
+    function bumpLiveRegistryRevision() {
+      state.liveRegistryRevision = (state.liveRegistryRevision || 0) + 1;
+      invalidateGroupSourceCache();
+      state.heavySweepCacheFrame = -1;
+      state.heavySweepCacheRevision = -1;
+      state.heavySweepCandidatesFull = null;
+      state.heavySweepCandidatesPartial = null;
+    }
+
+    function ensureGroupSourceCache() {
+      const frameStamp = state.frameStamp || 0;
+      const revision = state.liveRegistryRevision || 0;
+      if (!(state.groupSourceCache instanceof Map) || state.groupSourceCacheFrame !== frameStamp || state.groupSourceCacheRevision !== revision) {
+        state.groupSourceCache = new Map();
+        state.groupSourceCacheFrame = frameStamp;
+        state.groupSourceCacheRevision = revision;
+      }
+      return state.groupSourceCache;
+    }
+
+    function getEligibleGroupSource(cacheKey, sourceBodies, minAgeMs = 220) {
+      if (!Array.isArray(sourceBodies) || !sourceBodies.length) return null;
+      const cache = ensureGroupSourceCache();
+      const key = `${cacheKey}|${minAgeMs}`;
+      const cached = cache.get(key);
+      if (cached) return cached;
+      const bodies = [];
+      const now = performance.now();
+      for (let i = 0; i < sourceBodies.length; i += 1) {
+        const body = sourceBodies[i];
+        if (!body || body.plugin?.pendingRemoval) continue;
+        if (now - (body.spawnAt || 0) <= minAgeMs) continue;
+        bodies.push(body);
+      }
+      const entry = { bodies, hash: bodies.length ? buildSpatialHash(bodies) : null };
+      cache.set(key, entry);
+      return entry;
+    }
+
     function worldBodies() {
       if (!engine) return [];
       const stamp = state.frameStamp || 0;
@@ -4295,16 +4377,15 @@ function repairBodyPosition(body, boardW, boardH, reason = 'repair') {
     }
 
     
-function rescueFloatingBodies() {
+function rescueFloatingBodies(now = performance.now()) {
       const bodies = worldBodies();
       if (!bodies.length || !dom.board) return;
       const boardInfo = boardLogicalRect();
       const boardHeight = boardInfo.height || 0;
       const boardWidth = boardInfo.width || 0;
-      const now = performance.now();
-      const fullSweep = bodies.length <= 18 || now - (state.lastFullRescueSweepAt || 0) > 2400 || (state.repairQueueIds?.size || 0) >= 4;
+      const fullSweep = bodies.length <= 18 || now - (state.lastFullRescueSweepAt || 0) > 2600 || (state.repairQueueIds?.size || 0) >= 4;
       if (fullSweep) state.lastFullRescueSweepAt = now;
-      const candidates = collectHeavySweepCandidates(fullSweep);
+      const candidates = getHeavySweepCandidatesCached(fullSweep);
       if (!candidates.length) return;
       const hash = worldSpatialHash();
       if (!hash) return;
@@ -4364,32 +4445,34 @@ function rescueFloatingBodies() {
 
 
     
-    function separateDeepOverlaps() {
+    function separateDeepOverlaps(now = performance.now()) {
       const bodies = worldBodies();
       if (bodies.length < 2 || !dom.board) return 0;
       const boardInfo = boardLogicalRect();
       const boardWidth = boardInfo.width || 0;
       const boardHeight = boardInfo.height || 0;
-      const now = performance.now();
-      const fullSweep = bodies.length <= 18 || now - (state.lastFullOverlapSweepAt || 0) > 2200 || (state.repairQueueIds?.size || 0) >= 4;
+      const fullSweep = bodies.length <= 18 || now - (state.lastFullOverlapSweepAt || 0) > 2400 || (state.repairQueueIds?.size || 0) >= 4;
       if (fullSweep) state.lastFullOverlapSweepAt = now;
-      const candidateBodies = collectHeavySweepCandidates(fullSweep);
+      const candidateBodies = getHeavySweepCandidatesCached(fullSweep);
       if (candidateBodies.length < 1) return 0;
       const hash = worldSpatialHash();
       if (!hash) return 0;
-      const seenPairs = new Set();
+      const overlapCandidateStamp = (state.overlapCandidateStamp || 0) + 1;
+      state.overlapCandidateStamp = overlapCandidateStamp;
       let corrected = 0;
+      for (let i = 0; i < candidateBodies.length; i += 1) {
+        const body = candidateBodies[i];
+        if (!body || body.plugin?.pendingRemoval) continue;
+        body.plugin = body.plugin || {};
+        body.plugin._overlapCandidateStamp = overlapCandidateStamp;
+      }
       for (let i = 0; i < candidateBodies.length; i += 1) {
         const body = candidateBodies[i];
         if (!body || body.plugin?.pendingRemoval) continue;
         if (now - (body.spawnAt || 0) < 220) continue;
         visitNearbyFromHash(hash, body, 1, other => {
           if (!other || other.id === body.id || other.plugin?.pendingRemoval) return false;
-          const lo = body.id < other.id ? body.id : other.id;
-          const hi = body.id < other.id ? other.id : body.id;
-          const pairKey = `${lo}:${hi}`;
-          if (seenPairs.has(pairKey)) return false;
-          seenPairs.add(pairKey);
+          if (other.plugin?._overlapCandidateStamp === overlapCandidateStamp && body.id > other.id) return false;
           const dx = other.position.x - body.position.x;
           const dy = other.position.y - body.position.y;
           const minDist = (body.circleRadius || 0) + (other.circleRadius || 0) - 1.2;
@@ -4602,9 +4685,9 @@ function purgeBrokenBodies() {
     }
 
 
-function buildTouchGroupsNearSeeds(sourceBodies, seedBodies, pad = 0.5) {
+function buildTouchGroupsNearSeeds(sourceBodies, seedBodies, pad = 0.5, sourceHash = null) {
   if (!sourceBodies.length || !seedBodies.length) return [];
-  const hash = buildSpatialHash(sourceBodies);
+  const hash = sourceHash || buildSpatialHash(sourceBodies);
   const sourceStamp = (state.touchGroupSourceStamp || 0) + 1;
   state.touchGroupSourceStamp = sourceStamp;
   for (let i = 0; i < sourceBodies.length; i += 1) {
@@ -4644,9 +4727,10 @@ function buildTouchGroupsNearSeeds(sourceBodies, seedBodies, pad = 0.5) {
 
     
 function buildTouchGroupsForIndex(targetIndex, seedBodies = null) {
-      const targetBodies = collectEligibleBodies(worldContentBodiesByIndex(targetIndex), 220, scratchGroupSourceBodies);
+      const entry = getEligibleGroupSource(`content:${targetIndex}`, worldContentBodiesByIndex(targetIndex), 220);
+      const targetBodies = entry?.bodies || EMPTY_BODY_ARRAY;
       if (!targetBodies.length) return [];
-      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, 0.5);
+      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, 0.5, entry.hash);
       scratchGroupSeedBodies.length = 0;
       const now = performance.now();
       for (let i = 0; i < seedBodies.length; i += 1) {
@@ -4656,21 +4740,64 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null) {
         scratchGroupSeedBodies.push(body);
       }
       if (!scratchGroupSeedBodies.length) return [];
-      return buildTouchGroupsNearSeeds(targetBodies, scratchGroupSeedBodies, 0.5);
+      return buildTouchGroupsNearSeeds(targetBodies, scratchGroupSeedBodies, 0.5, entry.hash);
     }
 
+
+    function filterPreviewGroupsInPlace(groups, minLen = 3, maxSpeed = 4.2) {
+      let write = 0;
+      for (let i = 0; i < groups.length; i += 1) {
+        const group = groups[i];
+        if (!group || group.length < minLen) continue;
+        let ok = true;
+        for (let j = 0; j < group.length; j += 1) {
+          if ((group[j]?.speed || 0) >= maxSpeed) {
+            ok = false;
+            break;
+          }
+        }
+        if (!ok) continue;
+        groups[write++] = group;
+      }
+      groups.length = write;
+      return groups;
+    }
+
+    function filterClearableGroupsInPlace(groups, contentMinLen = 3) {
+      let write = 0;
+      for (let i = 0; i < groups.length; i += 1) {
+        const group = groups[i];
+        if (!group?.length) continue;
+        const type = group[0]?.gameType;
+        const special = type === 'hazard' || type === 'buzz';
+        const minLen = special ? 3 : contentMinLen;
+        if (group.length < minLen) continue;
+        const maxSpeed = special ? 6.4 : 4.8;
+        let ok = true;
+        for (let j = 0; j < group.length; j += 1) {
+          if ((group[j]?.speed || 0) >= maxSpeed) {
+            ok = false;
+            break;
+          }
+        }
+        if (!ok) continue;
+        groups[write++] = group;
+      }
+      groups.length = write;
+      return groups;
+    }
 
     function scanGroups() {
       if (state.clipTime > 0) {
         const preview = [];
         for (let idx = 0; idx < CONTENTS.length; idx += 1) preview.push(...buildTouchGroupsForIndex(idx));
         applyPreviewState(preview, EMPTY_ID_ARRAY);
-        return preview.filter(g => g.length >= 2 && g.every(body => body.speed < 4.2));
+        return filterPreviewGroupsInPlace(preview, 2, 4.2);
       }
       const groups = buildTouchGroupsForIndex(state.trendIndex);
       const nextGroups = buildTouchGroupsForIndex(state.nextTrendIndex);
       applyPreviewState(groups, nextGroups);
-      return groups.filter(g => g.length >= 3 && g.every(body => body.speed < 4.2));
+      return filterPreviewGroupsInPlace(groups, 3, 4.2);
     }
 
     function currentScanInterval(crowdFactor = 1) {
@@ -4685,17 +4812,19 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null) {
       const liveCount = state.liveBodies?.length || 0;
       const responsiveBase = Math.min(perfSettings.scanInterval || 0.82, 0.22);
       const base = (hasDirtyBodies || hasRecentContacts || activeBodies) ? responsiveBase : (perfSettings.scanInterval || 0.82);
-      const crowdBoost = liveCount >= 44 ? 1.42 : (liveCount >= 36 ? 1.22 : 1);
+      const crowdBoost = liveCount >= 48 ? 1.6 : (liveCount >= 40 ? 1.38 : (liveCount >= 32 ? 1.18 : 1));
       return base * crowdFactor * crowdBoost;
     }
 
     
 function buildTouchGroupsForType(gameType, contentIndex = null, seedBodies = null) {
       const sourceBodies = gameType === 'content' ? worldContentBodiesByIndex(contentIndex) : worldBodiesByType(gameType);
-      const targetBodies = collectEligibleBodies(sourceBodies, 220, scratchGroupSourceBodies);
+      const cacheKey = gameType === 'content' ? `content:${contentIndex}` : `type:${gameType}`;
+      const entry = getEligibleGroupSource(cacheKey, sourceBodies, 220);
+      const targetBodies = entry?.bodies || EMPTY_BODY_ARRAY;
       if (!targetBodies.length) return [];
       const loosePad = gameType === 'hazard' ? 8 : (gameType === 'buzz' ? 6 : 0.5);
-      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, loosePad);
+      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, loosePad, entry.hash);
       scratchGroupSeedBodies.length = 0;
       const now = performance.now();
       for (let i = 0; i < seedBodies.length; i += 1) {
@@ -4705,7 +4834,7 @@ function buildTouchGroupsForType(gameType, contentIndex = null, seedBodies = nul
         scratchGroupSeedBodies.push(body);
       }
       if (!scratchGroupSeedBodies.length) return [];
-      return buildTouchGroupsNearSeeds(targetBodies, scratchGroupSeedBodies, loosePad);
+      return buildTouchGroupsNearSeeds(targetBodies, scratchGroupSeedBodies, loosePad, entry.hash);
     }
 
 
@@ -4753,12 +4882,15 @@ function scanAllClearableGroups() {
           for (let idx = 0; idx < CONTENTS.length; idx += 1) groups.push(...buildTouchGroupsForIndex(idx));
         } else {
           scratchFullSweepBodies.length = 0;
-          const contentIndexSeen = new Set();
+          const seedIndexStamp = (state.seedIndexStamp || 0) + 1;
+          state.seedIndexStamp = seedIndexStamp;
+          if (!Array.isArray(state.seedIndexSeen)) state.seedIndexSeen = Array.from({ length: CONTENTS.length }, () => 0);
           for (let i = 0; i < seedBodies.length; i += 1) {
             const body = seedBodies[i];
             const idx = body?.gameType === 'content' ? body.contentIndex : null;
-            if (!Number.isInteger(idx) || contentIndexSeen.has(idx)) continue;
-            contentIndexSeen.add(idx);
+            if (!Number.isInteger(idx)) continue;
+            if (state.seedIndexSeen[idx] === seedIndexStamp) continue;
+            state.seedIndexSeen[idx] = seedIndexStamp;
             scratchFullSweepBodies.push(idx);
           }
           for (let i = 0; i < scratchFullSweepBodies.length; i += 1) {
@@ -4779,12 +4911,7 @@ function scanAllClearableGroups() {
         groups.push(...buildTouchGroupsForType('buzz', null, seedBodies));
       }
       state.groupScanDirtyIds?.clear();
-      return groups.filter(g => {
-        const type = g[0]?.gameType;
-        const special = type === 'hazard' || type === 'buzz';
-        const minLen = special ? 3 : contentMinLen;
-        return g.length >= minLen && g.every(body => body.speed < (special ? 6.4 : 4.8));
-      });
+      return filterClearableGroupsInPlace(groups, contentMinLen);
     }
 
 
@@ -4799,28 +4926,23 @@ function scanAllClearableGroups() {
 
     function expandPendingGroup(pending) {
       if (!pending || !Number.isInteger(pending.contentIndex)) return [];
-      const bodies = worldContentBodiesByIndex(pending.contentIndex).filter(body => performance.now() - body.spawnAt > 140);
+      const entry = getEligibleGroupSource(`content:${pending.contentIndex}`, worldContentBodiesByIndex(pending.contentIndex), 140);
+      const bodies = entry?.bodies || EMPTY_BODY_ARRAY;
       if (!bodies.length) return [];
-      const idMap = new Map(bodies.map(body => [body.id, body]));
-      const seed = [];
-      for (const id of pending.ids || []) {
-        const body = idMap.get(id);
-        if (body) seed.push(body);
+      scratchGroupSeedBodies.length = 0;
+      const pendingIdSet = new Set(pending.ids || EMPTY_ID_ARRAY);
+      for (let i = 0; i < bodies.length; i += 1) {
+        const body = bodies[i];
+        if (pendingIdSet.has(body.id)) scratchGroupSeedBodies.push(body);
       }
-      if (!seed.length) return [];
-      const visited = new Set(seed.map(body => body.id));
-      const stack = seed.slice();
-      while (stack.length) {
-        const current = stack.pop();
-        for (const other of bodies) {
-          if (visited.has(other.id) || other.id === current.id) continue;
-          if (touching(current, other)) {
-            visited.add(other.id);
-            stack.push(other);
-          }
-        }
+      if (!scratchGroupSeedBodies.length) return [];
+      const groups = buildTouchGroupsNearSeeds(bodies, scratchGroupSeedBodies, 0.5, entry.hash);
+      if (!groups.length) return [];
+      let largest = groups[0];
+      for (let i = 1; i < groups.length; i += 1) {
+        if (groups[i].length > largest.length) largest = groups[i];
       }
-      return bodies.filter(body => visited.has(body.id));
+      return largest || [];
     }
 
     function updatePendingClearVisual(ids = []) {
@@ -4874,7 +4996,14 @@ function scanAllClearableGroups() {
         if (type === 'buzz') return 2;
         return 1;
       };
-      groups.sort((a, b) => groupPriority(b) - groupPriority(a) || b.length - a.length || a.reduce((m, x) => m + x.position.y, 0) - b.reduce((m, x) => m + x.position.y, 0));
+      for (let i = 0; i < groups.length; i += 1) {
+        const group = groups[i];
+        let sumY = 0;
+        for (let j = 0; j < group.length; j += 1) sumY += group[j]?.position?.y || 0;
+        group._sortPriority = groupPriority(group);
+        group._sortY = sumY;
+      }
+      groups.sort((a, b) => (b._sortPriority - a._sortPriority) || (b.length - a.length) || (a._sortY - b._sortY));
       clearGroup(groups[0]);
       return true;
     }
@@ -6027,10 +6156,15 @@ function requestLoop(ts) {
         cleanupOffscreenBodies();
         purgeBrokenBodies();
       }
-      if (state.rescueTimer >= perfSettings.rescueInterval * Math.min(1.14, 0.92 + (crowdFactor - 1) * 0.14)) {
+      if (state.rescueTimer >= perfSettings.rescueInterval * Math.min(1.22, 0.9 + (crowdFactor - 1) * 0.18)) {
         state.rescueTimer = 0;
-        rescueFloatingBodies();
-        separateDeepOverlaps();
+        const maintenanceNow = performance.now();
+        rescueFloatingBodies(maintenanceNow);
+        const needOverlapSweep = (state.repairQueueIds?.size || 0) > 0
+          || (state.activeMovingCount || 0) > 0
+          || recentTouchPairs.size > 0
+          || maintenanceNow - (state.lastFullOverlapSweepAt || 0) > ((state.liveBodies?.length || 0) >= 40 ? 2800 : 2200);
+        if (needOverlapSweep) separateDeepOverlaps(maintenanceNow);
       }
       if (state.uiTimer >= perfSettings.uiInterval * Math.min(1.18, 0.96 + (crowdFactor - 1) * 0.16)) {
         updateDynamicVoiceCues(ts);
