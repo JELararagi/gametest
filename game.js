@@ -330,6 +330,9 @@
     const scratchSeedContentFlags = [];
     const scratchSweepWindows = { rescue:[], overlap:[], freeze:[] };
     const scratchDenseMaintenanceBodies = [];
+    const scratchNewlyFrozenBodies = [];
+    const scratchSettledHybridGroups = [];
+    const scratchHybridSeedBodies = [];
 
     function spatialHashKey(cx, cy) {
       if (cx <= -SPATIAL_HASH_OFFSET || cx >= SPATIAL_HASH_OFFSET || cy <= -SPATIAL_HASH_OFFSET || cy >= SPATIAL_HASH_OFFSET) {
@@ -439,6 +442,404 @@
     const TOUCH_MEMORY_BASE_TTL_MS = 360;
     const TOUCH_PAIR_NUMERIC_MULTIPLIER = 1048576;
     const recentTouchPairs = new Map();
+    function pairSupportsPersistentTouchGraph(a, b) {
+      if (!a || !b || a.plugin?.pendingRemoval || b.plugin?.pendingRemoval) return false;
+      const typeA = a.gameType;
+      if (typeA !== b.gameType) return false;
+      if (typeA === 'content') return a.contentIndex === b.contentIndex;
+      return typeA === 'hazard' || typeA === 'buzz';
+    }
+
+    function touchGraphNeighborSet(graph, bodyId, create = false) {
+      if (!(graph instanceof Map) || bodyId == null) return null;
+      let set = graph.get(bodyId);
+      if (!set && create) {
+        set = new Set();
+        graph.set(bodyId, set);
+      }
+      return set || null;
+    }
+
+    function linkTouchGraph(graph, aId, bId) {
+      if (!(graph instanceof Map) || aId == null || bId == null || aId === bId) return;
+      touchGraphNeighborSet(graph, aId, true)?.add(bId);
+      touchGraphNeighborSet(graph, bId, true)?.add(aId);
+    }
+
+    function unlinkTouchGraph(graph, aId, bId) {
+      if (!(graph instanceof Map) || aId == null || bId == null || aId === bId) return;
+      const setA = graph.get(aId);
+      if (setA) {
+        setA.delete(bId);
+        if (!setA.size) graph.delete(aId);
+      }
+      const setB = graph.get(bId);
+      if (setB) {
+        setB.delete(aId);
+        if (!setB.size) graph.delete(bId);
+      }
+    }
+
+    function clearTouchGraphBody(graph, bodyId) {
+      if (!(graph instanceof Map) || bodyId == null) return;
+      const neighbors = graph.get(bodyId);
+      if (neighbors) {
+        for (const otherId of neighbors) {
+          const otherSet = graph.get(otherId);
+          if (!otherSet) continue;
+          otherSet.delete(bodyId);
+          if (!otherSet.size) graph.delete(otherId);
+        }
+      }
+      graph.delete(bodyId);
+    }
+
+    function clearAllLiveTouchGraph() {
+      state.liveTouchAdj?.clear();
+      state.liveTouchGraphPairIds?.clear();
+    }
+
+    function disconnectLiveTouchGraphPair(key, aId = null, bId = null) {
+      let pair = key != null ? (state.liveTouchGraphPairIds?.get(key) || null) : null;
+      if (!pair && aId != null && bId != null) pair = [aId, bId];
+      if (pair) unlinkTouchGraph(state.liveTouchAdj, pair[0], pair[1]);
+      if (key != null) {
+        state.liveTouchGraphPairIds?.delete(key);
+        return;
+      }
+      if (pair && state.liveTouchGraphPairIds instanceof Map && state.liveTouchGraphPairIds.size) {
+        for (const [otherKey, otherPair] of state.liveTouchGraphPairIds.entries()) {
+          if (!otherPair) continue;
+          const same = (otherPair[0] === pair[0] && otherPair[1] === pair[1]) || (otherPair[0] === pair[1] && otherPair[1] === pair[0]);
+          if (same) state.liveTouchGraphPairIds.delete(otherKey);
+        }
+      }
+    }
+
+    function connectLiveTouchGraphPair(a, b) {
+      if (!pairSupportsPersistentTouchGraph(a, b)) return;
+      const key = touchPairKey(a, b);
+      linkTouchGraph(state.liveTouchAdj, a.id, b.id);
+      state.liveTouchGraphPairIds?.set(key, [a.id, b.id]);
+    }
+
+    function connectSettledTouchGraphPair(a, b) {
+      if (!pairSupportsPersistentTouchGraph(a, b)) return;
+      if (!isFrozenBody(a) || !isFrozenBody(b)) return;
+      linkTouchGraph(state.settledTouchAdj, a.id, b.id);
+    }
+
+    function removeBodyTouchGraphLinks(bodyOrId) {
+      const bodyId = typeof bodyOrId === 'object' ? bodyOrId?.id : bodyOrId;
+      if (bodyId == null) return;
+      clearTouchGraphBody(state.liveTouchAdj, bodyId);
+      clearTouchGraphBody(state.settledTouchAdj, bodyId);
+      if (state.liveTouchGraphPairIds instanceof Map && state.liveTouchGraphPairIds.size) {
+        for (const [key, pair] of state.liveTouchGraphPairIds.entries()) {
+          if (!pair || (pair[0] !== bodyId && pair[1] !== bodyId)) continue;
+          state.liveTouchGraphPairIds.delete(key);
+          recentTouchPairs.delete(key);
+        }
+      }
+    }
+
+    function refreshSettledTouchGraphForBodies(bodies, frozenHash = null, touchNow = performance.now()) {
+      if (!Array.isArray(bodies) || !bodies.length) return 0;
+      const hash = frozenHash || frozenSpatialHash();
+      if (!hash) return 0;
+      let linked = 0;
+      for (let i = 0; i < bodies.length; i += 1) {
+        const body = bodies[i];
+        if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) continue;
+        visitNearbyFromHash(hash, body, 1, other => {
+          if (!other || other.id === body.id || other.plugin?.pendingRemoval) return false;
+          if (!isFrozenBody(other) || !pairSupportsPersistentTouchGraph(body, other)) return false;
+          if (!touchingExact(body, other, 0.75)) return false;
+          connectSettledTouchGraphPair(body, other);
+          linked += 1;
+          return false;
+        });
+      }
+      return linked;
+    }
+
+    function visitTouchGraphNeighbors(body, touchNow = performance.now(), fn = null) {
+      if (!body || typeof fn !== 'function') return false;
+      const bodyId = body.id;
+      if (bodyId == null) return false;
+      const ttlMs = currentTouchMemoryTtlMs();
+      const liveStale = [];
+      const settledStale = [];
+      const applyLiveSet = (neighbors) => {
+        if (!(neighbors instanceof Set) || !neighbors.size) return false;
+        for (const otherId of neighbors) {
+          const other = bodyById(otherId);
+          if (!other || other.plugin?.pendingRemoval) {
+            liveStale.push({ key:null, otherId });
+            continue;
+          }
+          const key = touchPairKey(body, other);
+          const at = recentTouchPairs.get(key);
+          if (at == null || touchNow - at > ttlMs) {
+            liveStale.push({ key, otherId });
+            continue;
+          }
+          if (fn(other) === true) return true;
+        }
+        return false;
+      };
+      const applySettledSet = (neighbors) => {
+        if (!(neighbors instanceof Set) || !neighbors.size) return false;
+        for (const otherId of neighbors) {
+          const other = bodyById(otherId);
+          if (!other || other.plugin?.pendingRemoval || !isFrozenBody(other)) {
+            settledStale.push(otherId);
+            continue;
+          }
+          if (fn(other) === true) return true;
+        }
+        return false;
+      };
+      if (applyLiveSet(state.liveTouchAdj?.get(bodyId))) {
+        for (let i = 0; i < liveStale.length; i += 1) disconnectLiveTouchGraphPair(liveStale[i].key, bodyId, liveStale[i].otherId);
+        return true;
+      }
+      if (applySettledSet(state.settledTouchAdj?.get(bodyId))) {
+        for (let i = 0; i < liveStale.length; i += 1) disconnectLiveTouchGraphPair(liveStale[i].key, bodyId, liveStale[i].otherId);
+        for (let i = 0; i < settledStale.length; i += 1) unlinkTouchGraph(state.settledTouchAdj, bodyId, settledStale[i]);
+        return true;
+      }
+      for (let i = 0; i < liveStale.length; i += 1) disconnectLiveTouchGraphPair(liveStale[i].key, bodyId, liveStale[i].otherId);
+      for (let i = 0; i < settledStale.length; i += 1) unlinkTouchGraph(state.settledTouchAdj, bodyId, settledStale[i]);
+      return false;
+    }
+
+    function shouldUseTouchGraphGroupSearch(liveCount = 0, targetCount = 0, seedCount = 0) {
+      if (seedCount <= 0 || targetCount < 2) return false;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      if (liveCount >= 52 && isHeavyCrowdStable(liveCount, dynamicCount)) return true;
+      if (liveCount >= 40 && targetCount >= 6) return true;
+      if (liveCount >= 30 && seedCount >= 5 && targetCount >= 5) return true;
+      return false;
+    }
+
+    function buildTouchGroupsFromGraph(targetBodies, seedBodies = null, touchNow = performance.now(), matchOther = null) {
+      if (!targetBodies.length) return [];
+      const roots = Array.isArray(seedBodies) && seedBodies.length ? seedBodies : targetBodies;
+      const groups = [];
+      const visitStamp = (state.touchGroupVisitStamp || 0) + 1;
+      state.touchGroupVisitStamp = visitStamp;
+      const eligibleStamp = targetBodies._eligibleGroupStamp || 0;
+      const acceptOther = typeof matchOther === 'function' ? matchOther : null;
+      const stack = scratchTouchStack;
+      for (let i = 0; i < roots.length; i += 1) {
+        const root = roots[i];
+        if (!root || root.plugin?.pendingRemoval) continue;
+        root.plugin = root.plugin || {};
+        if (eligibleStamp && root.plugin._eligibleGroupStamp !== eligibleStamp) continue;
+        if (root.plugin._touchVisitStamp === visitStamp) continue;
+        stack.length = 0;
+        stack.push(root);
+        root.plugin._touchVisitStamp = visitStamp;
+        const group = [];
+        while (stack.length) {
+          const current = stack.pop();
+          group.push(current);
+          visitTouchGraphNeighbors(current, touchNow, other => {
+            if (!other || other.id === current.id) return false;
+            if (acceptOther && !acceptOther(other, current)) return false;
+            other.plugin = other.plugin || {};
+            if (eligibleStamp && other.plugin._eligibleGroupStamp !== eligibleStamp) return false;
+            if (other.plugin._touchVisitStamp === visitStamp) return false;
+            other.plugin._touchVisitStamp = visitStamp;
+            stack.push(other);
+            return false;
+          });
+        }
+        groups.push(group);
+      }
+      stack.length = 0;
+      return groups;
+    }
+
+
+    function settledGroupCacheKey(gameType, contentIndex = null) {
+      return gameType === 'content' ? `content:${contentIndex}` : String(gameType || '');
+    }
+
+    function ensureSettledGroupCacheStore() {
+      if (!(state.settledGroupCacheByKey instanceof Map)) state.settledGroupCacheByKey = new Map();
+      const revision = state.frozenSpatialHashRevision || 0;
+      if ((state.settledGroupCacheFrozenRevision ?? -1) !== revision) {
+        state.settledGroupCacheByKey.clear();
+        state.settledGroupCacheFrozenRevision = revision;
+      }
+      return state.settledGroupCacheByKey;
+    }
+
+    function settledSourceBodiesForKey(gameType, contentIndex = null) {
+      if (gameType === 'content') return state.liveContentBodiesByIndex?.[contentIndex] || EMPTY_BODY_ARRAY;
+      return state.liveBodiesByType?.[gameType] || EMPTY_BODY_ARRAY;
+    }
+
+    function buildSettledGroupCacheForKey(gameType, contentIndex = null) {
+      const store = ensureSettledGroupCacheStore();
+      const key = settledGroupCacheKey(gameType, contentIndex);
+      const cached = store.get(key);
+      if (cached) return cached;
+      const sourceBodies = settledSourceBodiesForKey(gameType, contentIndex);
+      const groups = [];
+      const visitStamp = (state.settledGroupVisitStamp || 0) + 1;
+      state.settledGroupVisitStamp = visitStamp;
+      const stack = scratchTouchStack;
+      for (let i = 0; i < sourceBodies.length; i += 1) {
+        const body = sourceBodies[i];
+        if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) continue;
+        body.plugin = body.plugin || {};
+        if (body.plugin._settledGroupVisitStamp === visitStamp) continue;
+        const neighbors = state.settledTouchAdj?.get(body.id);
+        if (!(neighbors instanceof Set) || !neighbors.size) {
+          body.plugin._settledGroupVisitStamp = visitStamp;
+          continue;
+        }
+        stack.length = 0;
+        stack.push(body);
+        body.plugin._settledGroupVisitStamp = visitStamp;
+        const ids = [];
+        while (stack.length) {
+          const current = stack.pop();
+          ids.push(current.id);
+          const adj = state.settledTouchAdj?.get(current.id);
+          if (!(adj instanceof Set) || !adj.size) continue;
+          for (const otherId of adj) {
+            const other = bodyById(otherId);
+            if (!other || other.plugin?.pendingRemoval || !isFrozenBody(other)) continue;
+            if (other.gameType !== gameType) continue;
+            if (gameType === 'content' && other.contentIndex !== contentIndex) continue;
+            other.plugin = other.plugin || {};
+            if (other.plugin._settledGroupVisitStamp === visitStamp) continue;
+            other.plugin._settledGroupVisitStamp = visitStamp;
+            stack.push(other);
+          }
+        }
+        if (ids.length >= 2) groups.push(ids);
+      }
+      stack.length = 0;
+      const result = { key, revision:(state.settledGroupCacheFrozenRevision ?? 0), groups };
+      store.set(key, result);
+      return result;
+    }
+
+    function materializeSettledGroups(gameType, contentIndex = null, minAgeMs = 220, scanNow = performance.now(), outGroups = scratchSettledHybridGroups) {
+      outGroups.length = 0;
+      const cache = buildSettledGroupCacheForKey(gameType, contentIndex);
+      const stamp = (state.settledGroupMaterializeStamp || 0) + 1;
+      state.settledGroupMaterializeStamp = stamp;
+      for (let i = 0; i < (cache?.groups?.length || 0); i += 1) {
+        const ids = cache.groups[i];
+        const group = [];
+        let valid = true;
+        for (let j = 0; j < ids.length; j += 1) {
+          const body = bodyById(ids[j]);
+          if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body) || (scanNow - (body.spawnAt || 0) <= minAgeMs)) {
+            valid = false;
+            break;
+          }
+          group.push(body);
+        }
+        if (!valid || group.length < 2) continue;
+        for (let j = 0; j < group.length; j += 1) {
+          group[j].plugin = group[j].plugin || {};
+          group[j].plugin._settledHybridStamp = stamp;
+        }
+        outGroups.push(group);
+      }
+      outGroups._settledHybridStamp = stamp;
+      return outGroups;
+    }
+
+    function shouldUseSettledHybridGroupSearch(liveCount = 0, targetCount = 0, seedCount = 0) {
+      if (targetCount < 2) return false;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      if (seedCount > 0 && seedCount >= targetCount * 0.72 && targetCount <= 10) return false;
+      if (liveCount >= 58 && isMostlyFrozenCrowd(liveCount, dynamicCount)) return true;
+      if (liveCount >= 48 && isHeavyCrowdStable(liveCount, dynamicCount) && targetCount >= 5) return true;
+      return false;
+    }
+
+    function collectHybridFrontierSeeds(targetBodies, settledStamp = 0, scanNow = performance.now(), outSeeds = scratchHybridSeedBodies) {
+      outSeeds.length = 0;
+      const liveCount = state.liveBodies?.length || 0;
+      const boardHeight = state.boardRectCache?.height || boardLogicalRect().height || 0;
+      const repairIds = state.repairQueueIds;
+      const dirtyIds = state.groupScanDirtyIds;
+      const activeIds = state.activeBodyIds;
+      const recentWindowMs = liveCount >= 72 ? 920 : (liveCount >= 60 ? 1120 : 1360);
+      for (let i = 0; i < targetBodies.length; i += 1) {
+        const body = targetBodies[i];
+        if (!body || body.plugin?.pendingRemoval) continue;
+        body.plugin = body.plugin || {};
+        const settledCovered = settledStamp > 0 && body.plugin._settledHybridStamp === settledStamp;
+        const urgent = repairIds?.has(body.id)
+          || dirtyIds?.has(body.id)
+          || activeIds?.has(body.id)
+          || body.outOfRangeSince
+          || body.floatStartAt
+          || (body.plugin.highPrecisionUntil || 0) > scanNow;
+        const recent = scanNow - (body.spawnAt || 0) < recentWindowMs;
+        const graphSparse = !settledCovered
+          && !(state.liveTouchAdj?.get(body.id)?.size || 0)
+          && !(state.settledTouchAdj?.get(body.id)?.size || 0);
+        const frontier = urgent
+          || recent
+          || !isFrozenBody(body)
+          || !settledCovered
+          || graphSparse
+          || !boardHeight
+          || !isDeepQuietBody(body, boardHeight, liveCount, scanNow);
+        if (!frontier) continue;
+        outSeeds.push(body);
+      }
+      const denseLimit = denseScanSeedLimit(liveCount);
+      if (denseLimit && outSeeds.length > Math.max(denseLimit * 2, 14)) prioritizeDenseScanSeeds(outSeeds, liveCount, scanNow);
+      return outSeeds;
+    }
+
+    function buildHybridTouchGroups(targetBodies, gameType, contentIndex = null, pad = 0.5, seedBodies = null, scanNow = performance.now(), prebuiltHash = null, matchOther = null) {
+      if (!targetBodies.length) return [];
+      const settledGroups = materializeSettledGroups(gameType, contentIndex, 220, scanNow, scratchSettledHybridGroups);
+      const settledStamp = settledGroups._settledHybridStamp || 0;
+      const seeds = Array.isArray(seedBodies) && seedBodies.length
+        ? seedBodies
+        : collectHybridFrontierSeeds(targetBodies, settledStamp, scanNow, scratchHybridSeedBodies);
+      if ((!seeds || !seeds.length) && settledGroups.length) return settledGroups.slice();
+      const refinedGroups = seeds?.length
+        ? buildTouchGroupsNearSeeds(targetBodies, seeds, pad, scanNow, prebuiltHash, matchOther)
+        : [];
+      if (!settledGroups.length) return refinedGroups;
+      const includeStamp = (state.hybridGroupIncludeStamp || 0) + 1;
+      state.hybridGroupIncludeStamp = includeStamp;
+      for (let i = 0; i < refinedGroups.length; i += 1) {
+        const group = refinedGroups[i];
+        for (let j = 0; j < (group?.length || 0); j += 1) {
+          group[j].plugin = group[j].plugin || {};
+          group[j].plugin._hybridGroupIncludeStamp = includeStamp;
+        }
+      }
+      const merged = refinedGroups.slice();
+      for (let i = 0; i < settledGroups.length; i += 1) {
+        const group = settledGroups[i];
+        let overlapped = false;
+        for (let j = 0; j < group.length; j += 1) {
+          if (group[j].plugin?._hybridGroupIncludeStamp === includeStamp) {
+            overlapped = true;
+            break;
+          }
+        }
+        if (!overlapped) merged.push(group);
+      }
+      return merged;
+    }
     function currentTouchMemoryTtlMs() {
       const liveCount = state.liveBodies?.length || 0;
       const dynamicCount = state.dynamicBodies?.length || 0;
@@ -911,6 +1312,14 @@
       activeSampleCursor:0,
       lastStableScanCacheKey:'',
       lastStableScanGroups:[],
+      liveTouchAdj:new Map(),
+      liveTouchGraphPairIds:new Map(),
+      settledTouchAdj:new Map(),
+      settledGroupCacheByKey:new Map(),
+      settledGroupCacheFrozenRevision:-1,
+      settledGroupVisitStamp:0,
+      settledGroupMaterializeStamp:0,
+      hybridGroupIncludeStamp:0,
       paused:false
     };
 
@@ -980,6 +1389,14 @@
       state.activeSampleCursor = 0;
       state.lastStableScanCacheKey = '';
       state.lastStableScanGroups = [];
+      state.liveTouchAdj = new Map();
+      state.liveTouchGraphPairIds = new Map();
+      state.settledTouchAdj = new Map();
+      state.settledGroupCacheByKey = new Map();
+      state.settledGroupCacheFrozenRevision = -1;
+      state.settledGroupVisitStamp = 0;
+      state.settledGroupMaterializeStamp = 0;
+      state.hybridGroupIncludeStamp = 0;
       state.visualPreviewIds = [];
       state.visualNextPreviewIds = [];
       state.visualGlowIds = [];
@@ -1078,6 +1495,7 @@ function isFrozenBody(body) {
 function thawBody(body, now = performance.now(), opts = {}) {
   if (!body || !isFrozenBody(body) || body.plugin?.pendingRemoval) return false;
   body.plugin = body.plugin || {};
+  removeBodyTouchGraphLinks(body);
   body.plugin.frozen = false;
   body.plugin.frozenAt = 0;
   unregisterFrozenLiveBody(body);
@@ -1112,6 +1530,7 @@ function thawBody(body, now = performance.now(), opts = {}) {
 function freezeBody(body, now = performance.now()) {
   if (!body || body.plugin?.pendingRemoval || body.gameType === 'wall' || body.isStatic || isFrozenBody(body)) return false;
   body.plugin = body.plugin || {};
+  removeBodyTouchGraphLinks(body);
   Body.setVelocity(body, { x:0, y:0 });
   Body.setAngularVelocity(body, 0);
   Body.setStatic(body, true);
@@ -1319,6 +1738,7 @@ function freezeRestedBodies(now = performance.now()) {
   const angularThresholdBase = perfSettings.freezeAngularThreshold || 0.02;
   const linearThreshold = liveCount >= 66 ? linearThresholdBase * 2.4 : (liveCount >= 58 ? linearThresholdBase * 2.1 : (liveCount >= 52 ? linearThresholdBase * 1.82 : (liveCount >= 42 ? linearThresholdBase * 1.45 : (liveCount >= 32 ? linearThresholdBase * 1.25 : linearThresholdBase))));
   const angularThreshold = liveCount >= 66 ? angularThresholdBase * 2.45 : (liveCount >= 58 ? angularThresholdBase * 2.15 : (liveCount >= 52 ? angularThresholdBase * 1.88 : (liveCount >= 42 ? angularThresholdBase * 1.48 : (liveCount >= 32 ? angularThresholdBase * 1.28 : angularThresholdBase))));
+  scratchNewlyFrozenBodies.length = 0;
   let frozenCount = 0;
   for (let i = 0; i < bodies.length; i += 1) {
     const body = bodies[i];
@@ -1342,8 +1762,12 @@ function freezeRestedBodies(now = performance.now()) {
     if (!body.plugin.restStartAt) body.plugin.restStartAt = now;
     const settledFor = now - body.plugin.restStartAt;
     if (settledFor < settleMs) continue;
-    if (freezeBody(body, now)) frozenCount += 1;
+    if (freezeBody(body, now)) {
+      frozenCount += 1;
+      scratchNewlyFrozenBodies.push(body);
+    }
   }
+  if (scratchNewlyFrozenBodies.length) refreshSettledTouchGraphForBodies(scratchNewlyFrozenBodies, frozenSpatialHash(), now);
   if (fullSweep) {
     if (frozenCount === 0 && quietStableSweep) {
       state.lastStableFreezeHashSignature = freezeSignature;
@@ -2092,6 +2516,7 @@ function registerLiveBody(body) {
     
 function unregisterLiveBody(body) {
       if (!body?.plugin?._liveRegistered) return;
+      removeBodyTouchGraphLinks(body);
       const refs = body.plugin._liveRefs || {};
       unregisterDynamicLiveBody(body);
       unregisterFrozenLiveBody(body);
@@ -5383,7 +5808,9 @@ function purgeBrokenBodies() {
 
     function pruneRecentTouchPairs(now = performance.now()) {
       recentTouchPairs.forEach((at, key) => {
-        if (now - at > currentTouchMemoryTtlMs()) recentTouchPairs.delete(key);
+        if (now - at <= currentTouchMemoryTtlMs()) return;
+        recentTouchPairs.delete(key);
+        disconnectLiveTouchGraphPair(key);
       });
     }
 
@@ -5391,6 +5818,7 @@ function purgeBrokenBodies() {
       if (!a || !b || a.id == null || b.id == null) return;
       const liveCount = state.liveBodies?.length || 0;
       const dynamicCount = state.dynamicBodies?.length || 0;
+      const graphRelevant = pairSupportsPersistentTouchGraph(a, b);
       if (isUltraDenseQuietCrowd(liveCount, dynamicCount)) {
         const boardHeight = state.boardRectCache?.height || boardLogicalRect().height || 0;
         if (boardHeight > 0 && isDeepQuietBody(a, boardHeight, liveCount, now) && isDeepQuietBody(b, boardHeight, liveCount, now)) return;
@@ -5420,7 +5848,9 @@ function purgeBrokenBodies() {
         const topRelevant = Math.min(Number.isFinite(a.position?.y) ? a.position.y : 9999, Number.isFinite(b.position?.y) ? b.position.y : 9999) <= topBand;
         if (!recentA && !recentB && !topRelevant && maxSpeed < 0.36 && maxAngular < 0.06) return;
       }
-      recentTouchPairs.set(touchPairKey(a, b), now);
+      const key = touchPairKey(a, b);
+      recentTouchPairs.set(key, now);
+      if (graphRelevant) connectLiveTouchGraphPair(a, b);
       state.lastRecentTouchAt = now;
     }
 
@@ -5431,6 +5861,7 @@ function purgeBrokenBodies() {
       if (at == null) return false;
       if (now - at > currentTouchMemoryTtlMs()) {
         recentTouchPairs.delete(key);
+        disconnectLiveTouchGraphPair(key, a.id, b.id);
         return false;
       }
       return true;
@@ -5510,10 +5941,11 @@ function purgeBrokenBodies() {
           || !a.isSleeping
           || !b.isSleeping;
         if (!activeTouch) return;
+        const graphTouchRelevant = pairSupportsPersistentTouchGraph(a, b);
         const touchMemoryRelevant = pairSupportsTouchMemory(a, b);
         const markA = isGroupScanRelevantBody(a);
         const markB = isGroupScanRelevantBody(b);
-        if (!touchMemoryRelevant && !markA && !markB) return;
+        if (!graphTouchRelevant && !markA && !markB) return;
         if (ultraDenseQuiet) {
           if (boardHeight > 0 && isDeepQuietBody(a, boardHeight, liveCount, now) && isDeepQuietBody(b, boardHeight, liveCount, now)) return;
           const topBand = liveCount >= 72 ? 360 : (liveCount >= 64 ? 400 : 440);
@@ -5523,7 +5955,7 @@ function purgeBrokenBodies() {
           const topRelevant = Math.min(Number.isFinite(a.position?.y) ? a.position.y : 9999, Number.isFinite(b.position?.y) ? b.position.y : 9999) <= topBand;
           if (!aActive && !bActive && !topRelevant) return;
         }
-        if (touchMemoryRelevant) rememberRecentTouch(a, b, now);
+        if (graphTouchRelevant || touchMemoryRelevant) rememberRecentTouch(a, b, now);
         if (markA && (!activePhase || activeIds?.has(a.id) || ultraDenseQuiet)) markDirtyOnce(a);
         if (markB && (!activePhase || activeIds?.has(b.id) || ultraDenseQuiet)) markDirtyOnce(b);
         processed += 1;
@@ -5541,7 +5973,10 @@ function purgeBrokenBodies() {
       if (now >= recentTouchPairsNextPruneAt || recentTouchPairs.size > recentTouchSoftCap) {
         recentTouchPairsNextPruneAt = now + (ultraDenseQuiet ? 96 : 120);
         pruneRecentTouchPairs(now);
-        if (recentTouchPairs.size > currentRecentTouchHardCap()) recentTouchPairs.clear();
+        if (recentTouchPairs.size > currentRecentTouchHardCap()) {
+          recentTouchPairs.clear();
+          clearAllLiveTouchGraph();
+        }
       }
     }
 
@@ -5627,7 +6062,19 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null, scanNow = perf
       const matchOther = useWorldHash
         ? ((other) => !!other && !other.plugin?.pendingRemoval && other.gameType === 'content' && other.contentIndex === targetIndex && other.plugin?._eligibleGroupStamp === targetBodies._eligibleGroupStamp)
         : null;
-      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, 0.5, scanNow, prebuiltHash, matchOther);
+      const useHybrid = shouldUseSettledHybridGroupSearch(liveCount, targetBodies.length, Array.isArray(seedBodies) ? seedBodies.length : 0);
+      if (!Array.isArray(seedBodies) || !seedBodies.length) {
+        if (useHybrid) {
+          const hybridGroups = buildHybridTouchGroups(targetBodies, 'content', targetIndex, 0.5, null, scanNow, prebuiltHash, matchOther);
+          if (hybridGroups.length) return hybridGroups;
+        }
+        const useTouchGraph = shouldUseTouchGraphGroupSearch(liveCount, targetBodies.length, targetBodies.length);
+        if (useTouchGraph) {
+          const graphGroups = buildTouchGroupsFromGraph(targetBodies, null, scanNow, matchOther);
+          if (graphGroups.some(group => (group?.length || 0) >= 2)) return graphGroups;
+        }
+        return buildTouchGroupsFromBodies(targetBodies, 0.5, scanNow, prebuiltHash, matchOther);
+      }
       scratchGroupSeedBodies.length = 0;
       const now = scanNow;
       for (let i = 0; i < seedBodies.length; i += 1) {
@@ -5638,6 +6085,15 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null, scanNow = perf
         scratchGroupSeedBodies.push(body);
       }
       if (!scratchGroupSeedBodies.length) return [];
+      if (useHybrid) {
+        const hybridGroups = buildHybridTouchGroups(targetBodies, 'content', targetIndex, 0.5, scratchGroupSeedBodies, scanNow, prebuiltHash, matchOther);
+        if (hybridGroups.some(group => (group?.length || 0) >= 2) || (liveCount >= 52 && targetBodies.length >= 6)) return hybridGroups;
+      }
+      const useTouchGraph = shouldUseTouchGraphGroupSearch(liveCount, targetBodies.length, scratchGroupSeedBodies.length);
+      if (useTouchGraph) {
+        const graphGroups = buildTouchGroupsFromGraph(targetBodies, scratchGroupSeedBodies, scanNow, matchOther);
+        if (graphGroups.some(group => (group?.length || 0) >= 2) || (liveCount >= 52 && targetBodies.length >= 6)) return graphGroups;
+      }
       return buildTouchGroupsNearSeeds(targetBodies, scratchGroupSeedBodies, 0.5, scanNow, prebuiltHash, matchOther);
     }
 
@@ -5730,7 +6186,19 @@ function buildTouchGroupsForType(gameType, contentIndex = null, seedBodies = nul
       const matchOther = useWorldHash
         ? ((other) => !!other && !other.plugin?.pendingRemoval && other.gameType === gameType && (gameType !== 'content' || other.contentIndex === contentIndex) && other.plugin?._eligibleGroupStamp === targetBodies._eligibleGroupStamp)
         : null;
-      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, loosePad, scanNow, prebuiltHash, matchOther);
+      const useHybrid = shouldUseSettledHybridGroupSearch(liveCount, targetBodies.length, Array.isArray(seedBodies) ? seedBodies.length : 0);
+      if (!Array.isArray(seedBodies) || !seedBodies.length) {
+        if (useHybrid) {
+          const hybridGroups = buildHybridTouchGroups(targetBodies, gameType, contentIndex, loosePad, null, scanNow, prebuiltHash, matchOther);
+          if (hybridGroups.length) return hybridGroups;
+        }
+        const useTouchGraph = shouldUseTouchGraphGroupSearch(liveCount, targetBodies.length, targetBodies.length);
+        if (useTouchGraph) {
+          const graphGroups = buildTouchGroupsFromGraph(targetBodies, null, scanNow, matchOther);
+          if (graphGroups.some(group => (group?.length || 0) >= 2)) return graphGroups;
+        }
+        return buildTouchGroupsFromBodies(targetBodies, loosePad, scanNow, prebuiltHash, matchOther);
+      }
       scratchGroupSeedBodies.length = 0;
       const now = scanNow;
       for (let i = 0; i < seedBodies.length; i += 1) {
@@ -5741,6 +6209,15 @@ function buildTouchGroupsForType(gameType, contentIndex = null, seedBodies = nul
         scratchGroupSeedBodies.push(body);
       }
       if (!scratchGroupSeedBodies.length) return [];
+      if (useHybrid) {
+        const hybridGroups = buildHybridTouchGroups(targetBodies, gameType, contentIndex, loosePad, scratchGroupSeedBodies, scanNow, prebuiltHash, matchOther);
+        if (hybridGroups.some(group => (group?.length || 0) >= 2) || (liveCount >= 48 && targetBodies.length >= 5)) return hybridGroups;
+      }
+      const useTouchGraph = shouldUseTouchGraphGroupSearch(liveCount, targetBodies.length, scratchGroupSeedBodies.length);
+      if (useTouchGraph) {
+        const graphGroups = buildTouchGroupsFromGraph(targetBodies, scratchGroupSeedBodies, scanNow, matchOther);
+        if (graphGroups.some(group => (group?.length || 0) >= 2) || (liveCount >= 48 && targetBodies.length >= 5)) return graphGroups;
+      }
       return buildTouchGroupsNearSeeds(targetBodies, scratchGroupSeedBodies, loosePad, scanNow, prebuiltHash, matchOther);
     }
 
