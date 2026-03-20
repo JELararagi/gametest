@@ -329,6 +329,7 @@
     const scratchTypeIndexList = [];
     const scratchSeedContentFlags = [];
     const scratchSweepWindows = { rescue:[], overlap:[], freeze:[] };
+    const scratchDenseMaintenanceBodies = [];
 
     function spatialHashKey(cx, cy) {
       if (cx <= -SPATIAL_HASH_OFFSET || cx >= SPATIAL_HASH_OFFSET || cy <= -SPATIAL_HASH_OFFSET || cy >= SPATIAL_HASH_OFFSET) {
@@ -435,9 +436,50 @@
     }
     const missingAvatarFiles = new Set();
     let trendBannerTimer = 0;
-    const TOUCH_MEMORY_TTL_MS = 520;
+    const TOUCH_MEMORY_BASE_TTL_MS = 360;
     const TOUCH_PAIR_NUMERIC_MULTIPLIER = 1048576;
     const recentTouchPairs = new Map();
+    function currentTouchMemoryTtlMs() {
+      const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const stableHeavyCrowd = liveCount >= 52 && isHeavyCrowdStable(liveCount, dynamicCount);
+      if (ultraDenseQuiet) return liveCount >= 74 ? 84 : (liveCount >= 66 ? 96 : (liveCount >= 58 ? 112 : 132));
+      if (stableHeavyCrowd) return liveCount >= 74 ? 112 : (liveCount >= 66 ? 132 : (liveCount >= 58 ? 150 : 176));
+      if (liveCount >= 60) return 210;
+      if (liveCount >= 46) return 270;
+      return TOUCH_MEMORY_BASE_TTL_MS;
+    }
+    function currentRecentTouchSoftCap() {
+      const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      if (ultraDenseQuiet) {
+        if (liveCount >= 74) return 120;
+        if (liveCount >= 64) return 156;
+        if (liveCount >= 52) return 220;
+        return 360;
+      }
+      if (liveCount >= 74) return 196;
+      if (liveCount >= 64) return 252;
+      if (liveCount >= 52) return 340;
+      return 640;
+    }
+    function currentRecentTouchHardCap() {
+      const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      if (ultraDenseQuiet) {
+        if (liveCount >= 74) return 280;
+        if (liveCount >= 64) return 360;
+        if (liveCount >= 52) return 480;
+        return 700;
+      }
+      if (liveCount >= 74) return 480;
+      if (liveCount >= 64) return 620;
+      if (liveCount >= 52) return 760;
+      return 1200;
+    }
     let lastCommentSpawnAt = 0;
     let activeBoardCharacterLayer = 'front';
     const avatarVariants = {
@@ -537,6 +579,10 @@
       win:['assets/audio/voice_mc_win_01.wav','assets/audio/voice_mc_win_02.wav','assets/audio/voice_mc_win_03.wav','assets/audio/voice_mc_win_04.wav'],
       lose:['assets/audio/voice_mc_lose_01.wav','assets/audio/voice_mc_lose_02.wav','assets/audio/voice_mc_lose_03.wav','assets/audio/voice_mc_lose_04.wav']
     };
+    const COMPRESSED_AUDIO_EXT = '.m4a';
+    Object.keys(voicePools).forEach(key => {
+      voicePools[key] = (voicePools[key] || []).map(path => String(path || '').replace(/\.wav$/i, COMPRESSED_AUDIO_EXT));
+    });
 
     const VOICE_TEXT_MAP = {
       'voice_mc_start_01.wav':'配信スタートっ！ねぇ、私がいっちばん可愛いでしょ？',
@@ -1124,18 +1170,31 @@ function bodyHasSupportBelowCached(body, hash, boardH = 0, slack = 16) {
   return value;
 }
 
-function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVelocityY = 0.08) {
+function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVelocityY = 0.08, opts = null) {
   if (!seedBody || !isFrozenBody(seedBody)) return 0;
   const clusterStamp = (state.touchGroupSourceStamp || 0) + 1;
   state.touchGroupSourceStamp = clusterStamp;
   const stack = [seedBody];
+  const maxCount = Math.max(0, Math.floor(opts?.maxCount || 0));
+  const sourceX = Number.isFinite(opts?.sourceX)
+    ? opts.sourceX
+    : (Number.isFinite(opts?.sourceBody?.position?.x) ? opts.sourceBody.position.x : Number.NaN);
+  const sourceY = Number.isFinite(opts?.sourceY)
+    ? opts.sourceY
+    : (Number.isFinite(opts?.sourceBody?.position?.y) ? opts.sourceBody.position.y : Number.NaN);
+  const maxDistance = Number.isFinite(opts?.maxDistance) ? Math.max(0, opts.maxDistance) : 0;
+  const maxDistanceSq = maxDistance > 0 && Number.isFinite(sourceX) && Number.isFinite(sourceY)
+    ? maxDistance * maxDistance
+    : 0;
   let count = 0;
   seedBody.plugin = seedBody.plugin || {};
   seedBody.plugin._frozenClusterStamp = clusterStamp;
   while (stack.length) {
+    if (maxCount && count >= maxCount) break;
     const current = stack.pop();
     if (!current || !isFrozenBody(current)) continue;
     if (thawBody(current, now, { vy:Math.max(0.08, seedVelocityY) })) count += 1;
+    if (maxCount && count >= maxCount) continue;
     visitNearbyFromHash(frozenHash, current, 1, other => {
       if (!other || !isFrozenBody(other)) return false;
       other.plugin = other.plugin || {};
@@ -1144,6 +1203,12 @@ function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVe
       const dy = other.position.y - current.position.y;
       const reach = (current.circleRadius || 0) + (other.circleRadius || 0) + 6;
       if (dx * dx + dy * dy > reach * reach) return false;
+      if (maxDistanceSq > 0) {
+        const sdx = other.position.x - sourceX;
+        const sdy = other.position.y - sourceY;
+        if (sdx * sdx + sdy * sdy > maxDistanceSq) return false;
+      }
+      if (maxCount && count + stack.length >= maxCount) return false;
       other.plugin._frozenClusterStamp = clusterStamp;
       stack.push(other);
       return false;
@@ -1156,6 +1221,9 @@ function thawFrozenBodiesNearActive(now = performance.now()) {
   if ((state.frozenBodyCount || 0) <= 0 || (state.activeMovingCount || 0) <= 0) return 0;
   const activeBodies = getActiveBodies();
   if (!activeBodies.length) return 0;
+  const liveCount = state.liveBodies?.length || 0;
+  const dynamicCount = state.dynamicBodies?.length || 0;
+  const ultraDenseStable = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
   scratchActiveBodies.length = 0;
   for (let i = 0; i < activeBodies.length; i += 1) {
     const body = activeBodies[i];
@@ -1175,14 +1243,32 @@ function thawFrozenBodiesNearActive(now = performance.now()) {
   let thawed = 0;
   for (let i = 0; i < scratchActiveBodies.length; i += 1) {
     const body = scratchActiveBodies[i];
-    const wakePad = (perfSettings.freezeWakePad || 16) + Math.min(22, Math.max(Math.abs(body.velocity?.x || 0), Math.abs(body.velocity?.y || 0)) * 2.4);
+    const maxSpeed = Math.max(Math.abs(body.velocity?.x || 0), Math.abs(body.velocity?.y || 0));
+    const wakePad = (perfSettings.freezeWakePad || 16) + Math.min(22, maxSpeed * 2.4);
+    const localWakeLimit = ultraDenseStable
+      ? (liveCount >= 72 ? 4 : (liveCount >= 64 ? 5 : (liveCount >= 56 ? 6 : 8)))
+      : 0;
+    const localWakeRadius = localWakeLimit
+      ? Math.max(108, wakePad * 2.4 + (body.circleRadius || 0) * 1.8 + maxSpeed * 11)
+      : 0;
     visitNearbyFromHash(hash, body, 1, frozen => {
       if (!frozen || !isFrozenBody(frozen)) return false;
       const dx = frozen.position.x - body.position.x;
       const dy = frozen.position.y - body.position.y;
       const reach = (body.circleRadius || 0) + (frozen.circleRadius || 0) + wakePad;
       if (dx * dx + dy * dy > reach * reach) return false;
-      thawed += thawFrozenCluster(frozen, hash, now, body.velocity?.y || 0.1);
+      thawed += thawFrozenCluster(
+        frozen,
+        hash,
+        now,
+        body.velocity?.y || 0.1,
+        localWakeLimit ? {
+          maxCount:localWakeLimit,
+          sourceX:body.position.x,
+          sourceY:body.position.y,
+          maxDistance:localWakeRadius
+        } : null
+      );
       return false;
     });
   }
@@ -1208,24 +1294,31 @@ function freezeRestedBodies(now = performance.now()) {
     && freezeSignature === (state.lastStableFreezeHashSignature ?? -1)
     && now < (state.lastStableFreezeResumeAt || 0)) return 0;
   const mostlyFrozenCrowd = isMostlyFrozenCrowd(liveCount, dynamicCount);
-  const fullSweepWindowMs = mostlyFrozenCrowd
-    ? (liveCount >= 60 ? 1860 : (liveCount >= 48 ? 1620 : 1460))
-    : (liveCount >= 52 ? 1380 : 1960);
+  const ultraDenseStable = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+  const fullSweepWindowMs = ultraDenseStable
+    ? (liveCount >= 72 ? 1180 : (liveCount >= 64 ? 1340 : 1520))
+    : (mostlyFrozenCrowd
+        ? (liveCount >= 60 ? 1860 : (liveCount >= 48 ? 1620 : 1460))
+        : (liveCount >= 52 ? 1380 : 1960));
   const fullSweep = sourceCount <= 14 || now - (state.lastFullFreezeSweepAt || 0) > fullSweepWindowMs;
   if (fullSweep) state.lastFullFreezeSweepAt = now;
   let bodies = sourceBodies;
   if (!fullSweep) {
-    const budget = sourceCount >= 48 ? 34 : (sourceCount >= 36 ? 30 : (sourceCount >= 26 ? 26 : (sourceCount >= 18 ? 22 : 0)));
+    const budget = ultraDenseStable
+      ? (sourceCount >= 48 ? 30 : (sourceCount >= 36 ? 26 : (sourceCount >= 26 ? 22 : (sourceCount >= 18 ? 18 : 0))))
+      : (sourceCount >= 48 ? 34 : (sourceCount >= 36 ? 30 : (sourceCount >= 26 ? 26 : (sourceCount >= 18 ? 22 : 0))));
     if (budget) bodies = sliceSweepCandidatesWindow(sourceBodies, 'freeze', budget);
   }
   const boardH = boardLogicalRect().height || 0;
   const hash = worldSpatialHash();
   if (!hash) return 0;
-  const settleMs = (perfSettings.freezeSettleMs || 980) * (liveCount >= 66 ? 0.24 : (liveCount >= 58 ? 0.30 : (liveCount >= 52 ? 0.38 : (liveCount >= 42 ? 0.54 : (liveCount >= 32 ? 0.7 : (liveCount >= 24 ? 0.84 : 1))))));
+  const settleMs = (perfSettings.freezeSettleMs || 980) * (ultraDenseStable
+    ? (liveCount >= 72 ? 0.11 : (liveCount >= 64 ? 0.15 : (liveCount >= 56 ? 0.20 : 0.28)))
+    : (liveCount >= 66 ? 0.24 : (liveCount >= 58 ? 0.30 : (liveCount >= 52 ? 0.38 : (liveCount >= 42 ? 0.54 : (liveCount >= 32 ? 0.7 : (liveCount >= 24 ? 0.84 : 1)))))));
   const linearThresholdBase = perfSettings.freezeLinearThreshold || 0.03;
   const angularThresholdBase = perfSettings.freezeAngularThreshold || 0.02;
-  const linearThreshold = liveCount >= 66 ? linearThresholdBase * 2.15 : (liveCount >= 58 ? linearThresholdBase * 1.95 : (liveCount >= 52 ? linearThresholdBase * 1.72 : (liveCount >= 42 ? linearThresholdBase * 1.45 : (liveCount >= 32 ? linearThresholdBase * 1.25 : linearThresholdBase))));
-  const angularThreshold = liveCount >= 66 ? angularThresholdBase * 2.2 : (liveCount >= 58 ? angularThresholdBase * 2.0 : (liveCount >= 52 ? angularThresholdBase * 1.78 : (liveCount >= 42 ? angularThresholdBase * 1.48 : (liveCount >= 32 ? angularThresholdBase * 1.28 : angularThresholdBase))));
+  const linearThreshold = liveCount >= 66 ? linearThresholdBase * 2.4 : (liveCount >= 58 ? linearThresholdBase * 2.1 : (liveCount >= 52 ? linearThresholdBase * 1.82 : (liveCount >= 42 ? linearThresholdBase * 1.45 : (liveCount >= 32 ? linearThresholdBase * 1.25 : linearThresholdBase))));
+  const angularThreshold = liveCount >= 66 ? angularThresholdBase * 2.45 : (liveCount >= 58 ? angularThresholdBase * 2.15 : (liveCount >= 52 ? angularThresholdBase * 1.88 : (liveCount >= 42 ? angularThresholdBase * 1.48 : (liveCount >= 32 ? angularThresholdBase * 1.28 : angularThresholdBase))));
   let frozenCount = 0;
   for (let i = 0; i < bodies.length; i += 1) {
     const body = bodies[i];
@@ -1312,14 +1405,30 @@ function refreshActiveBodies(now = performance.now()) {
   const dynamicBodies = state.dynamicBodies || EMPTY_BODY_ARRAY;
   const liveCount = state.liveBodies?.length || 0;
   const crowdTier = liveCount >= 64 ? 4 : (liveCount >= 54 ? 3 : (liveCount >= 44 ? 2 : (liveCount >= 34 ? 1 : 0)));
-  const activeWindowMs = crowdTier >= 4 ? 84 : (crowdTier >= 3 ? 108 : (crowdTier >= 2 ? 136 : (crowdTier >= 1 ? 176 : 320)));
-  const moveThreshold = crowdTier >= 4 ? 0.085 : (crowdTier >= 3 ? 0.07 : (crowdTier >= 2 ? 0.058 : (crowdTier >= 1 ? 0.048 : 0.04)));
-  const moveAngularThreshold = crowdTier >= 4 ? 0.05 : (crowdTier >= 3 ? 0.04 : (crowdTier >= 2 ? 0.032 : (crowdTier >= 1 ? 0.026 : 0.02)));
-  const visualThreshold = crowdTier >= 4 ? 0.22 : (crowdTier >= 3 ? 0.18 : (crowdTier >= 2 ? 0.14 : (crowdTier >= 1 ? 0.1 : 0.06)));
-  const visualAngularThreshold = crowdTier >= 4 ? 0.14 : (crowdTier >= 3 ? 0.11 : (crowdTier >= 2 ? 0.09 : (crowdTier >= 1 ? 0.075 : 0.06)));
+  const stableDenseCrowd = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicBodies.length);
+  const ultraDenseQuiet = liveCount >= 62 && stableDenseCrowd && (state.fastMovingBodiesCount || 0) <= 0 && (state.highPrecisionBodyCount || 0) <= 0;
+  const activeWindowMs = stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (liveCount >= 74 ? 22 : (liveCount >= 66 ? 28 : (liveCount >= 58 ? 38 : 52)))
+        : (liveCount >= 74 ? 28 : (liveCount >= 66 ? 36 : (liveCount >= 58 ? 46 : 58))))
+    : (crowdTier >= 4 ? 84 : (crowdTier >= 3 ? 108 : (crowdTier >= 2 ? 136 : (crowdTier >= 1 ? 176 : 320))));
+  const moveThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (liveCount >= 66 ? 0.124 : (liveCount >= 58 ? 0.112 : 0.098))
+        : (liveCount >= 66 ? 0.118 : (liveCount >= 58 ? 0.106 : 0.092)))
+    : (crowdTier >= 4 ? 0.085 : (crowdTier >= 3 ? 0.07 : (crowdTier >= 2 ? 0.058 : (crowdTier >= 1 ? 0.048 : 0.04))));
+  const moveAngularThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.072 : 0.056) : (crowdTier >= 4 ? 0.064 : 0.052))
+    : (crowdTier >= 4 ? 0.05 : (crowdTier >= 3 ? 0.04 : (crowdTier >= 2 ? 0.032 : (crowdTier >= 1 ? 0.026 : 0.02))));
+  const visualThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.30 : 0.23) : (crowdTier >= 4 ? 0.27 : 0.21))
+    : (crowdTier >= 4 ? 0.22 : (crowdTier >= 3 ? 0.18 : (crowdTier >= 2 ? 0.14 : (crowdTier >= 1 ? 0.1 : 0.06))));
+  const visualAngularThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.18 : 0.135) : (crowdTier >= 4 ? 0.165 : 0.124))
+    : (crowdTier >= 4 ? 0.14 : (crowdTier >= 3 ? 0.11 : (crowdTier >= 2 ? 0.09 : (crowdTier >= 1 ? 0.075 : 0.06))));
   const fastThreshold = crowdTier >= 3 ? 2.55 : 2.25;
-  const recentSpawnWindow = crowdTier >= 3 ? 560 : 720;
-  const restingAgeMs = crowdTier >= 4 ? 320 : (crowdTier >= 3 ? 360 : 420);
+  const recentSpawnWindow = stableDenseCrowd ? (ultraDenseQuiet ? (crowdTier >= 3 ? 320 : 400) : (crowdTier >= 3 ? 340 : 430)) : (crowdTier >= 3 ? 560 : 720);
+  const restingAgeMs = stableDenseCrowd ? (ultraDenseQuiet ? (crowdTier >= 4 ? 140 : 190) : (crowdTier >= 4 ? 170 : 225)) : (crowdTier >= 4 ? 320 : (crowdTier >= 3 ? 360 : 420));
   let movingCount = 0;
   let visualHotBodiesCount = 0;
   let fastMovingBodiesCount = 0;
@@ -1402,13 +1511,29 @@ function refreshTrackedActiveBodies(now = performance.now()) {
   nextIds.clear();
   nextVisualHotBodies.length = 0;
   const crowdTier = liveCount >= 64 ? 4 : (liveCount >= 54 ? 3 : (liveCount >= 44 ? 2 : (liveCount >= 34 ? 1 : 0)));
-  const activeWindowMs = crowdTier >= 4 ? 84 : (crowdTier >= 3 ? 108 : (crowdTier >= 2 ? 136 : (crowdTier >= 1 ? 176 : 320)));
-  const moveThreshold = crowdTier >= 4 ? 0.085 : (crowdTier >= 3 ? 0.07 : (crowdTier >= 2 ? 0.058 : (crowdTier >= 1 ? 0.048 : 0.04)));
-  const moveAngularThreshold = crowdTier >= 4 ? 0.05 : (crowdTier >= 3 ? 0.04 : (crowdTier >= 2 ? 0.032 : (crowdTier >= 1 ? 0.026 : 0.02)));
-  const visualThreshold = crowdTier >= 4 ? 0.22 : (crowdTier >= 3 ? 0.18 : (crowdTier >= 2 ? 0.14 : (crowdTier >= 1 ? 0.1 : 0.06)));
-  const visualAngularThreshold = crowdTier >= 4 ? 0.14 : (crowdTier >= 3 ? 0.11 : (crowdTier >= 2 ? 0.09 : (crowdTier >= 1 ? 0.075 : 0.06)));
+  const stableDenseCrowd = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+  const ultraDenseQuiet = liveCount >= 62 && stableDenseCrowd && (state.fastMovingBodiesCount || 0) <= 0 && (state.highPrecisionBodyCount || 0) <= 0;
+  const activeWindowMs = stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (liveCount >= 74 ? 22 : (liveCount >= 66 ? 28 : (liveCount >= 58 ? 38 : 52)))
+        : (liveCount >= 74 ? 28 : (liveCount >= 66 ? 36 : (liveCount >= 58 ? 46 : 58))))
+    : (crowdTier >= 4 ? 84 : (crowdTier >= 3 ? 108 : (crowdTier >= 2 ? 136 : (crowdTier >= 1 ? 176 : 320))));
+  const moveThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (liveCount >= 66 ? 0.124 : (liveCount >= 58 ? 0.112 : 0.098))
+        : (liveCount >= 66 ? 0.118 : (liveCount >= 58 ? 0.106 : 0.092)))
+    : (crowdTier >= 4 ? 0.085 : (crowdTier >= 3 ? 0.07 : (crowdTier >= 2 ? 0.058 : (crowdTier >= 1 ? 0.048 : 0.04))));
+  const moveAngularThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.072 : 0.056) : (crowdTier >= 4 ? 0.064 : 0.052))
+    : (crowdTier >= 4 ? 0.05 : (crowdTier >= 3 ? 0.04 : (crowdTier >= 2 ? 0.032 : (crowdTier >= 1 ? 0.026 : 0.02))));
+  const visualThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.30 : 0.23) : (crowdTier >= 4 ? 0.27 : 0.21))
+    : (crowdTier >= 4 ? 0.22 : (crowdTier >= 3 ? 0.18 : (crowdTier >= 2 ? 0.14 : (crowdTier >= 1 ? 0.1 : 0.06))));
+  const visualAngularThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.18 : 0.135) : (crowdTier >= 4 ? 0.165 : 0.124))
+    : (crowdTier >= 4 ? 0.14 : (crowdTier >= 3 ? 0.11 : (crowdTier >= 2 ? 0.09 : (crowdTier >= 1 ? 0.075 : 0.06))));
   const fastThreshold = crowdTier >= 3 ? 2.55 : 2.25;
-  const recentSpawnWindow = crowdTier >= 3 ? 560 : 720;
+  const recentSpawnWindow = stableDenseCrowd ? (ultraDenseQuiet ? (crowdTier >= 3 ? 320 : 400) : (crowdTier >= 3 ? 340 : 430)) : (crowdTier >= 3 ? 560 : 720);
   let movingCount = 0;
   let visualHotBodiesCount = 0;
   let fastMovingBodiesCount = 0;
@@ -1477,7 +1602,11 @@ function refreshTrackedActiveBodies(now = performance.now()) {
   }
   trackedBodies.length = write;
 
-  const sampleBudget = Math.min(dynamicCount, dynamicCount >= 72 ? 16 : (dynamicCount >= 58 ? 14 : (dynamicCount >= 44 ? 12 : 10)));
+  const sampleBudget = Math.min(dynamicCount, stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (dynamicCount >= 72 ? 4 : (dynamicCount >= 58 ? 5 : (dynamicCount >= 44 ? 6 : 5)))
+        : (dynamicCount >= 72 ? 5 : (dynamicCount >= 58 ? 6 : (dynamicCount >= 44 ? 7 : 6))))
+    : (dynamicCount >= 72 ? 16 : (dynamicCount >= 58 ? 14 : (dynamicCount >= 44 ? 12 : 10))));
   if (sampleBudget > 0) {
     let cursor = state.activeSampleCursor || 0;
     for (let i = 0; i < sampleBudget; i += 1) {
@@ -1526,6 +1655,113 @@ function isMostlyFrozenCrowd(liveCount = state.liveBodies?.length || 0, dynamicC
     && !(state.repairQueueIds?.size || 0);
 }
 
+function isHeavyCrowdStable(liveCount = state.liveBodies?.length || 0, dynamicCount = state.dynamicBodies?.length || 0) {
+  return liveCount >= 44
+    && isMostlyFrozenCrowd(liveCount, dynamicCount)
+    && (state.fastMovingBodiesCount || 0) <= (liveCount >= 60 ? 0 : 1)
+    && (state.activeMovingCount || 0) <= Math.max(1, Math.floor(liveCount * 0.05))
+    && !(state.groupScanDirtyIds?.size || 0)
+    && !(state.repairQueueIds?.size || 0)
+    && recentTouchPairs.size === 0;
+}
+
+function isUltraDenseQuietCrowd(liveCount = state.liveBodies?.length || 0, dynamicCount = state.dynamicBodies?.length || 0) {
+  return liveCount >= 62
+    && isHeavyCrowdStable(liveCount, dynamicCount)
+    && (state.fastMovingBodiesCount || 0) <= 0
+    && (state.highPrecisionBodyCount || 0) <= 0
+    && recentTouchPairs.size === 0;
+}
+
+function denseQuietLowerBandY(boardHeight = boardLogicalRect().height || 0, liveCount = state.liveBodies?.length || 0) {
+  if (!boardHeight) return 0;
+  const ratio = liveCount >= 74 ? 0.56 : (liveCount >= 66 ? 0.58 : (liveCount >= 58 ? 0.60 : 0.62));
+  return boardHeight * ratio;
+}
+
+function isDeepQuietBody(body, boardHeight = boardLogicalRect().height || 0, liveCount = state.liveBodies?.length || 0, now = performance.now()) {
+  if (!body || !boardHeight || liveCount < 56) return false;
+  if ((body.gameType || 'content') !== 'content') return false;
+  if (!Number.isFinite(body.position?.y) || body.position.y <= denseQuietLowerBandY(boardHeight, liveCount)) return false;
+  if (body.contentIndex === state.trendIndex || body.contentIndex === state.nextTrendIndex) return false;
+  if (state.repairQueueIds?.has(body.id) || state.groupScanDirtyIds?.has(body.id)) return false;
+  const plugin = body.plugin || {};
+  if ((plugin.highPrecisionUntil || 0) > now) return false;
+  const age = now - (body.spawnAt || 0);
+  const minAge = liveCount >= 72 ? 1280 : (liveCount >= 64 ? 1120 : 980);
+  if (age < minAge) return false;
+  const maxLinear = liveCount >= 72 ? 0.055 : 0.065;
+  const maxAngular = liveCount >= 72 ? 0.022 : 0.03;
+  const quiet = Math.abs(body.velocity?.x || 0) <= maxLinear
+    && Math.abs(body.velocity?.y || 0) <= maxLinear
+    && Math.abs(body.angularVelocity || 0) <= maxAngular
+    && (body.speed || 0) <= maxLinear * 1.2;
+  if (!quiet) return false;
+  return isFrozenBody(body) || body.isSleeping || body.isStatic;
+}
+
+function prioritizeDenseMaintenanceCandidates(candidates, boardHeight = boardLogicalRect().height || 0, liveCount = state.liveBodies?.length || 0, now = performance.now()) {
+  if (!Array.isArray(candidates) || candidates.length < 2 || liveCount < 56 || !boardHeight) return candidates;
+  const out = scratchDenseMaintenanceBodies;
+  out.length = 0;
+  for (let i = 0; i < candidates.length; i += 1) {
+    const body = candidates[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    const mustKeep = !!body.floatStartAt
+      || !!body.outOfRangeSince
+      || !!body.plugin?.pendingClear
+      || state.repairQueueIds?.has(body.id)
+      || state.groupScanDirtyIds?.has(body.id);
+    if (mustKeep || !isDeepQuietBody(body, boardHeight, liveCount, now)) out.push(body);
+  }
+  return out.length ? out : candidates;
+}
+
+function denseScanSeedLimit(liveCount = state.liveBodies?.length || 0) {
+  if (liveCount >= 74) return 6;
+  if (liveCount >= 66) return 7;
+  if (liveCount >= 58) return 8;
+  if (liveCount >= 48) return 10;
+  return 0;
+}
+
+function denseScanSeedScore(body, scanNow = performance.now(), repairIds = null, dirtyIds = null) {
+  if (!body) return Number.NEGATIVE_INFINITY;
+  let score = 0;
+  if (repairIds?.has(body.id)) score += 16;
+  else if (dirtyIds?.has(body.id)) score += 10;
+  if (body.plugin?.highPrecisionUntil && body.plugin.highPrecisionUntil > scanNow) score += 8;
+  if (body.outOfRangeSince || body.floatStartAt) score += 7;
+  const speed = body.speed || 0;
+  if (speed > 0.14 || Math.abs(body.velocity?.x || 0) > 0.12 || Math.abs(body.velocity?.y || 0) > 0.14) score += 6;
+  if (body.gameType === 'hazard' || body.gameType === 'buzz') score += 4;
+  else if (body.gameType === 'content' && body.contentIndex === state.trendIndex) score += 3;
+  const age = scanNow - (body.spawnAt || 0);
+  if (age < 760) score += 3;
+  if (body.plugin?.lastActiveAt) score += Math.max(0, 420 - Math.min(420, scanNow - body.plugin.lastActiveAt)) * 0.01;
+  const y = Number.isFinite(body.position?.y) ? body.position.y : 9999;
+  score += Math.max(0, 900 - Math.min(900, y)) * 0.006;
+  return score;
+}
+
+function prioritizeDenseScanSeeds(seedBodies, liveCount = state.liveBodies?.length || 0, scanNow = performance.now()) {
+  if (!Array.isArray(seedBodies)) return seedBodies;
+  const limit = denseScanSeedLimit(liveCount);
+  if (!limit || seedBodies.length <= limit) return seedBodies;
+  const repairIds = state.repairQueueIds;
+  const dirtyIds = state.groupScanDirtyIds;
+  seedBodies.sort((a, b) => {
+    const scoreDiff = denseScanSeedScore(b, scanNow, repairIds, dirtyIds) - denseScanSeedScore(a, scanNow, repairIds, dirtyIds);
+    if (scoreDiff) return scoreDiff;
+    const ay = Number.isFinite(a?.position?.y) ? a.position.y : Number.POSITIVE_INFINITY;
+    const by = Number.isFinite(b?.position?.y) ? b.position.y : Number.POSITIVE_INFINITY;
+    if (ay !== by) return ay - by;
+    return (b?.plugin?.lastActiveAt || 0) - (a?.plugin?.lastActiveAt || 0);
+  });
+  seedBodies.length = limit;
+  return seedBodies;
+}
+
 function maybeRefreshActiveBodies(now = performance.now(), force = false) {
   const dynamicRevision = state.dynamicRegistryRevision || 0;
   if (force || dynamicRevision !== (state.activeBodiesLiveRevision || -1)) return refreshActiveBodies(now);
@@ -1542,13 +1778,23 @@ function maybeRefreshActiveBodies(now = performance.now(), force = false) {
     && (state.fastMovingBodiesCount || 0) <= 0
     && (state.highPrecisionBodyCount || 0) <= 0
     && !(state.repairQueueIds?.size || 0);
+  const stableHeavyCrowd = isHeavyCrowdStable(liveCount, dynamicCount);
+  const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
   const minGap = idleBoard
     ? (mostlyFrozenCrowd
-        ? (liveCount >= 60 ? 0.18 : (liveCount >= 48 ? 0.15 : (liveCount >= 36 ? 0.12 : 0.08)))
+        ? (ultraDenseQuiet
+            ? (liveCount >= 74 ? 0.56 : (liveCount >= 66 ? 0.48 : (liveCount >= 58 ? 0.40 : 0.32)))
+            : (stableHeavyCrowd
+                ? (liveCount >= 74 ? 0.46 : (liveCount >= 66 ? 0.40 : (liveCount >= 58 ? 0.34 : 0.27)))
+                : (liveCount >= 68 ? 0.26 : (liveCount >= 60 ? 0.22 : (liveCount >= 48 ? 0.17 : (liveCount >= 36 ? 0.13 : 0.08))))))
         : (liveCount >= 60 ? 0.11 : (liveCount >= 48 ? 0.086 : (liveCount >= 36 ? 0.064 : 0))))
     : (quietCrowd
         ? (mostlyFrozenCrowd
-            ? (liveCount >= 60 ? 0.034 : (liveCount >= 48 ? 0.026 : 0.018))
+            ? (ultraDenseQuiet
+                ? (liveCount >= 74 ? 0.14 : (liveCount >= 66 ? 0.118 : (liveCount >= 58 ? 0.096 : 0.072)))
+                : (stableHeavyCrowd
+                    ? (liveCount >= 74 ? 0.112 : (liveCount >= 66 ? 0.096 : (liveCount >= 58 ? 0.078 : 0.056)))
+                    : (liveCount >= 68 ? 0.056 : (liveCount >= 60 ? 0.046 : (liveCount >= 48 ? 0.032 : 0.02)))))
             : (liveCount >= 60 ? 0.022 : (liveCount >= 48 ? 0.016 : 0.012)))
         : 0);
   if (!minGap || now - (state.lastActiveRefreshAt || 0) >= minGap * 1000) return refreshActiveBodies(now);
@@ -2889,9 +3135,16 @@ function syncBodyVisuals() {
         node.hidden = false;
         const zValue = String(100 + Math.round(rawY * 10) + (body.id % 10));
         const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
+        const liveCountForVisuals = state.liveBodies?.length || 0;
         const crowdVisualSkip = !state.forceFullVisualSync
-          && (state.liveBodies?.length || 0) >= 40
-          && (state.fastMovingBodiesCount || 0) <= ((state.liveBodies?.length || 0) >= 58 ? 0 : 1);
+          && liveCountForVisuals >= 40
+          && (state.fastMovingBodiesCount || 0) <= (liveCountForVisuals >= 58 ? 0 : 1);
+        const stableHeavyVisualCrowd = crowdVisualSkip
+          && liveCountForVisuals >= 48
+          && (state.highPrecisionBodyCount || 0) <= 0
+          && (state.activeMovingCount || 0) <= (liveCountForVisuals >= 60 ? 0 : 1)
+          && !(state.repairQueueIds?.size || 0)
+          && !(state.groupScanDirtyIds?.size || 0);
         const stationaryVisualSkip = crowdVisualSkip
           && !trendBody
           && !forecastReady
@@ -2902,15 +3155,24 @@ function syncBodyVisuals() {
           && Math.abs(body.velocity?.x || 0) < 0.06
           && Math.abs(body.velocity?.y || 0) < 0.065
           && Math.abs(body.angularVelocity || 0) < 0.03;
+        const deepQuietVisual = stableHeavyVisualCrowd
+          && !trendBody
+          && !forecastReady
+          && !previewLen
+          && !nextPreviewLen
+          && !glowSet?.has(body.id)
+          && isDeepQuietBody(body, boardH, liveCountForVisuals, now);
+        const positionThreshold = (stationaryVisualSkip ? perfSettings.transformPositionThreshold * 0.44 : perfSettings.transformPositionThreshold) * (stableHeavyVisualCrowd ? 1.85 : 1) * (deepQuietVisual ? 1.45 : 1);
+        const angleThreshold = (stationaryVisualSkip ? perfSettings.transformAngleThreshold * 0.5 : perfSettings.transformAngleThreshold) * (stableHeavyVisualCrowd ? 1.58 : 1) * (deepQuietVisual ? 1.36 : 1);
         const canSkipTransform = !!node._transform && !state.forceFullVisualSync
-          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < (stationaryVisualSkip ? perfSettings.transformPositionThreshold * 0.44 : perfSettings.transformPositionThreshold)
-          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < (stationaryVisualSkip ? perfSettings.transformPositionThreshold * 0.44 : perfSettings.transformPositionThreshold)
-          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < (stationaryVisualSkip ? perfSettings.transformAngleThreshold * 0.5 : perfSettings.transformAngleThreshold)
+          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < positionThreshold
+          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < positionThreshold
+          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < angleThreshold
           && Math.abs((node._drawScale ?? scale) - scale) < 0.001
           && node.className === className
           && node._zIndex === zValue
           && node._filter === filterValue
-          && (body.isSleeping || stationaryVisualSkip);
+          && (body.isSleeping || stationaryVisualSkip || deepQuietVisual);
         if (!canSkipTransform) {
           const transformValue = `translate3d(${nextDrawX}px, ${nextDrawY}px, 0) rotate(${nextAngle}rad) scale(${scale})`;
           if (node._transform !== transformValue) {
@@ -2943,7 +3205,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v149_perfmax_hashsig_freezeskip_maintcache";
+    const BUILD_ID = "v156_ultralite_lowerband_quietstack_v6";
 
     function measureViewportSize() {
       const docEl = document.documentElement;
@@ -4784,9 +5046,15 @@ function makeBody(x, y, index, specialType = false) {
       const liveCount = state.liveBodies?.length || 0;
       const dynamicCount = state.dynamicBodies?.length || 0;
       const frozenHeavy = liveCount >= 36 && dynamicCount <= Math.max(4, Math.floor(liveCount * 0.18));
-      const maxAgeMs = frozenHeavy
-        ? (liveCount >= 60 ? 168 : (liveCount >= 48 ? 132 : 96))
-        : (liveCount >= 60 ? 108 : (liveCount >= 48 ? 88 : (liveCount >= 36 ? 64 : 0)));
+      const stableHeavyCrowd = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+      const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const maxAgeMs = ultraDenseQuiet
+        ? (liveCount >= 72 ? 760 : (liveCount >= 64 ? 600 : 460))
+        : (stableHeavyCrowd
+            ? (liveCount >= 72 ? 520 : (liveCount >= 64 ? 420 : 320))
+            : (frozenHeavy
+                ? (liveCount >= 60 ? 168 : (liveCount >= 48 ? 132 : 96))
+                : (liveCount >= 60 ? 108 : (liveCount >= 48 ? 88 : (liveCount >= 36 ? 64 : 0)))));
       if (!force && state.boardStatsCache) {
         if (state.boardStatsCacheRevision === revision) return state.boardStatsCache;
         if (maxAgeMs > 0 && now - (state.boardStatsCacheAt || 0) <= maxAgeMs) return state.boardStatsCache;
@@ -4853,18 +5121,27 @@ function rescueFloatingBodies() {
       const boardWidth = boardInfo.width || 0;
       const now = performance.now();
       const dynamicCount = state.dynamicBodies?.length || 0;
+      const liveCount = state.liveBodies?.length || 0;
       const mostlyFrozenCrowd = isMostlyFrozenCrowd(bodies.length, dynamicCount);
+      const ultraDenseStable = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
       const worldRevision = currentWorldHashSignature();
       if (worldRevision === (state.lastRescueFullSweepHashRevision ?? -1)
         && !(state.repairQueueIds?.size || 0)
         && (state.activeMovingCount || 0) <= 0
         && (state.highPrecisionBodyCount || 0) <= 0) return;
-      const fullSweepIntervalMs = mostlyFrozenCrowd ? (bodies.length >= 60 ? 4200 : 3400) : 2800;
+      const fullSweepIntervalMs = ultraDenseStable
+        ? (liveCount >= 64 ? 13600 : 10400)
+        : (mostlyFrozenCrowd ? (liveCount >= 60 ? 6200 : 4600) : 2800);
       const fullSweep = dynamicCount <= 12 || now - (state.lastFullRescueSweepAt || 0) > fullSweepIntervalMs || (state.repairQueueIds?.size || 0) >= 4;
       if (fullSweep) state.lastFullRescueSweepAt = now;
       let candidates = getHeavySweepCandidates(fullSweep);
+      if (!fullSweep && ultraDenseStable) candidates = prioritizeDenseMaintenanceCandidates(candidates, boardHeight, liveCount, now);
       if (!fullSweep) {
-        const budget = dynamicCount >= 30 ? 8 : (dynamicCount >= 22 ? 10 : (dynamicCount >= 16 ? 12 : (dynamicCount >= 10 ? 14 : 0)));
+        const budget = ultraDenseStable
+          ? (dynamicCount >= 30 ? 1 : (dynamicCount >= 22 ? 2 : (dynamicCount >= 16 ? 3 : (dynamicCount >= 10 ? 4 : 0))))
+          : (mostlyFrozenCrowd
+              ? (dynamicCount >= 30 ? 6 : (dynamicCount >= 22 ? 8 : (dynamicCount >= 16 ? 10 : (dynamicCount >= 10 ? 12 : 0))))
+              : (dynamicCount >= 30 ? 8 : (dynamicCount >= 22 ? 10 : (dynamicCount >= 16 ? 12 : (dynamicCount >= 10 ? 14 : 0)))));
         if (budget) candidates = sliceSweepCandidatesWindow(candidates, 'rescue', budget);
       }
       if (!candidates.length) return;
@@ -4876,6 +5153,7 @@ function rescueFloatingBodies() {
         const age = now - (body.spawnAt || 0);
         if (age < 260) continue;
         if (body.position.y < 72 || body.position.y > boardHeight - 60) continue;
+        if (!fullSweep && ultraDenseStable && isDeepQuietBody(body, boardHeight, liveCount, now) && !body.floatStartAt && !body.outOfRangeSince) continue;
         const movingEnough = Math.abs(body.velocity?.y || 0) > 0.12 || Math.abs(body.velocity?.x || 0) > 0.16 || Math.abs(body.angularVelocity || 0) > 0.04;
         if (movingEnough) {
           body.floatStartAt = 0;
@@ -4927,18 +5205,27 @@ function rescueFloatingBodies() {
       const boardHeight = boardInfo.height || 0;
       const now = performance.now();
       const dynamicCount = state.dynamicBodies?.length || 0;
+      const liveCount = state.liveBodies?.length || 0;
       const mostlyFrozenCrowd = isMostlyFrozenCrowd(bodies.length, dynamicCount);
+      const ultraDenseStable = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
       const worldRevision = currentWorldHashSignature();
       if (worldRevision === (state.lastOverlapFullSweepHashRevision ?? -1)
         && !(state.repairQueueIds?.size || 0)
         && (state.activeMovingCount || 0) <= 0
         && (state.highPrecisionBodyCount || 0) <= 0) return 0;
-      const fullSweepIntervalMs = mostlyFrozenCrowd ? (bodies.length >= 60 ? 3800 : 3200) : 2600;
+      const fullSweepIntervalMs = ultraDenseStable
+        ? (liveCount >= 64 ? 14400 : 11200)
+        : (mostlyFrozenCrowd ? (liveCount >= 60 ? 5600 : 4000) : 2600);
       const fullSweep = dynamicCount <= 12 || now - (state.lastFullOverlapSweepAt || 0) > fullSweepIntervalMs || (state.repairQueueIds?.size || 0) >= 4;
       if (fullSweep) state.lastFullOverlapSweepAt = now;
       let candidateBodies = getHeavySweepCandidates(fullSweep);
+      if (!fullSweep && ultraDenseStable) candidateBodies = prioritizeDenseMaintenanceCandidates(candidateBodies, boardHeight, liveCount, now);
       if (!fullSweep) {
-        const budget = dynamicCount >= 30 ? 10 : (dynamicCount >= 22 ? 12 : (dynamicCount >= 16 ? 14 : (dynamicCount >= 10 ? 16 : 0)));
+        const budget = ultraDenseStable
+          ? (dynamicCount >= 30 ? 1 : (dynamicCount >= 22 ? 2 : (dynamicCount >= 16 ? 3 : (dynamicCount >= 10 ? 4 : 0))))
+          : (mostlyFrozenCrowd
+              ? (dynamicCount >= 30 ? 8 : (dynamicCount >= 22 ? 10 : (dynamicCount >= 16 ? 12 : (dynamicCount >= 10 ? 14 : 0))))
+              : (dynamicCount >= 30 ? 10 : (dynamicCount >= 22 ? 12 : (dynamicCount >= 16 ? 14 : (dynamicCount >= 10 ? 16 : 0)))));
         if (budget) candidateBodies = sliceSweepCandidatesWindow(candidateBodies, 'overlap', budget);
       }
       if (candidateBodies.length < 1) return 0;
@@ -4957,9 +5244,12 @@ function rescueFloatingBodies() {
         const body = candidateBodies[i];
         if (!body || body.plugin?.pendingRemoval) continue;
         if (now - (body.spawnAt || 0) < 220) continue;
+        const bodyDeepQuiet = !fullSweep && ultraDenseStable && isDeepQuietBody(body, boardHeight, liveCount, now);
+        if (bodyDeepQuiet && !body.floatStartAt && !body.outOfRangeSince) continue;
         visitNearbyFromHash(hash, body, 1, other => {
           if (!other || other.id === body.id || other.plugin?.pendingRemoval) return false;
           other.plugin = other.plugin || {};
+          if (bodyDeepQuiet && !fullSweep && ultraDenseStable && isDeepQuietBody(other, boardHeight, liveCount, now)) return false;
           if (other.plugin._overlapCandidateStamp === candidateStamp && body.id > other.id) return false;
           const dx = other.position.x - body.position.x;
           const dy = other.position.y - body.position.y;
@@ -5093,12 +5383,43 @@ function purgeBrokenBodies() {
 
     function pruneRecentTouchPairs(now = performance.now()) {
       recentTouchPairs.forEach((at, key) => {
-        if (now - at > TOUCH_MEMORY_TTL_MS) recentTouchPairs.delete(key);
+        if (now - at > currentTouchMemoryTtlMs()) recentTouchPairs.delete(key);
       });
     }
 
     function rememberRecentTouch(a, b, now = performance.now()) {
       if (!a || !b || a.id == null || b.id == null) return;
+      const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      if (isUltraDenseQuietCrowd(liveCount, dynamicCount)) {
+        const boardHeight = state.boardRectCache?.height || boardLogicalRect().height || 0;
+        if (boardHeight > 0 && isDeepQuietBody(a, boardHeight, liveCount, now) && isDeepQuietBody(b, boardHeight, liveCount, now)) return;
+        const recentWindow = liveCount >= 74 ? 360 : (liveCount >= 66 ? 440 : 520);
+        const topBand = liveCount >= 72 ? 360 : (liveCount >= 64 ? 400 : 440);
+        const aPlugin = a.plugin || {};
+        const bPlugin = b.plugin || {};
+        const recentA = now - (a.spawnAt || 0) < recentWindow
+          || (aPlugin.highPrecisionUntil || 0) > now
+          || state.repairQueueIds?.has(a.id)
+          || state.groupScanDirtyIds?.has(a.id)
+          || !a.isSleeping;
+        const recentB = now - (b.spawnAt || 0) < recentWindow
+          || (bPlugin.highPrecisionUntil || 0) > now
+          || state.repairQueueIds?.has(b.id)
+          || state.groupScanDirtyIds?.has(b.id)
+          || !b.isSleeping;
+        const maxSpeed = Math.max(
+          a.speed || 0,
+          b.speed || 0,
+          Math.abs(a.velocity?.x || 0),
+          Math.abs(a.velocity?.y || 0),
+          Math.abs(b.velocity?.x || 0),
+          Math.abs(b.velocity?.y || 0)
+        );
+        const maxAngular = Math.max(Math.abs(a.angularVelocity || 0), Math.abs(b.angularVelocity || 0));
+        const topRelevant = Math.min(Number.isFinite(a.position?.y) ? a.position.y : 9999, Number.isFinite(b.position?.y) ? b.position.y : 9999) <= topBand;
+        if (!recentA && !recentB && !topRelevant && maxSpeed < 0.36 && maxAngular < 0.06) return;
+      }
       recentTouchPairs.set(touchPairKey(a, b), now);
       state.lastRecentTouchAt = now;
     }
@@ -5108,26 +5429,65 @@ function purgeBrokenBodies() {
       const key = touchPairKey(a, b);
       const at = recentTouchPairs.get(key);
       if (at == null) return false;
-      if (now - at > TOUCH_MEMORY_TTL_MS) {
+      if (now - at > currentTouchMemoryTtlMs()) {
         recentTouchPairs.delete(key);
         return false;
       }
       return true;
     }
 
+    function isScanRelevantContentIndex(index) {
+      if (!Number.isInteger(index)) return false;
+      if (state.clipTime > 0) return true;
+      return index === state.trendIndex || index === state.nextTrendIndex;
+    }
+
+    function isGroupScanRelevantBody(body) {
+      if (!body || body.plugin?.pendingRemoval) return false;
+      const type = body.gameType;
+      if (type === 'content') return isScanRelevantContentIndex(body.contentIndex);
+      return type === 'hazard' || type === 'buzz';
+    }
+
+    function pairSupportsTouchMemory(a, b) {
+      if (!a || !b) return false;
+      const typeA = a.gameType;
+      if (typeA !== b.gameType) return false;
+      if (typeA === 'content') return a.contentIndex === b.contentIndex && isScanRelevantContentIndex(a.contentIndex);
+      return typeA === 'hazard' || typeA === 'buzz';
+    }
+
     function processCollisionTouches(event, activePhase = false) {
       const now = performance.now();
       const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const stableHeavyCrowd = activePhase && isHeavyCrowdStable(liveCount, dynamicCount);
+      const ultraDenseQuiet = activePhase && isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const boardHeight = ultraDenseQuiet ? (state.boardRectCache?.height || boardLogicalRect().height || 0) : 0;
       if (activePhase) {
-        const minGap = liveCount >= 54 ? 132 : (liveCount >= 42 ? 110 : (liveCount >= 32 ? 72 : (liveCount >= 22 ? 42 : 0)));
+        const minGap = ultraDenseQuiet
+          ? (liveCount >= 72 ? 520 : (liveCount >= 64 ? 440 : (liveCount >= 56 ? 360 : 280)))
+          : (stableHeavyCrowd
+              ? (liveCount >= 72 ? 380 : (liveCount >= 64 ? 328 : (liveCount >= 56 ? 272 : 212)))
+              : (liveCount >= 60 ? 138 : (liveCount >= 48 ? 114 : (liveCount >= 36 ? 82 : (liveCount >= 24 ? 46 : 0)))));
         if (minGap && now - (state.lastCollisionActiveRememberAt || 0) < minGap) return;
         state.lastCollisionActiveRememberAt = now;
       }
       const pairs = event?.pairs || EMPTY_BODY_ARRAY;
       const activeIds = state.activeBodyIds;
       const pairLimit = activePhase
-        ? (liveCount >= 60 ? 24 : (liveCount >= 50 ? 32 : (liveCount >= 42 ? 42 : (liveCount >= 34 ? 60 : (liveCount >= 26 ? 84 : pairs.length)))))
+        ? (ultraDenseQuiet
+            ? (liveCount >= 72 ? 1 : (liveCount >= 64 ? 2 : (liveCount >= 56 ? 3 : 5)))
+            : (stableHeavyCrowd
+                ? (liveCount >= 72 ? 3 : (liveCount >= 64 ? 4 : (liveCount >= 56 ? 5 : 8)))
+                : (liveCount >= 64 ? 20 : (liveCount >= 54 ? 28 : (liveCount >= 44 ? 36 : (liveCount >= 34 ? 52 : (liveCount >= 26 ? 76 : pairs.length)))))))
         : pairs.length;
+      if (!pairs.length || pairLimit <= 0) return;
+      const denseSampling = activePhase && liveCount >= 40 && pairs.length > pairLimit * (ultraDenseQuiet ? 2 : (stableHeavyCrowd ? 3 : 5));
+      const scanBudget = denseSampling ? Math.min(pairs.length, pairLimit * (ultraDenseQuiet ? 1 : (stableHeavyCrowd ? 2 : 4))) : pairs.length;
+      const scanStride = denseSampling ? Math.max(1, Math.ceil(pairs.length / Math.max(1, scanBudget))) : 1;
+      const scanStart = denseSampling ? ((state.collisionPairCursor || 0) % pairs.length) : 0;
+      if (denseSampling) state.collisionPairCursor = (scanStart + scanBudget * scanStride) % pairs.length;
       const collisionMarkStamp = (state.collisionMarkStamp || 0) + 1;
       state.collisionMarkStamp = collisionMarkStamp;
       const markDirtyOnce = (body) => {
@@ -5138,28 +5498,50 @@ function purgeBrokenBodies() {
         markGroupScanDirty(body);
       };
       let processed = 0;
-      for (let i = 0; i < pairs.length; i += 1) {
-        if (processed >= pairLimit) break;
-        const pair = pairs[i];
+      const handlePair = (pair) => {
+        if (!pair || processed >= pairLimit) return;
         const a = pair?.bodyA;
         const b = pair?.bodyB;
-        if (!a || !b || a.isStatic || b.isStatic) continue;
-        if (a.plugin?.pendingRemoval || b.plugin?.pendingRemoval) continue;
+        if (!a || !b || a.isStatic || b.isStatic) return;
+        if (a.plugin?.pendingRemoval || b.plugin?.pendingRemoval) return;
         const activeTouch = !activePhase
           || activeIds?.has(a.id)
           || activeIds?.has(b.id)
           || !a.isSleeping
           || !b.isSleeping;
-        if (!activeTouch) continue;
-        rememberRecentTouch(a, b, now);
-        if (!activePhase || activeIds?.has(a.id)) markDirtyOnce(a);
-        if (!activePhase || activeIds?.has(b.id)) markDirtyOnce(b);
+        if (!activeTouch) return;
+        const touchMemoryRelevant = pairSupportsTouchMemory(a, b);
+        const markA = isGroupScanRelevantBody(a);
+        const markB = isGroupScanRelevantBody(b);
+        if (!touchMemoryRelevant && !markA && !markB) return;
+        if (ultraDenseQuiet) {
+          if (boardHeight > 0 && isDeepQuietBody(a, boardHeight, liveCount, now) && isDeepQuietBody(b, boardHeight, liveCount, now)) return;
+          const topBand = liveCount >= 72 ? 360 : (liveCount >= 64 ? 400 : 440);
+          const recentWindow = liveCount >= 72 ? 360 : (liveCount >= 64 ? 440 : 520);
+          const aActive = activeIds?.has(a.id) || (a.plugin?.highPrecisionUntil || 0) > now || now - (a.spawnAt || 0) < recentWindow || !a.isSleeping;
+          const bActive = activeIds?.has(b.id) || (b.plugin?.highPrecisionUntil || 0) > now || now - (b.spawnAt || 0) < recentWindow || !b.isSleeping;
+          const topRelevant = Math.min(Number.isFinite(a.position?.y) ? a.position.y : 9999, Number.isFinite(b.position?.y) ? b.position.y : 9999) <= topBand;
+          if (!aActive && !bActive && !topRelevant) return;
+        }
+        if (touchMemoryRelevant) rememberRecentTouch(a, b, now);
+        if (markA && (!activePhase || activeIds?.has(a.id) || ultraDenseQuiet)) markDirtyOnce(a);
+        if (markB && (!activePhase || activeIds?.has(b.id) || ultraDenseQuiet)) markDirtyOnce(b);
         processed += 1;
+      };
+      if (denseSampling) {
+        for (let scan = 0, offset = 0; scan < scanBudget && processed < pairLimit; scan += 1, offset += scanStride) {
+          handlePair(pairs[(scanStart + offset) % pairs.length]);
+        }
+      } else {
+        for (let i = 0; i < pairs.length && processed < pairLimit; i += 1) {
+          handlePair(pairs[i]);
+        }
       }
-      if (now >= recentTouchPairsNextPruneAt || recentTouchPairs.size > 640) {
-        recentTouchPairsNextPruneAt = now + 140;
+      const recentTouchSoftCap = currentRecentTouchSoftCap();
+      if (now >= recentTouchPairsNextPruneAt || recentTouchPairs.size > recentTouchSoftCap) {
+        recentTouchPairsNextPruneAt = now + (ultraDenseQuiet ? 96 : 120);
         pruneRecentTouchPairs(now);
-        if (recentTouchPairs.size > 1200) recentTouchPairs.clear();
+        if (recentTouchPairs.size > currentRecentTouchHardCap()) recentTouchPairs.clear();
       }
     }
 
@@ -5315,15 +5697,23 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null, scanNow = perf
       const base = activeScan ? responsiveBase : (perfSettings.scanInterval || 0.82);
       const crowdBoost = activeScan
         ? (liveCount >= 56 ? 1.12 : (liveCount >= 42 ? 1.06 : 1))
-        : (liveCount >= 60 ? 1.74 : (liveCount >= 50 ? 1.56 : (liveCount >= 40 ? 1.34 : (liveCount >= 30 ? 1.18 : 1))));
+        : (liveCount >= 60 ? 1.82 : (liveCount >= 50 ? 1.62 : (liveCount >= 40 ? 1.38 : (liveCount >= 30 ? 1.18 : 1))));
       const frozenHeavyBoost = !activeScan && liveCount >= 40 && dynamicCount <= Math.max(4, Math.floor(liveCount * 0.22))
-        ? (liveCount >= 60 ? 1.18 : 1.1)
+        ? (liveCount >= 60 ? 1.22 : 1.12)
         : 1;
       const mostlyFrozenCrowd = !activeScan && isMostlyFrozenCrowd(liveCount, dynamicCount);
-      const quietCrowdBoost = mostlyFrozenCrowd
-        ? (liveCount >= 64 ? 1.34 : (liveCount >= 52 ? 1.22 : 1.12))
+      const ultraDenseQuiet = !activeScan && isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const quietCrowdBoost = ultraDenseQuiet
+        ? (liveCount >= 72 ? 1.52 : (liveCount >= 64 ? 1.42 : 1.28))
+        : (mostlyFrozenCrowd
+            ? (liveCount >= 64 ? 1.34 : (liveCount >= 52 ? 1.22 : 1.12))
+            : 1);
+      const stableHeavyBoost = isHeavyCrowdStable(liveCount, dynamicCount)
+        ? (ultraDenseQuiet
+            ? (liveCount >= 72 ? 2.64 : (liveCount >= 64 ? 2.28 : (liveCount >= 56 ? 1.92 : 1.5)))
+            : (liveCount >= 72 ? 1.98 : (liveCount >= 64 ? 1.78 : (liveCount >= 56 ? 1.54 : (liveCount >= 48 ? 1.3 : 1.16)))))
         : 1;
-      return base * crowdFactor * crowdBoost * frozenHeavyBoost * quietCrowdBoost;
+      return base * crowdFactor * crowdBoost * frozenHeavyBoost * quietCrowdBoost * stableHeavyBoost;
     }
 
 
@@ -5367,7 +5757,7 @@ function scanAllClearableGroups() {
       if (state.groupScanDirtyIds instanceof Set) {
         state.groupScanDirtyIds.forEach(id => {
           const body = bodyById(id);
-          if (!body || body.plugin?.pendingRemoval) return;
+          if (!body || body.plugin?.pendingRemoval || !isGroupScanRelevantBody(body)) return;
           body.plugin = body.plugin || {};
           if (body.plugin._scanSeedStamp === seedStamp) return;
           body.plugin._scanSeedStamp = seedStamp;
@@ -5376,7 +5766,7 @@ function scanAllClearableGroups() {
       }
       for (let i = 0; i < active.length; i += 1) {
         const body = active[i];
-        if (!body || body.plugin?.pendingRemoval) continue;
+        if (!body || body.plugin?.pendingRemoval || !isGroupScanRelevantBody(body)) continue;
         body.plugin = body.plugin || {};
         if (body.plugin._scanSeedStamp === seedStamp) continue;
         body.plugin._scanSeedStamp = seedStamp;
@@ -5384,10 +5774,28 @@ function scanAllClearableGroups() {
       }
       const seedBodies = scratchScanSeedBodies;
       const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const stableHeavyCrowd = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+      const ultraDenseQuiet = liveCount >= 62 && stableHeavyCrowd && (state.fastMovingBodiesCount || 0) <= 0 && (state.highPrecisionBodyCount || 0) <= 0;
+      if (stableHeavyCrowd && seedBodies.length > denseScanSeedLimit(liveCount)) prioritizeDenseScanSeeds(seedBodies, liveCount, scanNow);
+      if (ultraDenseQuiet && seedBodies.length > 4) {
+        const boardHeight = boardLogicalRect().height || 0;
+        if (boardHeight > 0) {
+          let write = 0;
+          for (let i = 0; i < seedBodies.length; i += 1) {
+            const body = seedBodies[i];
+            if (!body || isDeepQuietBody(body, boardHeight, liveCount, scanNow)) continue;
+            seedBodies[write++] = body;
+          }
+          if (write > 0 && write < seedBodies.length) seedBodies.length = write;
+        }
+      }
       const bigBuzzPairs = state.clipTime > 0;
       const fullScanIntervalMs = bigBuzzPairs
-        ? (liveCount >= 46 ? 1380 : (liveCount >= 34 ? 1200 : 1600))
-        : (liveCount >= 56 ? 4600 : (liveCount >= 42 ? 3800 : (liveCount >= 34 ? 3200 : 2400)));
+        ? (ultraDenseQuiet ? (liveCount >= 46 ? 1960 : 2140) : (liveCount >= 46 ? 1480 : (liveCount >= 34 ? 1260 : 1680)))
+        : (ultraDenseQuiet
+            ? (liveCount >= 70 ? 11800 : (liveCount >= 60 ? 9600 : 8200))
+            : (liveCount >= 56 ? 5600 : (liveCount >= 42 ? 4300 : (liveCount >= 34 ? 3400 : 2400))));
       const periodicFullScan = now - (state.lastFullGroupScanAt || 0) > fullScanIntervalMs;
       const crowded = liveCount >= 28;
       const tooManySeeds = seedBodies.length >= Math.max(12, liveCount * 0.45);
@@ -6564,32 +6972,49 @@ function stepPhysics(frameDt) {
   const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
   const highPrecision = needsHighPrecisionPhysics(now);
   const liveCount = state.liveBodies?.length || 0;
+  const dynamicCount = state.dynamicBodies?.length || 0;
   const crowdRelaxed = !highPrecision
     && liveCount >= 40
     && (state.highPrecisionBodyCount || 0) <= 0
     && (state.fastMovingBodiesCount || 0) <= (liveCount >= 58 ? 0 : 1)
-    && (state.activeMovingCount || 0) <= Math.max(4, Math.floor(liveCount * 0.14))
+    && (state.activeMovingCount || 0) <= Math.max(3, Math.floor(liveCount * 0.12))
+    && !(state.repairQueueIds?.size || 0);
+  const ultraRelaxed = crowdRelaxed && isHeavyCrowdStable(liveCount, dynamicCount);
+  const ultraDenseStable = ultraRelaxed && liveCount >= 56;
+  const ultraDenseQuiet = ultraDenseStable
+    && recentTouchPairs.size === 0
+    && (state.fastMovingBodiesCount || 0) <= 0
+    && (state.highPrecisionBodyCount || 0) <= 0
+    && (state.activeMovingCount || 0) <= 1
     && !(state.repairQueueIds?.size || 0);
   const fixedDeltaMs = highPrecision
     ? Math.min(baseFixedDeltaMs, 1000 / 48)
-    : (crowdRelaxed
-        ? Math.max(baseFixedDeltaMs, liveCount >= 64 ? 1000 / 24 : (liveCount >= 54 ? 1000 / 26 : (liveCount >= 44 ? 1000 / 28 : 1000 / 30)))
-        : baseFixedDeltaMs);
+    : (ultraDenseQuiet
+        ? Math.max(baseFixedDeltaMs, liveCount >= 74 ? 1000 / 16 : (liveCount >= 66 ? 1000 / 17 : (liveCount >= 58 ? 1000 / 18 : 1000 / 19)))
+        : (ultraRelaxed
+            ? Math.max(baseFixedDeltaMs, liveCount >= 74 ? 1000 / 17 : (liveCount >= 66 ? 1000 / 18 : (liveCount >= 58 ? 1000 / 19 : 1000 / 20)))
+            : (crowdRelaxed
+                ? Math.max(baseFixedDeltaMs, liveCount >= 68 ? 1000 / 22 : (liveCount >= 58 ? 1000 / 24 : (liveCount >= 48 ? 1000 / 26 : 1000 / 28)))
+                : baseFixedDeltaMs)));
   const maxSteps = highPrecision ? Math.max(2, state.maxPhysicsSteps || 1) : 1;
   applyPhysicsQuality(highPrecision);
   if (liveCount > 0 && (state.activeMovingCount || 0) <= 0 && (state.highPrecisionBodyCount || 0) <= 0 && !(state.repairQueueIds?.size) && !(state.groupScanDirtyIds?.size)) {
     state.physicsAccumulator = 0;
     return;
   }
-  const thawIntervalMs = crowdRelaxed
-    ? (liveCount >= 52 ? 156 : (liveCount >= 38 ? 124 : 88))
-    : (liveCount >= 52 ? 124 : (liveCount >= 38 ? 96 : (liveCount >= 26 ? 68 : 44)));
+  const thawIntervalMs = ultraDenseQuiet
+    ? (liveCount >= 70 ? 320 : (liveCount >= 60 ? 272 : 224))
+    : (ultraRelaxed
+        ? (liveCount >= 70 ? 256 : (liveCount >= 60 ? 220 : 176))
+        : (crowdRelaxed
+            ? (liveCount >= 52 ? 156 : (liveCount >= 38 ? 124 : 88))
+            : (liveCount >= 52 ? 124 : (liveCount >= 38 ? 96 : (liveCount >= 26 ? 68 : 44)))));
   if (now - (state.lastThawNearActiveAt || 0) >= thawIntervalMs) {
     state.lastThawNearActiveAt = now;
     thawFrozenBodiesNearActive(now);
   }
-  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + (crowdRelaxed ? 1.85 : 1.35)));
-  if (crowdRelaxed && state.physicsAccumulator < fixedDeltaMs * 0.96) return;
+  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + (ultraDenseQuiet ? 0.44 : (ultraDenseStable ? 0.64 : (ultraRelaxed ? 0.9 : (crowdRelaxed ? 1.7 : 1.35))))));
+  if ((ultraDenseQuiet && state.physicsAccumulator < fixedDeltaMs * 0.9995) || (ultraRelaxed && state.physicsAccumulator < fixedDeltaMs * 0.998) || (crowdRelaxed && state.physicsAccumulator < fixedDeltaMs * 0.97)) return;
   let steps = 0;
   while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
     Engine.update(engine, fixedDeltaMs);
@@ -6602,9 +7027,9 @@ function stepPhysics(frameDt) {
     const dynamicCount = state.dynamicBodies?.length || 0;
     const canUseTrackedRefresh = !highPrecision
       && steps <= 1
-      && liveCount >= 46
-      && dynamicCount >= 18
-      && dynamicCount > ((state.activeBodies?.length || 0) + 6)
+      && liveCount >= 40
+      && dynamicCount >= 14
+      && dynamicCount > ((state.activeBodies?.length || 0) + 4)
       && (state.highPrecisionBodyCount || 0) <= 0
       && (state.fastMovingBodiesCount || 0) <= (liveCount >= 60 ? 0 : 1)
       && !(state.repairQueueIds?.size || 0);
@@ -6629,8 +7054,20 @@ function requestLoop(ts) {
       stepPhysics(frameDt);
 
       state.visualTimer += frameDt;
+      const visualLiveCount = state.liveBodies?.length || 0;
+      const visualDynamicCount = state.dynamicBodies?.length || 0;
       const forceVisualNow = hasFastMovingBodies();
-      if (state.visualTimer >= perfSettings.visualInterval || forceVisualNow) {
+      const stableHeavyVisualCrowd = isHeavyCrowdStable(visualLiveCount, visualDynamicCount);
+      const ultraDenseQuietVisualCrowd = stableHeavyVisualCrowd
+        && visualLiveCount >= 62
+        && (state.activeMovingCount || 0) <= 0
+        && recentTouchPairs.size === 0;
+      const visualInterval = stableHeavyVisualCrowd
+        ? perfSettings.visualInterval * (ultraDenseQuietVisualCrowd
+            ? (visualLiveCount >= 74 ? 3.16 : (visualLiveCount >= 66 ? 2.74 : (visualLiveCount >= 58 ? 2.26 : 1.84)))
+            : (visualLiveCount >= 74 ? 2.86 : (visualLiveCount >= 66 ? 2.46 : (visualLiveCount >= 58 ? 2.04 : 1.68))))
+        : perfSettings.visualInterval;
+      if (state.visualTimer >= visualInterval || forceVisualNow) {
         const visualDt = forceVisualNow ? Math.max(frameDt, state.visualTimer) : state.visualTimer;
         if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(visualDt);
         if (hasPendingVisualWork()) syncBodyVisuals();
@@ -6646,8 +7083,21 @@ function requestLoop(ts) {
         && (state.highPrecisionBodyCount || 0) <= 0
         && (state.activeMovingCount || 0) <= 1
         && recentTouchPairs.size === 0) || staticCrowdLogic;
+      const stableHeavyLogicCrowd = isHeavyCrowdStable(preLogicLiveCount, preLogicDynamicCount);
+      const ultraDenseQuietLogic = stableHeavyLogicCrowd
+        && preLogicLiveCount >= 62
+        && (state.activeMovingCount || 0) <= 0
+        && recentTouchPairs.size === 0;
       const logicFrameMs = crowdLogicRelaxed
-        ? Math.max(perfSettings.logicFrameMs || 0, staticCrowdLogic ? (preLogicLiveCount >= 60 ? 52 : 46) : (preLogicLiveCount >= 60 ? 42 : 36))
+        ? Math.max(perfSettings.logicFrameMs || 0, staticCrowdLogic
+            ? (ultraDenseQuietLogic
+                ? (preLogicLiveCount >= 74 ? 132 : (preLogicLiveCount >= 66 ? 112 : (preLogicLiveCount >= 58 ? 92 : (preLogicLiveCount >= 48 ? 70 : 52))))
+                : (preLogicLiveCount >= 74 ? 116 : (preLogicLiveCount >= 66 ? 98 : (preLogicLiveCount >= 58 ? 82 : (preLogicLiveCount >= 48 ? 62 : 48)))))
+            : (stableHeavyLogicCrowd
+                ? (ultraDenseQuietLogic
+                    ? (preLogicLiveCount >= 74 ? 86 : (preLogicLiveCount >= 66 ? 74 : (preLogicLiveCount >= 58 ? 62 : 48)))
+                    : (preLogicLiveCount >= 74 ? 74 : (preLogicLiveCount >= 66 ? 64 : (preLogicLiveCount >= 58 ? 54 : 44))))
+                : (preLogicLiveCount >= 60 ? 42 : 36)))
         : (perfSettings.logicFrameMs || 0);
       if (state.lastLogicTs && ts - state.lastLogicTs < logicFrameMs) return;
       const dt = clamp((ts - state.lastLogicTs) / 1000, 0.001, 0.08);
@@ -6780,9 +7230,10 @@ function requestLoop(ts) {
       state.freezeTimer += dt;
       const dynamicCount = state.dynamicBodies?.length || 0;
       const mostlyFrozenCrowd = isMostlyFrozenCrowd(liveCount, dynamicCount);
-      const freezeInterval = (perfSettings.freezeCheckInterval || 0.42) * Math.min(1.12, 0.94 + (crowdFactor - 1) * 0.08) * (mostlyFrozenCrowd ? 1.08 : 1);
-      const cleanupInterval = perfSettings.cleanupInterval * crowdFactor * (mostlyFrozenCrowd ? 1.32 : 1);
-      const rescueInterval = perfSettings.rescueInterval * Math.min(1.18, 0.92 + (crowdFactor - 1) * 0.16) * (mostlyFrozenCrowd ? 1.44 : 1);
+      const ultraDenseQuietCrowd = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const freezeInterval = (perfSettings.freezeCheckInterval || 0.42) * Math.min(1.12, 0.94 + (crowdFactor - 1) * 0.08) * (mostlyFrozenCrowd ? (ultraDenseQuietCrowd ? 1.16 : 1.08) : 1);
+      const cleanupInterval = perfSettings.cleanupInterval * crowdFactor * (mostlyFrozenCrowd ? (ultraDenseQuietCrowd ? 1.46 : 1.32) : 1);
+      const rescueInterval = perfSettings.rescueInterval * Math.min(1.18, 0.92 + (crowdFactor - 1) * 0.16) * (mostlyFrozenCrowd ? (ultraDenseQuietCrowd ? 1.72 : 1.44) : 1);
       if (state.freezeTimer >= freezeInterval) {
         state.freezeTimer = 0;
         const maintenanceNow = performance.now();
