@@ -632,7 +632,7 @@
     #start-screen .title-main,#result-screen .title-main,#howto-screen .title-main{font-size:84px !important;line-height:1.02}
 
 
-    /* --- v12 gameplay system/layout patch --- */
+    /* --- v13 gameplay system/layout patch --- */
     #game-shell{--top-hud-h:144px !important;--bottom-info-h:68px !important;--bottom-controls-h:44px !important}
     #board-wrap{padding:calc(var(--top-hud-h) + 28px) 8px calc(var(--bottom-stack) - 34px) !important}
     #top-right{position:absolute;left:8px;right:8px;top:8px;bottom:auto;display:grid !important;grid-template-columns:200px minmax(0,1fr);align-items:stretch;justify-content:stretch;gap:8px;height:44px;padding:6px 8px;z-index:24;flex-wrap:nowrap !important}
@@ -1763,8 +1763,6 @@
   </div>
 
   <script>
-
-
 (() => {
     const { Engine, Render, Runner, Bodies, Composite, Events, Body, Sleeping } = Matter;
 
@@ -2096,6 +2094,19 @@
     const scratchTypeIndexList = [];
     const scratchSeedContentFlags = [];
     const scratchSweepWindows = { rescue:[], overlap:[], freeze:[] };
+    const scratchDenseMaintenanceBodies = [];
+    const scratchNewlyFrozenBodies = [];
+    const scratchSettledHybridGroups = [];
+    const scratchHybridSeedBodies = [];
+    const scratchFrozenSurfaceWakeBodies = [];
+    const scratchSettledProxyClusterStack = [];
+    const scratchSettledProxyGroupClusters = [];
+    const scratchSettledProxyOverlayBodies = [];
+    const scratchSettledProxyDirtyCells = [];
+    const scratchSettledProxyDirtyCellSet = new Set();
+    const scratchSettledProxySeedClusters = [];
+    const scratchMaterializedGroupBodies = [];
+    const FROZEN_SURFACE_CELL = 56;
 
     function spatialHashKey(cx, cy) {
       if (cx <= -SPATIAL_HASH_OFFSET || cx >= SPATIAL_HASH_OFFSET || cy <= -SPATIAL_HASH_OFFSET || cy >= SPATIAL_HASH_OFFSET) {
@@ -2123,6 +2134,7 @@
 
     function visitNearbyFromHash(hash, body, radiusCells = 1, fn) {
       if (!hash || !body) return false;
+      if (hash._proxyRegistry) return visitNearbyFromProxyRegistry(hash, body, radiusCells, fn);
       if (Array.isArray(hash.layers) && hash.layers.length) {
         for (let i = 0; i < hash.layers.length; i += 1) {
           if (visitNearbyFromHash(hash.layers[i], body, radiusCells, fn) === true) return true;
@@ -2142,6 +2154,281 @@
         }
       }
       return false;
+    }
+
+    function frozenSurfaceCellIndex(x, cellSize = FROZEN_SURFACE_CELL) {
+      const safeCell = Math.max(1, cellSize || 1);
+      const safeX = Number.isFinite(x) ? x : 0;
+      return Math.floor(safeX / safeCell);
+    }
+
+    function frozenSurfaceShellDepthThreshold(liveCount = state.liveBodies?.length || 0, body = null) {
+      const radius = body?.circleRadius || 0;
+      const base = liveCount >= 74 ? 28 : (liveCount >= 66 ? 34 : (liveCount >= 58 ? 40 : 46));
+      return Math.max(base, radius * (liveCount >= 66 ? 1.18 : 1.32) + 12);
+    }
+
+    function measureFrozenSurfaceDepthFromCache(body, surfaceCache) {
+      if (!body || !surfaceCache) return Number.POSITIVE_INFINITY;
+      const cellSize = Math.max(1, surfaceCache.cellSize || FROZEN_SURFACE_CELL);
+      const radius = body.circleRadius || 0;
+      const x = Number.isFinite(body.position?.x) ? body.position.x : 0;
+      const topEdge = (Number.isFinite(body.position?.y) ? body.position.y : 0) - radius;
+      const minCell = frozenSurfaceCellIndex(x - radius, cellSize);
+      const maxCell = frozenSurfaceCellIndex(x + radius, cellSize);
+      let surfaceTop = Number.POSITIVE_INFINITY;
+      for (let cx = minCell; cx <= maxCell; cx += 1) {
+        const value = surfaceCache.topYByCell?.get(cx);
+        if (value == null) continue;
+        if (value < surfaceTop) surfaceTop = value;
+      }
+      if (!Number.isFinite(surfaceTop)) return 0;
+      return Math.max(0, topEdge - surfaceTop);
+    }
+
+
+    function ensureFrozenSurfaceCacheStore() {
+      if (!(state.frozenSurfaceBodiesByCell instanceof Map)) state.frozenSurfaceBodiesByCell = new Map();
+      if (!(state.frozenSurfaceTopYByCell instanceof Map)) state.frozenSurfaceTopYByCell = new Map();
+      if (!state.frozenSurfaceCache
+        || state.frozenSurfaceCache.topYByCell !== state.frozenSurfaceTopYByCell
+        || state.frozenSurfaceCache.bodiesByCell !== state.frozenSurfaceBodiesByCell) {
+        state.frozenSurfaceCache = {
+          cellSize:FROZEN_SURFACE_CELL,
+          topYByCell:state.frozenSurfaceTopYByCell,
+          bodiesByCell:state.frozenSurfaceBodiesByCell,
+          revision:state.frozenSurfaceRevision || 0
+        };
+      }
+      state.frozenSurfaceCache.revision = state.frozenSurfaceRevision || 0;
+      return state.frozenSurfaceCache;
+    }
+
+    function bodyFrozenSurfaceCellRange(body, cellSize = FROZEN_SURFACE_CELL) {
+      if (!body) return null;
+      const radius = body.circleRadius || 0;
+      const x = Number.isFinite(body.position?.x) ? body.position.x : 0;
+      return [
+        frozenSurfaceCellIndex(x - radius, cellSize),
+        frozenSurfaceCellIndex(x + radius, cellSize)
+      ];
+    }
+
+    function bodyFrozenSurfaceTopEdge(body) {
+      if (!body) return 0;
+      const radius = body.circleRadius || 0;
+      const y = Number.isFinite(body.position?.y) ? body.position.y : 0;
+      return y - radius;
+    }
+
+    function rebuildFrozenSurfaceCacheFromBodies() {
+      const cellSize = FROZEN_SURFACE_CELL;
+      const topYByCell = new Map();
+      const bodiesByCell = new Map();
+      const frozenBodies = state.frozenBodies || EMPTY_BODY_ARRAY;
+      for (let i = 0; i < frozenBodies.length; i += 1) {
+        const body = frozenBodies[i];
+        if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) continue;
+        const range = bodyFrozenSurfaceCellRange(body, cellSize);
+        if (!range) continue;
+        const [minCell, maxCell] = range;
+        const topEdge = bodyFrozenSurfaceTopEdge(body);
+        body.plugin = body.plugin || {};
+        body.plugin._frozenSurfaceTracked = 1;
+        body.plugin._frozenSurfaceMinCell = minCell;
+        body.plugin._frozenSurfaceMaxCell = maxCell;
+        body.plugin._frozenSurfaceRevision = -1;
+        body.plugin._frozenSurfaceDepth = Number.NaN;
+        body.plugin._frozenSurfaceShell = 0;
+        for (let cell = minCell; cell <= maxCell; cell += 1) {
+          let bucket = bodiesByCell.get(cell);
+          if (!bucket) {
+            bucket = [];
+            bodiesByCell.set(cell, bucket);
+          }
+          bucket.push(body);
+          const currentTop = topYByCell.get(cell);
+          if (currentTop == null || topEdge < currentTop) topYByCell.set(cell, topEdge);
+        }
+      }
+      state.frozenSurfaceBodiesByCell = bodiesByCell;
+      state.frozenSurfaceTopYByCell = topYByCell;
+      state.frozenSurfaceRevision = (state.frozenSurfaceRevision || 0) + 1;
+      state.frozenSurfaceCache = {
+        cellSize,
+        topYByCell,
+        bodiesByCell,
+        revision:state.frozenSurfaceRevision
+      };
+      state.frozenSurfaceCacheRevision = state.frozenSurfaceRevision;
+      return state.frozenSurfaceCache;
+    }
+
+    function trackFrozenSurfaceBody(body) {
+      if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) return ensureFrozenSurfaceCacheStore();
+      body.plugin = body.plugin || {};
+      if (body.plugin._frozenSurfaceTracked) return ensureFrozenSurfaceCacheStore();
+      const cache = ensureFrozenSurfaceCacheStore();
+      const range = bodyFrozenSurfaceCellRange(body, cache.cellSize || FROZEN_SURFACE_CELL);
+      if (!range) return cache;
+      const [minCell, maxCell] = range;
+      const topEdge = bodyFrozenSurfaceTopEdge(body);
+      let changed = false;
+      for (let cell = minCell; cell <= maxCell; cell += 1) {
+        let bucket = state.frozenSurfaceBodiesByCell.get(cell);
+        if (!bucket) {
+          bucket = [];
+          state.frozenSurfaceBodiesByCell.set(cell, bucket);
+          changed = true;
+        }
+        bucket.push(body);
+        const currentTop = state.frozenSurfaceTopYByCell.get(cell);
+        if (currentTop == null || topEdge < currentTop) {
+          state.frozenSurfaceTopYByCell.set(cell, topEdge);
+          changed = true;
+        }
+      }
+      body.plugin._frozenSurfaceTracked = 1;
+      body.plugin._frozenSurfaceMinCell = minCell;
+      body.plugin._frozenSurfaceMaxCell = maxCell;
+      body.plugin._frozenSurfaceRevision = -1;
+      body.plugin._frozenSurfaceDepth = Number.NaN;
+      body.plugin._frozenSurfaceShell = 0;
+      if (changed) {
+        state.frozenSurfaceRevision = (state.frozenSurfaceRevision || 0) + 1;
+        cache.revision = state.frozenSurfaceRevision;
+        state.frozenSurfaceCacheRevision = state.frozenSurfaceRevision;
+      }
+      return cache;
+    }
+
+    function untrackFrozenSurfaceBody(body) {
+      if (!body) return ensureFrozenSurfaceCacheStore();
+      const cache = ensureFrozenSurfaceCacheStore();
+      const minCell = Number.isInteger(body.plugin?._frozenSurfaceMinCell)
+        ? body.plugin._frozenSurfaceMinCell
+        : (bodyFrozenSurfaceCellRange(body, cache.cellSize || FROZEN_SURFACE_CELL)?.[0]);
+      const maxCell = Number.isInteger(body.plugin?._frozenSurfaceMaxCell)
+        ? body.plugin._frozenSurfaceMaxCell
+        : (bodyFrozenSurfaceCellRange(body, cache.cellSize || FROZEN_SURFACE_CELL)?.[1]);
+      if (!Number.isInteger(minCell) || !Number.isInteger(maxCell)) {
+        if (body.plugin) {
+          body.plugin._frozenSurfaceTracked = 0;
+          body.plugin._frozenSurfaceMinCell = null;
+          body.plugin._frozenSurfaceMaxCell = null;
+          body.plugin._frozenSurfaceRevision = -1;
+          body.plugin._frozenSurfaceDepth = Number.NaN;
+          body.plugin._frozenSurfaceShell = 0;
+        }
+        return cache;
+      }
+      let changed = false;
+      for (let cell = minCell; cell <= maxCell; cell += 1) {
+        const bucket = state.frozenSurfaceBodiesByCell.get(cell);
+        if (!bucket?.length) continue;
+        let removed = false;
+        const prevTop = state.frozenSurfaceTopYByCell.get(cell);
+        for (let i = bucket.length - 1; i >= 0; i -= 1) {
+          if (bucket[i]?.id !== body.id) continue;
+          bucket.splice(i, 1);
+          removed = true;
+        }
+        if (!removed) continue;
+        if (!bucket.length) {
+          state.frozenSurfaceBodiesByCell.delete(cell);
+          if (state.frozenSurfaceTopYByCell.has(cell)) {
+            state.frozenSurfaceTopYByCell.delete(cell);
+            changed = true;
+          }
+          continue;
+        }
+        let nextTop = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < bucket.length; i += 1) {
+          const other = bucket[i];
+          if (!other || other.plugin?.pendingRemoval || !isFrozenBody(other)) continue;
+          const topEdge = bodyFrozenSurfaceTopEdge(other);
+          if (topEdge < nextTop) nextTop = topEdge;
+        }
+        if (Number.isFinite(nextTop)) {
+          state.frozenSurfaceTopYByCell.set(cell, nextTop);
+          if (prevTop == null || Math.abs(nextTop - prevTop) > 0.001) changed = true;
+        } else if (state.frozenSurfaceTopYByCell.has(cell)) {
+          state.frozenSurfaceTopYByCell.delete(cell);
+          changed = true;
+        }
+      }
+      if (body.plugin) {
+        body.plugin._frozenSurfaceTracked = 0;
+        body.plugin._frozenSurfaceMinCell = null;
+        body.plugin._frozenSurfaceMaxCell = null;
+        body.plugin._frozenSurfaceRevision = -1;
+        body.plugin._frozenSurfaceDepth = Number.NaN;
+        body.plugin._frozenSurfaceShell = 0;
+      }
+      if (changed) {
+        state.frozenSurfaceRevision = (state.frozenSurfaceRevision || 0) + 1;
+        cache.revision = state.frozenSurfaceRevision;
+        state.frozenSurfaceCacheRevision = state.frozenSurfaceRevision;
+      }
+      return cache;
+    }
+
+    function buildFrozenSurfaceCache() {
+      const frozenBodies = state.frozenBodies || EMPTY_BODY_ARRAY;
+      if (!frozenBodies.length) return ensureFrozenSurfaceCacheStore();
+      const cache = ensureFrozenSurfaceCacheStore();
+      if (!state.frozenSurfaceBodiesByCell?.size && frozenBodies.length) {
+        return rebuildFrozenSurfaceCacheFromBodies();
+      }
+      return cache;
+    }
+
+    function frozenSurfaceDepth(body, surfaceCache = null) {
+      if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) return Number.POSITIVE_INFINITY;
+      const revision = state.frozenSurfaceRevision || 0;
+      body.plugin = body.plugin || {};
+      if (body.plugin._frozenSurfaceRevision === revision && Number.isFinite(body.plugin._frozenSurfaceDepth)) {
+        return body.plugin._frozenSurfaceDepth;
+      }
+      const cache = surfaceCache || buildFrozenSurfaceCache();
+      if (!cache) return Number.POSITIVE_INFINITY;
+      const depth = measureFrozenSurfaceDepthFromCache(body, cache);
+      body.plugin._frozenSurfaceRevision = revision;
+      body.plugin._frozenSurfaceDepth = depth;
+      body.plugin._frozenSurfaceShell = depth <= frozenSurfaceShellDepthThreshold(state.liveBodies?.length || 0, body) ? 1 : 0;
+      return depth;
+    }
+
+    function isFrozenSurfaceShellBody(body, surfaceCache = null, maxDepth = null) {
+      if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) return false;
+      const cache = surfaceCache || buildFrozenSurfaceCache();
+      if (!cache) return false;
+      if (maxDepth == null
+        && body.plugin?._frozenSurfaceRevision === (cache.revision || (state.frozenSurfaceRevision || 0))
+        && body.plugin?._frozenSurfaceShell === 1) return true;
+      const depth = frozenSurfaceDepth(body, cache);
+      const allowedDepth = Number.isFinite(maxDepth) ? maxDepth : frozenSurfaceShellDepthThreshold(state.liveBodies?.length || 0, body);
+      return depth <= allowedDepth;
+    }
+
+    function isBuriedFrozenStableBody(body, surfaceCache = null, liveCount = state.liveBodies?.length || 0, now = performance.now()) {
+      if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) return false;
+      body.plugin = body.plugin || {};
+      if ((body.plugin.highPrecisionUntil || 0) > now) return false;
+      if (state.repairQueueIds?.has(body.id) || state.groupScanDirtyIds?.has(body.id)) return false;
+      if (body.outOfRangeSince || body.floatStartAt) return false;
+      const age = now - (body.spawnAt || 0);
+      const minAge = liveCount >= 72 ? 1240 : (liveCount >= 64 ? 1080 : 920);
+      if (age < minAge) return false;
+      const maxLinear = liveCount >= 72 ? 0.055 : (liveCount >= 64 ? 0.062 : 0.07);
+      const maxAngular = liveCount >= 72 ? 0.022 : (liveCount >= 64 ? 0.028 : 0.034);
+      const quiet = (body.isSleeping || body.isStatic || isFrozenBody(body))
+        && Math.abs(body.velocity?.x || 0) <= maxLinear
+        && Math.abs(body.velocity?.y || 0) <= maxLinear
+        && Math.abs(body.angularVelocity || 0) <= maxAngular
+        && (body.speed || 0) <= maxLinear * 1.22;
+      if (!quiet) return false;
+      return !isFrozenSurfaceShellBody(body, surfaceCache, frozenSurfaceShellDepthThreshold(liveCount, body));
     }
 
     function collectEligibleBodies(sourceBodies, minAgeMs = 220, outBodies = scratchGroupSourceBodies, now = performance.now()) {
@@ -2202,9 +2489,1497 @@
     }
     const missingAvatarFiles = new Set();
     let trendBannerTimer = 0;
-    const TOUCH_MEMORY_TTL_MS = 520;
+    const TOUCH_MEMORY_BASE_TTL_MS = 360;
     const TOUCH_PAIR_NUMERIC_MULTIPLIER = 1048576;
     const recentTouchPairs = new Map();
+    function pairSupportsPersistentTouchGraph(a, b) {
+      if (!a || !b || a.plugin?.pendingRemoval || b.plugin?.pendingRemoval) return false;
+      const typeA = a.gameType;
+      if (typeA !== b.gameType) return false;
+      if (typeA === 'content') return a.contentIndex === b.contentIndex;
+      return typeA === 'hazard' || typeA === 'buzz';
+    }
+
+    function touchGraphNeighborSet(graph, bodyId, create = false) {
+      if (!(graph instanceof Map) || bodyId == null) return null;
+      let set = graph.get(bodyId);
+      if (!set && create) {
+        set = new Set();
+        graph.set(bodyId, set);
+      }
+      return set || null;
+    }
+
+    function linkTouchGraph(graph, aId, bId) {
+      if (!(graph instanceof Map) || aId == null || bId == null || aId === bId) return;
+      touchGraphNeighborSet(graph, aId, true)?.add(bId);
+      touchGraphNeighborSet(graph, bId, true)?.add(aId);
+    }
+
+    function unlinkTouchGraph(graph, aId, bId) {
+      if (!(graph instanceof Map) || aId == null || bId == null || aId === bId) return;
+      const setA = graph.get(aId);
+      if (setA) {
+        setA.delete(bId);
+        if (!setA.size) graph.delete(aId);
+      }
+      const setB = graph.get(bId);
+      if (setB) {
+        setB.delete(aId);
+        if (!setB.size) graph.delete(bId);
+      }
+    }
+
+    function clearTouchGraphBody(graph, bodyId) {
+      if (!(graph instanceof Map) || bodyId == null) return;
+      const neighbors = graph.get(bodyId);
+      if (neighbors) {
+        for (const otherId of neighbors) {
+          const otherSet = graph.get(otherId);
+          if (!otherSet) continue;
+          otherSet.delete(bodyId);
+          if (!otherSet.size) graph.delete(otherId);
+        }
+      }
+      graph.delete(bodyId);
+    }
+
+    function clearAllLiveTouchGraph() {
+      state.liveTouchAdj?.clear();
+      state.liveTouchGraphPairIds?.clear();
+    }
+
+    function disconnectLiveTouchGraphPair(key, aId = null, bId = null) {
+      let pair = key != null ? (state.liveTouchGraphPairIds?.get(key) || null) : null;
+      if (!pair && aId != null && bId != null) pair = [aId, bId];
+      if (pair) unlinkTouchGraph(state.liveTouchAdj, pair[0], pair[1]);
+      if (key != null) {
+        state.liveTouchGraphPairIds?.delete(key);
+        return;
+      }
+      if (pair && state.liveTouchGraphPairIds instanceof Map && state.liveTouchGraphPairIds.size) {
+        for (const [otherKey, otherPair] of state.liveTouchGraphPairIds.entries()) {
+          if (!otherPair) continue;
+          const same = (otherPair[0] === pair[0] && otherPair[1] === pair[1]) || (otherPair[0] === pair[1] && otherPair[1] === pair[0]);
+          if (same) state.liveTouchGraphPairIds.delete(otherKey);
+        }
+      }
+    }
+
+    function connectLiveTouchGraphPair(a, b) {
+      if (!pairSupportsPersistentTouchGraph(a, b)) return;
+      const key = touchPairKey(a, b);
+      linkTouchGraph(state.liveTouchAdj, a.id, b.id);
+      state.liveTouchGraphPairIds?.set(key, [a.id, b.id]);
+    }
+
+    function connectSettledTouchGraphPair(a, b) {
+      if (!pairSupportsPersistentTouchGraph(a, b)) return;
+      if (!isFrozenBody(a) || !isFrozenBody(b)) return;
+      linkTouchGraph(state.settledTouchAdj, a.id, b.id);
+    }
+
+    function removeBodyTouchGraphLinks(bodyOrId) {
+      const bodyId = typeof bodyOrId === 'object' ? bodyOrId?.id : bodyOrId;
+      if (bodyId == null) return;
+      clearTouchGraphBody(state.liveTouchAdj, bodyId);
+      clearTouchGraphBody(state.settledTouchAdj, bodyId);
+      if (state.liveTouchGraphPairIds instanceof Map && state.liveTouchGraphPairIds.size) {
+        for (const [key, pair] of state.liveTouchGraphPairIds.entries()) {
+          if (!pair || (pair[0] !== bodyId && pair[1] !== bodyId)) continue;
+          state.liveTouchGraphPairIds.delete(key);
+          recentTouchPairs.delete(key);
+        }
+      }
+    }
+
+    function refreshSettledTouchGraphForBodies(bodies, frozenHash = null, touchNow = performance.now()) {
+      if (!Array.isArray(bodies) || !bodies.length) return 0;
+      const hash = frozenHash || frozenSpatialHash();
+      if (!hash) return 0;
+      let linked = 0;
+      for (let i = 0; i < bodies.length; i += 1) {
+        const body = bodies[i];
+        if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) continue;
+        visitNearbyFromHash(hash, body, 1, other => {
+          if (!other || other.id === body.id || other.plugin?.pendingRemoval) return false;
+          if (!isFrozenBody(other) || !pairSupportsPersistentTouchGraph(body, other)) return false;
+          if (!touchingExact(body, other, 0.75)) return false;
+          connectSettledTouchGraphPair(body, other);
+          linked += 1;
+          return false;
+        });
+      }
+      return linked;
+    }
+
+    function visitTouchGraphNeighbors(body, touchNow = performance.now(), fn = null) {
+      if (!body || typeof fn !== 'function') return false;
+      const bodyId = body.id;
+      if (bodyId == null) return false;
+      const ttlMs = currentTouchMemoryTtlMs();
+      const liveStale = [];
+      const settledStale = [];
+      const applyLiveSet = (neighbors) => {
+        if (!(neighbors instanceof Set) || !neighbors.size) return false;
+        for (const otherId of neighbors) {
+          const other = bodyById(otherId);
+          if (!other || other.plugin?.pendingRemoval) {
+            liveStale.push({ key:null, otherId });
+            continue;
+          }
+          const key = touchPairKey(body, other);
+          const at = recentTouchPairs.get(key);
+          if (at == null || touchNow - at > ttlMs) {
+            liveStale.push({ key, otherId });
+            continue;
+          }
+          if (fn(other) === true) return true;
+        }
+        return false;
+      };
+      const applySettledSet = (neighbors) => {
+        if (!(neighbors instanceof Set) || !neighbors.size) return false;
+        for (const otherId of neighbors) {
+          const other = bodyById(otherId);
+          if (!other || other.plugin?.pendingRemoval || !isFrozenBody(other)) {
+            settledStale.push(otherId);
+            continue;
+          }
+          if (fn(other) === true) return true;
+        }
+        return false;
+      };
+      if (applyLiveSet(state.liveTouchAdj?.get(bodyId))) {
+        for (let i = 0; i < liveStale.length; i += 1) disconnectLiveTouchGraphPair(liveStale[i].key, bodyId, liveStale[i].otherId);
+        return true;
+      }
+      if (applySettledSet(state.settledTouchAdj?.get(bodyId))) {
+        for (let i = 0; i < liveStale.length; i += 1) disconnectLiveTouchGraphPair(liveStale[i].key, bodyId, liveStale[i].otherId);
+        for (let i = 0; i < settledStale.length; i += 1) unlinkTouchGraph(state.settledTouchAdj, bodyId, settledStale[i]);
+        return true;
+      }
+      for (let i = 0; i < liveStale.length; i += 1) disconnectLiveTouchGraphPair(liveStale[i].key, bodyId, liveStale[i].otherId);
+      for (let i = 0; i < settledStale.length; i += 1) unlinkTouchGraph(state.settledTouchAdj, bodyId, settledStale[i]);
+      return false;
+    }
+
+    function shouldUseTouchGraphGroupSearch(liveCount = 0, targetCount = 0, seedCount = 0) {
+      if (seedCount <= 0 || targetCount < 2) return false;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      if (liveCount >= 52 && isHeavyCrowdStable(liveCount, dynamicCount)) return true;
+      if (liveCount >= 40 && targetCount >= 6) return true;
+      if (liveCount >= 30 && seedCount >= 5 && targetCount >= 5) return true;
+      return false;
+    }
+
+    function buildTouchGroupsFromGraph(targetBodies, seedBodies = null, touchNow = performance.now(), matchOther = null) {
+      if (!targetBodies.length) return [];
+      const roots = Array.isArray(seedBodies) && seedBodies.length ? seedBodies : targetBodies;
+      const groups = [];
+      const visitStamp = (state.touchGroupVisitStamp || 0) + 1;
+      state.touchGroupVisitStamp = visitStamp;
+      const eligibleStamp = targetBodies._eligibleGroupStamp || 0;
+      const acceptOther = typeof matchOther === 'function' ? matchOther : null;
+      const stack = scratchTouchStack;
+      for (let i = 0; i < roots.length; i += 1) {
+        const root = roots[i];
+        if (!root || root.plugin?.pendingRemoval) continue;
+        root.plugin = root.plugin || {};
+        if (eligibleStamp && root.plugin._eligibleGroupStamp !== eligibleStamp) continue;
+        if (root.plugin._touchVisitStamp === visitStamp) continue;
+        stack.length = 0;
+        stack.push(root);
+        root.plugin._touchVisitStamp = visitStamp;
+        const group = [];
+        while (stack.length) {
+          const current = stack.pop();
+          group.push(current);
+          visitTouchGraphNeighbors(current, touchNow, other => {
+            if (!other || other.id === current.id) return false;
+            if (acceptOther && !acceptOther(other, current)) return false;
+            other.plugin = other.plugin || {};
+            if (eligibleStamp && other.plugin._eligibleGroupStamp !== eligibleStamp) return false;
+            if (other.plugin._touchVisitStamp === visitStamp) return false;
+            other.plugin._touchVisitStamp = visitStamp;
+            stack.push(other);
+            return false;
+          });
+        }
+        groups.push(group);
+      }
+      stack.length = 0;
+      return groups;
+    }
+
+
+    function settledGroupCacheKey(gameType, contentIndex = null) {
+      return gameType === 'content' ? `content:${contentIndex}` : String(gameType || '');
+    }
+
+    
+
+function ensureSettledGroupCacheStore() {
+  if (!(state.settledGroupCacheByKey instanceof Map)) state.settledGroupCacheByKey = new Map();
+  if (!(state.settledClusterById instanceof Map)) state.settledClusterById = new Map();
+  if (!(state.settledGroupCacheDirtyKeys instanceof Set)) state.settledGroupCacheDirtyKeys = new Set();
+  if (!(state.settledKeysBySurfaceCell instanceof Map)) state.settledKeysBySurfaceCell = new Map();
+  if (!(state.settledSurfaceCellsByKey instanceof Map)) state.settledSurfaceCellsByKey = new Map();
+  return state.settledGroupCacheByKey;
+}
+
+function bodySettledCacheKey(body) {
+  if (!body) return '';
+  const liveType = body.plugin?._liveType ?? body.gameType;
+  const liveContentIndex = Number.isInteger(body.plugin?._liveContentIndex) ? body.plugin._liveContentIndex : body.contentIndex;
+  if (liveType === 'content' && Number.isInteger(liveContentIndex)) return settledGroupCacheKey('content', liveContentIndex);
+  if (liveType === 'hazard' || liveType === 'buzz') return settledGroupCacheKey(liveType, null);
+  return '';
+}
+
+function clearSettledClusterTag(body, clusterId = null) {
+  if (!body?.plugin) return;
+  if (clusterId != null && body.plugin._settledClusterId !== clusterId) return;
+  body.plugin._settledClusterId = null;
+  body.plugin._settledClusterRevision = 0;
+  body.plugin._settledClusterSize = 0;
+}
+
+function registerSettledCacheSurfaceCells(key, cells = EMPTY_ID_ARRAY) {
+  ensureSettledGroupCacheStore();
+  const oldCells = state.settledSurfaceCellsByKey?.get(key);
+  if (oldCells?.length) {
+    for (let i = 0; i < oldCells.length; i += 1) {
+      const cell = oldCells[i];
+      const keys = state.settledKeysBySurfaceCell?.get(cell);
+      if (!keys) continue;
+      keys.delete(key);
+      if (!keys.size) state.settledKeysBySurfaceCell.delete(cell);
+    }
+  }
+  const nextCells = cells?.length ? Array.from(new Set(cells)).sort((a, b) => a - b) : EMPTY_ID_ARRAY;
+  if (nextCells.length) {
+    state.settledSurfaceCellsByKey.set(key, nextCells);
+    for (let i = 0; i < nextCells.length; i += 1) {
+      const cell = nextCells[i];
+      let keys = state.settledKeysBySurfaceCell.get(cell);
+      if (!keys) {
+        keys = new Set();
+        state.settledKeysBySurfaceCell.set(cell, keys);
+      }
+      keys.add(key);
+    }
+  } else {
+    state.settledSurfaceCellsByKey.delete(key);
+  }
+}
+
+function dropSettledGroupCacheKey(key) {
+  ensureSettledGroupCacheStore();
+  const cached = state.settledGroupCacheByKey?.get(key);
+  if (cached?.clusters?.length) {
+    for (let i = 0; i < cached.clusters.length; i += 1) {
+      const cluster = cached.clusters[i];
+      if (!cluster) continue;
+      state.settledClusterById?.delete(cluster.id);
+      const bodies = cluster.bodies || EMPTY_BODY_ARRAY;
+      for (let j = 0; j < bodies.length; j += 1) clearSettledClusterTag(bodies[j], cluster.id);
+      cluster._groupDescriptor = null;
+      cluster._descriptorClusters = null;
+    }
+  }
+  registerSettledCacheSurfaceCells(key, EMPTY_ID_ARRAY);
+  state.settledGroupCacheByKey?.delete(key);
+  state.settledGroupCacheDirtyKeys?.delete(key);
+}
+
+function collectSettledSurfaceDirtyKeys(body, outKeys = null) {
+  const keys = outKeys || new Set();
+  if (!body || body.plugin?.pendingRemoval) return keys;
+  const ownKey = bodySettledCacheKey(body);
+  if (ownKey) keys.add(ownKey);
+  const range = bodyFrozenSurfaceCellRange(body, FROZEN_SURFACE_CELL);
+  if (!range || !(state.settledKeysBySurfaceCell instanceof Map) || !state.settledKeysBySurfaceCell.size) return keys;
+  const [minCell, maxCell] = range;
+  for (let cell = minCell; cell <= maxCell; cell += 1) {
+    const cellKeys = state.settledKeysBySurfaceCell.get(cell);
+    if (!cellKeys?.size) continue;
+    cellKeys.forEach(key => keys.add(key));
+  }
+  return keys;
+}
+
+function markSettledCachesDirtyForBody(body) {
+  if (!body || body.plugin?.pendingRemoval) return;
+  ensureSettledGroupCacheStore();
+  const keys = collectSettledSurfaceDirtyKeys(body, new Set());
+  if (!keys.size) return;
+  keys.forEach(key => {
+    if (!key) return;
+    state.settledGroupCacheDirtyKeys?.add(key);
+  });
+  state.lastFullGroupScanAt = 0;
+  state.lastStableScanCacheKey = '';
+  state.lastStableScanGroups = [];
+}
+
+function settledClusterForBody(body) {
+  if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) return null;
+  const clusterId = body.plugin?._settledClusterId;
+  if (clusterId == null) return null;
+  const cluster = state.settledClusterById?.get(clusterId) || null;
+  if (!cluster) return null;
+  if (state.settledGroupCacheDirtyKeys?.has(cluster.key)) return null;
+  return cluster;
+}
+
+function settledClusterIdForBody(body) {
+  return settledClusterForBody(body)?.id ?? null;
+}
+
+function ensureSettledClusterForBody(body) {
+  let cluster = settledClusterForBody(body);
+  if (cluster || !body || body.plugin?.pendingRemoval || !isFrozenBody(body)) return cluster;
+  if (body.gameType === 'content' && Number.isInteger(body.contentIndex)) {
+    buildSettledGroupCacheForKey('content', body.contentIndex);
+  } else if (body.gameType === 'hazard' || body.gameType === 'buzz') {
+    buildSettledGroupCacheForKey(body.gameType, null);
+  }
+  cluster = settledClusterForBody(body);
+  return cluster || null;
+}
+
+function settledSourceBodiesForKey(gameType, contentIndex = null) {
+  if (gameType === 'content') return state.liveContentBodiesByIndex?.[contentIndex] || EMPTY_BODY_ARRAY;
+  return state.liveBodiesByType?.[gameType] || EMPTY_BODY_ARRAY;
+}
+
+
+function pushTopBodiesByY(bucket, body, maxCount = 0, tieX = Number.NaN) {
+  if (!bucket || !body) return bucket;
+  const limit = Math.max(0, Math.floor(maxCount || 0));
+  const bodyY = body?.position?.y || 0;
+  const bodyX = body?.position?.x || 0;
+  let insertAt = bucket.length;
+  for (let i = 0; i < bucket.length; i += 1) {
+    const other = bucket[i];
+    const otherY = other?.position?.y || 0;
+    if (bodyY < otherY) {
+      insertAt = i;
+      break;
+    }
+    if (bodyY === otherY && Number.isFinite(tieX)) {
+      const bodyDx = Math.abs(bodyX - tieX);
+      const otherDx = Math.abs((other?.position?.x || 0) - tieX);
+      if (bodyDx < otherDx) {
+        insertAt = i;
+        break;
+      }
+    }
+  }
+  if (insertAt < bucket.length) {
+    bucket.splice(insertAt, 0, body);
+  } else if (!limit || bucket.length < limit) {
+    bucket.push(body);
+  }
+  if (limit && bucket.length > limit) bucket.length = limit;
+  return bucket;
+}
+
+
+function buildSettledGroupCacheForKey(gameType, contentIndex = null) {
+  const store = ensureSettledGroupCacheStore();
+  const key = settledGroupCacheKey(gameType, contentIndex);
+  const dirty = state.settledGroupCacheDirtyKeys?.has(key);
+  const cached = store.get(key);
+  if (cached && !dirty) return cached;
+  if (cached || dirty) dropSettledGroupCacheKey(key);
+  const sourceBodies = settledSourceBodiesForKey(gameType, contentIndex);
+  const clusters = [];
+  const revision = state.frozenSpatialHashRevision || 0;
+  const visitStamp = (state.settledGroupVisitStamp || 0) + 1;
+  const liveCount = state.liveBodies?.length || 0;
+  const frontierCellSize = FROZEN_SURFACE_CELL;
+  const frontierDepthPerCell = liveCount >= 74 ? 2 : (liveCount >= 62 ? 3 : 4);
+  const frontierProxyCellSpan = liveCount >= 76 ? 3 : 2;
+  const frontierProxyCellSize = frontierCellSize * frontierProxyCellSpan;
+  const frontierProxyDepthPerBand = liveCount >= 72 ? 1 : 2;
+  const proxyClustersByCell = new Map();
+  const surfaceCache = sourceBodies.length >= 2 ? buildFrozenSurfaceCache() : null;
+  const keySurfaceCells = new Set();
+  state.settledGroupVisitStamp = visitStamp;
+  const stack = scratchTouchStack;
+  for (let i = 0; i < sourceBodies.length; i += 1) {
+    const body = sourceBodies[i];
+    if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) continue;
+    body.plugin = body.plugin || {};
+    if (body.plugin._settledGroupVisitStamp === visitStamp) continue;
+    const neighbors = state.settledTouchAdj?.get(body.id);
+    if (!(neighbors instanceof Set) || !neighbors.size) {
+      body.plugin._settledGroupVisitStamp = visitStamp;
+      clearSettledClusterTag(body);
+      continue;
+    }
+    stack.length = 0;
+    stack.push(body);
+    body.plugin._settledGroupVisitStamp = visitStamp;
+    const bodies = [];
+    const frontierColumns = new Map();
+    const occupiedCells = new Set();
+    let maxSpawnAt = 0;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+    let ySum = 0;
+    let minOccupiedCell = null;
+    let maxOccupiedCell = null;
+    while (stack.length) {
+      const current = stack.pop();
+      bodies.push(current);
+      const spawnAt = current.spawnAt || 0;
+      if (spawnAt > maxSpawnAt) maxSpawnAt = spawnAt;
+      const posY = Number.isFinite(current.position?.y) ? current.position.y : 0;
+      if (posY < minY) minY = posY;
+      if (posY > maxY) maxY = posY;
+      ySum += posY;
+      const occupiedRange = bodyFrozenSurfaceCellRange(current, frontierCellSize);
+      if (occupiedRange) {
+        const [cellMin, cellMax] = occupiedRange;
+        for (let cell = cellMin; cell <= cellMax; cell += 1) {
+          occupiedCells.add(cell);
+          keySurfaceCells.add(cell);
+        }
+        minOccupiedCell = minOccupiedCell == null ? cellMin : Math.min(minOccupiedCell, cellMin);
+        maxOccupiedCell = maxOccupiedCell == null ? cellMax : Math.max(maxOccupiedCell, cellMax);
+      }
+      if (surfaceCache && isFrozenSurfaceShellBody(current, surfaceCache)) {
+        const cell = frozenSurfaceCellIndex(current.position?.x || 0, frontierCellSize);
+        let bucket = frontierColumns.get(cell);
+        if (!bucket) {
+          bucket = [];
+          frontierColumns.set(cell, bucket);
+        }
+        pushTopBodiesByY(bucket, current, frontierDepthPerCell);
+      }
+      const adj = state.settledTouchAdj?.get(current.id);
+      if (!(adj instanceof Set) || !adj.size) continue;
+      for (const otherId of adj) {
+        const other = bodyById(otherId);
+        if (!other || other.plugin?.pendingRemoval || !isFrozenBody(other)) continue;
+        if (other.gameType !== gameType) continue;
+        if (gameType === 'content' && other.contentIndex !== contentIndex) continue;
+        other.plugin = other.plugin || {};
+        if (other.plugin._settledGroupVisitStamp === visitStamp) continue;
+        other.plugin._settledGroupVisitStamp = visitStamp;
+        stack.push(other);
+      }
+    }
+    if (bodies.length < 2) {
+      for (let j = 0; j < bodies.length; j += 1) clearSettledClusterTag(bodies[j]);
+      continue;
+    }
+    const frontierBodies = [];
+    frontierColumns.forEach(bucket => {
+      for (let j = 0; j < bucket.length; j += 1) frontierBodies.push(bucket[j]);
+    });
+    frontierBodies.sort((a, b) => (a?.position?.y || 0) - (b?.position?.y || 0));
+    const frontierProxyColumns = new Map();
+    frontierColumns.forEach((bucket, cell) => {
+      const proxyCell = Math.floor(cell / frontierProxyCellSpan);
+      const bandCenterX = (proxyCell * frontierProxyCellSpan + frontierProxyCellSpan * 0.5) * frontierCellSize;
+      let proxyBucket = frontierProxyColumns.get(proxyCell);
+      if (!proxyBucket) {
+        proxyBucket = [];
+        frontierProxyColumns.set(proxyCell, proxyBucket);
+      }
+      for (let j = 0; j < bucket.length; j += 1) {
+        pushTopBodiesByY(proxyBucket, bucket[j], frontierProxyDepthPerBand, bandCenterX);
+      }
+    });
+    const frontierProxyBodies = [];
+    frontierProxyColumns.forEach(bucket => {
+      for (let j = 0; j < bucket.length; j += 1) frontierProxyBodies.push(bucket[j]);
+    });
+    frontierProxyBodies.sort((a, b) => (a?.position?.y || 0) - (b?.position?.y || 0));
+    const frontierProxyCells = frontierProxyColumns.size ? Array.from(frontierProxyColumns.keys()).sort((a, b) => a - b) : EMPTY_ID_ARRAY;
+    let minProxyCell = null;
+    let maxProxyCell = null;
+    if (frontierProxyCells.length) {
+      minProxyCell = frontierProxyCells[0];
+      maxProxyCell = frontierProxyCells[frontierProxyCells.length - 1];
+    }
+    const clusterId = `${key}:${(state.settledClusterSeq || 0) + 1}`;
+    state.settledClusterSeq = (state.settledClusterSeq || 0) + 1;
+    const bodyIds = new Array(bodies.length);
+    const surfaceCells = occupiedCells.size ? Array.from(occupiedCells.values()).sort((a, b) => a - b) : EMPTY_ID_ARRAY;
+    const cluster = {
+      id: clusterId,
+      key,
+      revision,
+      gameType,
+      contentIndex,
+      bodies,
+      bodyIds,
+      size: bodies.length,
+      maxSpawnAt,
+      minY,
+      maxY,
+      ySum,
+      frontierCellSize,
+      frontierDepthPerCell,
+      frontierColumns,
+      frontierBodies,
+      frontierProxyCellSpan,
+      frontierProxyCellSize,
+      frontierProxyDepthPerBand,
+      frontierProxyColumns,
+      frontierProxyBodies,
+      frontierProxyCells,
+      minProxyCell,
+      maxProxyCell,
+      surfaceCells,
+      minOccupiedCell,
+      maxOccupiedCell
+    };
+    for (let j = 0; j < bodies.length; j += 1) {
+      const member = bodies[j];
+      bodyIds[j] = member?.id;
+      member.plugin = member.plugin || {};
+      member.plugin._settledClusterRevision = revision;
+      member.plugin._settledClusterId = clusterId;
+      member.plugin._settledClusterSize = bodies.length;
+    }
+    clusters.push(cluster);
+    state.settledClusterById.set(clusterId, cluster);
+    for (let j = 0; j < frontierProxyCells.length; j += 1) {
+      const proxyCell = frontierProxyCells[j];
+      let bucket = proxyClustersByCell.get(proxyCell);
+      if (!bucket) {
+        bucket = [];
+        proxyClustersByCell.set(proxyCell, bucket);
+      }
+      bucket.push(cluster);
+    }
+  }
+  stack.length = 0;
+  const surfaceCells = keySurfaceCells.size ? Array.from(keySurfaceCells.values()).sort((a, b) => a - b) : EMPTY_ID_ARRAY;
+  const result = {
+    key,
+    revision,
+    clusters,
+    frontierCellSize,
+    frontierProxyCellSpan,
+    frontierProxyCellSize,
+    frontierProxyDepthPerBand,
+    proxyClustersByCell,
+    surfaceCells
+  };
+  store.set(key, result);
+  registerSettledCacheSurfaceCells(key, surfaceCells);
+  state.settledGroupCacheDirtyKeys?.delete(key);
+  return result;
+}
+
+function isLazyGroupDescriptor(group) {
+  return !!group && group._lazyGroup === 1;
+}
+
+function settledClusterGroupDescriptor(cluster) {
+  if (!cluster || (cluster.size || 0) < 1) return null;
+  const cached = cluster._groupDescriptor;
+  if (cached && cached._descriptorRevision === cluster.revision) return cached;
+  const descriptorClusters = cluster._descriptorClusters || (cluster._descriptorClusters = Object.freeze([cluster]));
+  const descriptor = {
+    _lazyGroup: 1,
+    _descriptorRevision: cluster.revision,
+    length: cluster.size || cluster.bodies?.length || 0,
+    gameType: cluster.gameType,
+    contentIndex: cluster.contentIndex,
+    dynamicBodies: EMPTY_BODY_ARRAY,
+    clusters: descriptorClusters,
+    primaryClusterId: cluster.id,
+    ySum: Number.isFinite(cluster.ySum) ? cluster.ySum : 0,
+    maxDynamicSpeed: 0
+  };
+  cluster._groupDescriptor = descriptor;
+  return descriptor;
+}
+
+function createLazyGroupDescriptor(dynamicBodies = EMPTY_BODY_ARRAY, clusters = EMPTY_BODY_ARRAY) {
+  if ((!dynamicBodies || !dynamicBodies.length) && (!clusters || !clusters.length)) return null;
+  if ((!dynamicBodies || !dynamicBodies.length) && clusters?.length === 1) return settledClusterGroupDescriptor(clusters[0]);
+  const dynamicRefs = dynamicBodies?.length ? dynamicBodies.slice() : EMPTY_BODY_ARRAY;
+  const clusterRefs = clusters?.length ? clusters.slice() : EMPTY_BODY_ARRAY;
+  let len = dynamicRefs.length;
+  let ySum = 0;
+  let maxDynamicSpeed = 0;
+  let gameType = dynamicRefs[0]?.gameType ?? clusterRefs[0]?.gameType ?? null;
+  let contentIndex = dynamicRefs[0]?.contentIndex ?? clusterRefs[0]?.contentIndex ?? null;
+  for (let i = 0; i < dynamicRefs.length; i += 1) {
+    const body = dynamicRefs[i];
+    if (!body) continue;
+    ySum += body.position?.y || 0;
+    if ((body.speed || 0) > maxDynamicSpeed) maxDynamicSpeed = body.speed || 0;
+  }
+  for (let i = 0; i < clusterRefs.length; i += 1) {
+    const cluster = clusterRefs[i];
+    if (!cluster) continue;
+    len += cluster.size || cluster.bodies?.length || 0;
+    ySum += Number.isFinite(cluster.ySum) ? cluster.ySum : 0;
+  }
+  return {
+    _lazyGroup: 1,
+    length: len,
+    gameType,
+    contentIndex,
+    dynamicBodies: dynamicRefs,
+    clusters: clusterRefs,
+    primaryClusterId: dynamicRefs.length === 0 && clusterRefs.length === 1 ? clusterRefs[0]?.id ?? null : null,
+    ySum,
+    maxDynamicSpeed
+  };
+}
+
+function groupLength(group) {
+  return isLazyGroupDescriptor(group) ? Math.max(0, group.length || 0) : (group?.length || 0);
+}
+
+function groupType(group) {
+  if (isLazyGroupDescriptor(group)) return group.gameType || null;
+  return group?.[0]?.gameType || null;
+}
+
+function groupContentIndex(group) {
+  if (isLazyGroupDescriptor(group)) return group.contentIndex;
+  return group?.[0]?.contentIndex;
+}
+
+function groupRepresentativeBody(group) {
+  if (!isLazyGroupDescriptor(group)) return group?.[0] || null;
+  if (group.dynamicBodies?.length) return group.dynamicBodies[0] || null;
+  const cluster = group.clusters?.[0] || null;
+  return cluster?.bodies?.[0] || null;
+}
+
+function groupPrimaryClusterId(group, settledRevision = state.frozenSpatialHashRevision || 0) {
+  if (isLazyGroupDescriptor(group)) return group.primaryClusterId ?? null;
+  const first = group?.[0];
+  return settledClusterIdForBody(first);
+}
+
+function forEachGroupBodyId(group, fn = null) {
+  if (!group || typeof fn !== 'function') return;
+  if (!isLazyGroupDescriptor(group)) {
+    for (let i = 0; i < group.length; i += 1) {
+      const body = group[i];
+      if (!body || body.plugin?.pendingRemoval || body.id == null) continue;
+      fn(body.id, body);
+    }
+    return;
+  }
+  const dynamicBodies = group.dynamicBodies || EMPTY_BODY_ARRAY;
+  for (let i = 0; i < dynamicBodies.length; i += 1) {
+    const body = dynamicBodies[i];
+    if (!body || body.plugin?.pendingRemoval || body.id == null) continue;
+    fn(body.id, body);
+  }
+  const clusters = group.clusters || EMPTY_BODY_ARRAY;
+  for (let i = 0; i < clusters.length; i += 1) {
+    const ids = clusters[i]?.bodyIds || EMPTY_ID_ARRAY;
+    for (let j = 0; j < ids.length; j += 1) {
+      const id = ids[j];
+      if (id == null) continue;
+      fn(id, null);
+    }
+  }
+}
+
+function groupIdsSnapshot(group) {
+  if (isLazyGroupDescriptor(group) && !(group.dynamicBodies?.length || 0) && (group.clusters?.length || 0) === 1) {
+    return group.clusters[0]?.bodyIds || EMPTY_ID_ARRAY;
+  }
+  const ids = [];
+  forEachGroupBodyId(group, id => ids.push(id));
+  return ids;
+}
+
+function groupBodiesBelowSpeed(group, maxSpeed = 4.8) {
+  if (!group) return false;
+  if (!isLazyGroupDescriptor(group)) return group.every(body => !!body && !body.plugin?.pendingRemoval && (body.speed || 0) < maxSpeed);
+  const dynamicBodies = group.dynamicBodies || EMPTY_BODY_ARRAY;
+  if (!dynamicBodies.length) return true;
+  if ((group.maxDynamicSpeed || 0) >= maxSpeed) return false;
+  for (let i = 0; i < dynamicBodies.length; i += 1) {
+    const body = dynamicBodies[i];
+    if (!body || body.plugin?.pendingRemoval || (body.speed || 0) >= maxSpeed) return false;
+  }
+  return true;
+}
+
+function groupYSum(group) {
+  if (isLazyGroupDescriptor(group)) return Number.isFinite(group.ySum) ? group.ySum : 0;
+  let ySum = 0;
+  for (let i = 0; i < (group?.length || 0); i += 1) ySum += group[i]?.position?.y || 0;
+  return ySum;
+}
+
+function materializeGroupBodies(group, outBodies = scratchMaterializedGroupBodies) {
+  if (!isLazyGroupDescriptor(group)) return Array.isArray(group) ? group : EMPTY_BODY_ARRAY;
+  outBodies.length = 0;
+  const stamp = (state.settledGroupMaterializeStamp || 0) + 1;
+  state.settledGroupMaterializeStamp = stamp;
+  const pushBody = (body) => {
+    if (!body || body.plugin?.pendingRemoval) return;
+    body.plugin = body.plugin || {};
+    if (body.plugin._groupMaterializeStamp === stamp) return;
+    body.plugin._groupMaterializeStamp = stamp;
+    outBodies.push(body);
+  };
+  const dynamicBodies = group.dynamicBodies || EMPTY_BODY_ARRAY;
+  for (let i = 0; i < dynamicBodies.length; i += 1) pushBody(dynamicBodies[i]);
+  const clusters = group.clusters || EMPTY_BODY_ARRAY;
+  for (let i = 0; i < clusters.length; i += 1) {
+    const bodies = clusters[i]?.bodies || EMPTY_BODY_ARRAY;
+    for (let j = 0; j < bodies.length; j += 1) pushBody(bodies[j]);
+  }
+  return outBodies;
+}
+
+function groupCollectCoverage(group, coveredClusterIds, coveredBodyIds, settledRevision = state.frozenSpatialHashRevision || 0) {
+  if (!group) return;
+  if (isLazyGroupDescriptor(group)) {
+    const clusters = group.clusters || EMPTY_BODY_ARRAY;
+    for (let i = 0; i < clusters.length; i += 1) {
+      const clusterId = clusters[i]?.id;
+      if (clusterId != null) coveredClusterIds.add(clusterId);
+    }
+    const dynamicBodies = group.dynamicBodies || EMPTY_BODY_ARRAY;
+    for (let i = 0; i < dynamicBodies.length; i += 1) {
+      const body = dynamicBodies[i];
+      if (!body || body.id == null) continue;
+      coveredBodyIds.add(body.id);
+      const clusterId = settledClusterIdForBody(body);
+      if (clusterId != null) coveredClusterIds.add(clusterId);
+    }
+    return;
+  }
+  for (let i = 0; i < (group?.length || 0); i += 1) {
+    const body = group[i];
+    if (!body || body.id == null) continue;
+    coveredBodyIds.add(body.id);
+    const clusterId = settledClusterIdForBody(body);
+    if (clusterId != null) coveredClusterIds.add(clusterId);
+  }
+}
+
+function materializeSettledGroupsFromCache(cache, minAgeMs = 220, scanNow = performance.now(), outGroups = scratchSettledHybridGroups) {
+  outGroups.length = 0;
+  const revision = cache?.revision ?? (state.frozenSpatialHashRevision || 0);
+  const clusters = cache?.clusters || EMPTY_BODY_ARRAY;
+  for (let i = 0; i < clusters.length; i += 1) {
+    const cluster = clusters[i];
+    if (!cluster || (cluster.size || 0) < 2) continue;
+    if (scanNow - (cluster.maxSpawnAt || 0) <= minAgeMs) continue;
+    outGroups.push(settledClusterGroupDescriptor(cluster));
+  }
+  outGroups._settledClusterRevision = revision;
+  return outGroups;
+}
+
+function materializeSettledGroups(gameType, contentIndex = null, minAgeMs = 220, scanNow = performance.now(), outGroups = scratchSettledHybridGroups) {
+  const cache = buildSettledGroupCacheForKey(gameType, contentIndex);
+  return materializeSettledGroupsFromCache(cache, minAgeMs, scanNow, outGroups);
+}
+
+function collectClusterFrontierBodiesNear(cluster, sourceX, sourceY, maxDistance = 0, stamp = 0, outBodies = scratchFrozenSurfaceWakeBodies, seedBody = null, useProxyFrontier = false) {
+  const columns = useProxyFrontier && cluster?.frontierProxyColumns instanceof Map && cluster.frontierProxyColumns.size
+    ? cluster.frontierProxyColumns
+    : cluster?.frontierColumns;
+  if (!cluster || !(columns instanceof Map) || !columns.size) return outBodies;
+  const cellSize = Math.max(1, useProxyFrontier
+    ? (cluster.frontierProxyCellSize || cluster.frontierCellSize || FROZEN_SURFACE_CELL)
+    : (cluster.frontierCellSize || FROZEN_SURFACE_CELL));
+  const radius = Math.max(0, maxDistance || 0);
+  const safeX = Number.isFinite(sourceX) ? sourceX : 0;
+  const safeY = Number.isFinite(sourceY) ? sourceY : 0;
+  const minCell = frozenSurfaceCellIndex(safeX - radius, cellSize);
+  const maxCell = frozenSurfaceCellIndex(safeX + radius, cellSize);
+  const maxDistanceSq = radius > 0 ? radius * radius : 0;
+  for (let cx = minCell; cx <= maxCell; cx += 1) {
+    const bucket = columns.get(cx);
+    if (!bucket) continue;
+    for (let i = 0; i < bucket.length; i += 1) {
+      const body = bucket[i];
+      if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) continue;
+      body.plugin = body.plugin || {};
+      if (stamp && body.plugin._frozenClusterStamp === stamp) continue;
+      const dx = (body.position?.x || 0) - safeX;
+      const dy = (body.position?.y || 0) - safeY;
+      if (maxDistanceSq > 0 && dx * dx + dy * dy > maxDistanceSq) continue;
+      if (stamp) body.plugin._frozenClusterStamp = stamp;
+      const seedBias = seedBody && body.id === seedBody.id ? (useProxyFrontier ? 1024 : 768) : 0;
+      body.plugin._surfaceWakeScore = dx * dx + dy * dy + Math.max(0, (body.position?.y || 0) - safeY) * 6 - seedBias;
+      outBodies.push(body);
+    }
+  }
+  return outBodies;
+}
+
+function pushOverlayBodyUnique(body, overlayStamp = 0, outBodies = scratchSettledProxyOverlayBodies) {
+  if (!body || body.plugin?.pendingRemoval) return false;
+  body.plugin = body.plugin || {};
+  if (overlayStamp && body.plugin._settledOverlayStamp === overlayStamp) return false;
+  if (overlayStamp) body.plugin._settledOverlayStamp = overlayStamp;
+  outBodies.push(body);
+  return true;
+}
+
+function bodyMatchesGroupSource(body, gameType, contentIndex = null, eligibleStamp = 0) {
+  if (!body || body.plugin?.pendingRemoval) return false;
+  if (body.gameType !== gameType) return false;
+  if (gameType === 'content' && body.contentIndex !== contentIndex) return false;
+  if (eligibleStamp && body.plugin?._eligibleGroupStamp !== eligibleStamp) return false;
+  return true;
+}
+
+function collectDirtyLaneProxyCells(seedBodies, proxyCellSize = FROZEN_SURFACE_CELL * 2, outCells = scratchSettledProxyDirtyCells) {
+  outCells.length = 0;
+  if (!Array.isArray(seedBodies) || !seedBodies.length) return outCells;
+  const seen = new Set();
+  const liveCount = state.liveBodies?.length || 0;
+  const lanePadCells = liveCount >= 72 ? 1 : 2;
+  for (let i = 0; i < seedBodies.length; i += 1) {
+    const body = seedBodies[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    const posX = Number.isFinite(body.position?.x) ? body.position.x : 0;
+    const radius = Math.max(
+      proxyCellSize * 0.72,
+      (body.circleRadius || 0) * (liveCount >= 72 ? 2.25 : 2.7)
+        + 24
+        + Math.min(42, Math.abs(body.velocity?.x || 0) * 12 + Math.abs(body.velocity?.y || 0) * 16)
+    );
+    const minCell = frozenSurfaceCellIndex(posX - radius, proxyCellSize) - lanePadCells;
+    const maxCell = frozenSurfaceCellIndex(posX + radius, proxyCellSize) + lanePadCells;
+    for (let cell = minCell; cell <= maxCell; cell += 1) {
+      if (seen.has(cell)) continue;
+      seen.add(cell);
+      outCells.push(cell);
+    }
+  }
+  return outCells;
+}
+
+function visitNearbyFromProxyRegistry(registry, body, radiusCells = 1, fn) {
+  if (!registry || !body || typeof fn !== 'function') return false;
+  const visitStamp = (state.proxyRegistryVisitStamp || 0) + 1;
+  state.proxyRegistryVisitStamp = visitStamp;
+  const dynamicHash = registry.dynamicHash || null;
+  if (dynamicHash) {
+    const hitDynamic = visitNearbyFromHash(dynamicHash, body, Math.max(1, radiusCells), other => {
+      if (!other || other.plugin?.pendingRemoval) return false;
+      other.plugin = other.plugin || {};
+      if (other.plugin._proxyRegistryVisitStamp === visitStamp) return false;
+      other.plugin._proxyRegistryVisitStamp = visitStamp;
+      return fn(other) === true;
+    });
+    if (hitDynamic === true) return true;
+  }
+  const proxyClustersByCell = registry.proxyClustersByCell;
+  if (!(proxyClustersByCell instanceof Map) || !proxyClustersByCell.size) return false;
+  const cellSize = Math.max(1, registry.cellSize || FROZEN_SURFACE_CELL);
+  const dirtyCellSet = registry.dirtyCellSet instanceof Set ? registry.dirtyCellSet : null;
+  const baseCell = frozenSurfaceCellIndex(body.position?.x || 0, cellSize);
+  const minCell = baseCell - radiusCells;
+  const maxCell = baseCell + radiusCells;
+  for (let cell = minCell; cell <= maxCell; cell += 1) {
+    if (dirtyCellSet && !dirtyCellSet.has(cell)) continue;
+    const clusters = proxyClustersByCell.get(cell);
+    if (!clusters?.length) continue;
+    for (let i = 0; i < clusters.length; i += 1) {
+      const cluster = clusters[i];
+      if (!cluster || (cluster.size || 0) < 2) continue;
+      const proxyColumns = cluster.frontierProxyColumns;
+      const bucket = proxyColumns instanceof Map ? proxyColumns.get(cell) : null;
+      if (bucket?.length) {
+        for (let j = 0; j < bucket.length; j += 1) {
+          const proxyBody = bucket[j];
+          if (!proxyBody || proxyBody.plugin?.pendingRemoval || !isFrozenBody(proxyBody)) continue;
+          proxyBody.plugin = proxyBody.plugin || {};
+          if (proxyBody.plugin._proxyRegistryVisitStamp === visitStamp) continue;
+          proxyBody.plugin._proxyRegistryVisitStamp = visitStamp;
+          if (fn(proxyBody) === true) return true;
+        }
+        continue;
+      }
+      if (cluster._proxyRegistryFallbackStamp === visitStamp) continue;
+      cluster._proxyRegistryFallbackStamp = visitStamp;
+      const proxyBodies = cluster.frontierProxyBodies?.length
+        ? cluster.frontierProxyBodies
+        : ((cluster.frontierBodies && cluster.frontierBodies.length) ? cluster.frontierBodies : EMPTY_BODY_ARRAY);
+      const fallbackLimit = cluster.frontierProxyBodies?.length
+        ? Math.min(proxyBodies.length, 2)
+        : Math.min(proxyBodies.length, 3);
+      for (let j = 0; j < fallbackLimit; j += 1) {
+        const proxyBody = proxyBodies[j];
+        if (!proxyBody || proxyBody.plugin?.pendingRemoval || !isFrozenBody(proxyBody)) continue;
+        proxyBody.plugin = proxyBody.plugin || {};
+        if (proxyBody.plugin._proxyRegistryVisitStamp === visitStamp) continue;
+        proxyBody.plugin._proxyRegistryVisitStamp = visitStamp;
+        if (fn(proxyBody) === true) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function buildSettledProxyOverlayRegistryFromDirtyLanes(sourceBodies, seedBodies, gameType, contentIndex = null, settledCache = null, settledRevision = state.frozenSpatialHashRevision || 0) {
+  if (!sourceBodies?.length || !seedBodies?.length) return null;
+  const cache = settledCache || buildSettledGroupCacheForKey(gameType, contentIndex);
+  const proxyClustersByCell = cache?.proxyClustersByCell;
+  if (!(proxyClustersByCell instanceof Map) || !proxyClustersByCell.size) return null;
+  const liveCount = state.liveBodies?.length || 0;
+  const proxyCellSize = Math.max(1, cache?.frontierProxyCellSize || (FROZEN_SURFACE_CELL * (liveCount >= 76 ? 3 : 2)));
+  const dirtyCells = collectDirtyLaneProxyCells(seedBodies, proxyCellSize, scratchSettledProxyDirtyCells);
+  if (!dirtyCells.length) return null;
+  const dirtyCellSet = scratchSettledProxyDirtyCellSet;
+  dirtyCellSet.clear();
+  let candidateClusterCount = 0;
+  for (let i = 0; i < dirtyCells.length; i += 1) {
+    const cell = dirtyCells[i];
+    dirtyCellSet.add(cell);
+    candidateClusterCount += proxyClustersByCell.get(cell)?.length || 0;
+  }
+  const dynamicHash = dynamicSpatialHash();
+  if (!candidateClusterCount && !dynamicHash) return null;
+  return {
+    _proxyRegistry:1,
+    _proxyFrontier:1,
+    _dirtyLaneOverlay:1,
+    cellSize:proxyCellSize,
+    dirtyCellSet,
+    dirtyCells,
+    proxyClustersByCell,
+    dynamicHash,
+    settledRevision,
+    _proxyBodyCount:candidateClusterCount,
+    _dirtyLaneCellCount:dirtyCells.length
+  };
+}
+
+function buildSettledProxyOverlayHashFromDirtyLanes(sourceBodies, seedBodies, gameType, contentIndex = null, settledCache = null, settledRevision = state.frozenSpatialHashRevision || 0, outBodies = scratchSettledProxyOverlayBodies) {
+  outBodies.length = 0;
+  if (!sourceBodies?.length || !seedBodies?.length) return null;
+  const cache = settledCache || buildSettledGroupCacheForKey(gameType, contentIndex);
+  const proxyClustersByCell = cache?.proxyClustersByCell;
+  if (!(proxyClustersByCell instanceof Map) || !proxyClustersByCell.size) return null;
+  const liveCount = state.liveBodies?.length || 0;
+  const proxyCellSize = Math.max(1, cache?.frontierProxyCellSize || (FROZEN_SURFACE_CELL * (liveCount >= 76 ? 3 : 2)));
+  const dirtyCells = collectDirtyLaneProxyCells(seedBodies, proxyCellSize, scratchSettledProxyDirtyCells);
+  if (!dirtyCells.length) return null;
+  const overlayStamp = (state.settledOverlayStamp || 0) + 1;
+  state.settledOverlayStamp = overlayStamp;
+  const eligibleStamp = sourceBodies._eligibleGroupStamp || 0;
+  const clusterMap = state.settledClusterById || EMPTY_LOOKUP_MAP;
+  const dirtyCellSet = scratchSettledProxyDirtyCellSet;
+  dirtyCellSet.clear();
+  for (let i = 0; i < dirtyCells.length; i += 1) dirtyCellSet.add(dirtyCells[i]);
+  const dynamicCellPad = liveCount >= 74 ? 1 : 2;
+  const seedClusters = scratchSettledProxySeedClusters;
+  seedClusters.length = 0;
+
+  const pushClusterProxyNearCell = (cluster, proxyCell = null) => {
+    if (!cluster || (cluster.size || 0) < 2) return;
+    const proxyColumns = cluster.frontierProxyColumns;
+    if (proxyCell != null && proxyColumns instanceof Map && proxyColumns.size) {
+      const bucket = proxyColumns.get(proxyCell);
+      if (bucket?.length) {
+        for (let i = 0; i < bucket.length; i += 1) pushOverlayBodyUnique(bucket[i], overlayStamp, outBodies);
+        return;
+      }
+    }
+    const proxyBodies = cluster.frontierProxyBodies?.length
+      ? cluster.frontierProxyBodies
+      : ((cluster.frontierBodies && cluster.frontierBodies.length) ? cluster.frontierBodies : EMPTY_BODY_ARRAY);
+    const fallbackLimit = cluster.frontierProxyBodies?.length
+      ? Math.min(proxyBodies.length, 2)
+      : Math.min(proxyBodies.length, 3);
+    for (let i = 0; i < fallbackLimit; i += 1) pushOverlayBodyUnique(proxyBodies[i], overlayStamp, outBodies);
+  };
+
+  for (let i = 0; i < seedBodies.length; i += 1) {
+    const body = seedBodies[i];
+    if (!bodyMatchesGroupSource(body, gameType, contentIndex, eligibleStamp)) continue;
+    pushOverlayBodyUnique(body, overlayStamp, outBodies);
+    const clusterId = settledClusterIdForBody(body);
+    if (clusterId == null) continue;
+    const cluster = clusterMap.get(clusterId) || null;
+    if (!cluster || (cluster.size || 0) < 2) continue;
+    if (cluster._dirtyLaneSeedStamp === overlayStamp) continue;
+    cluster._dirtyLaneSeedStamp = overlayStamp;
+    seedClusters.push(cluster);
+  }
+
+  for (let i = 0; i < seedClusters.length; i += 1) {
+    const cluster = seedClusters[i];
+    if (!cluster) continue;
+    const minCell = Number.isInteger(cluster.minProxyCell) ? cluster.minProxyCell : null;
+    const maxCell = Number.isInteger(cluster.maxProxyCell) ? cluster.maxProxyCell : null;
+    if (minCell != null && maxCell != null) {
+      for (let cell = minCell; cell <= maxCell; cell += 1) {
+        if (!dirtyCellSet.has(cell)) continue;
+        pushClusterProxyNearCell(cluster, cell);
+      }
+    } else {
+      pushClusterProxyNearCell(cluster, null);
+    }
+  }
+
+  for (let i = 0; i < dirtyCells.length; i += 1) {
+    const cell = dirtyCells[i];
+    const clusters = proxyClustersByCell.get(cell);
+    if (!clusters?.length) continue;
+    for (let j = 0; j < clusters.length; j += 1) {
+      pushClusterProxyNearCell(clusters[j], cell);
+    }
+  }
+
+  const dynamicBodies = state.dynamicBodies || EMPTY_BODY_ARRAY;
+  for (let i = 0; i < dynamicBodies.length; i += 1) {
+    const body = dynamicBodies[i];
+    if (!bodyMatchesGroupSource(body, gameType, contentIndex, eligibleStamp)) continue;
+    if (body.plugin?._settledOverlayStamp === overlayStamp) continue;
+    const clusterId = settledClusterIdForBody(body);
+    if (clusterId != null) {
+      const cluster = clusterMap.get(clusterId) || null;
+      if (cluster && (cluster.size || 0) >= 2) continue;
+    }
+    const cell = frozenSurfaceCellIndex(body.position?.x || 0, proxyCellSize);
+    let nearDirty = dirtyCellSet.has(cell);
+    if (!nearDirty) {
+      for (let d = 1; d <= dynamicCellPad; d += 1) {
+        if (dirtyCellSet.has(cell - d) || dirtyCellSet.has(cell + d)) {
+          nearDirty = true;
+          break;
+        }
+      }
+    }
+    if (!nearDirty) continue;
+    pushOverlayBodyUnique(body, overlayStamp, outBodies);
+  }
+  seedClusters.length = 0;
+  const minUsefulBodies = Math.min(sourceBodies.length, Math.max(4, (seedBodies?.length || 0) + 2));
+  if (outBodies.length < minUsefulBodies) return null;
+  const hash = buildSpatialHash(outBodies);
+  hash._proxyFrontier = 1;
+  hash._proxyBodyCount = outBodies.length;
+  hash._dirtyLaneOverlay = 1;
+  hash._dirtyLaneCellCount = dirtyCells.length;
+  return hash;
+}
+
+function buildSettledProxyOverlayHash(sourceBodies, settledRevision = state.frozenSpatialHashRevision || 0, outBodies = scratchSettledProxyOverlayBodies) {
+  outBodies.length = 0;
+  if (!sourceBodies?.length) return null;
+  const clusterMap = state.settledClusterById || EMPTY_LOOKUP_MAP;
+  const overlayStamp = (state.settledOverlayStamp || 0) + 1;
+  state.settledOverlayStamp = overlayStamp;
+  for (let i = 0; i < sourceBodies.length; i += 1) {
+    const body = sourceBodies[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    body.plugin = body.plugin || {};
+    const clusterId = settledClusterIdForBody(body);
+    if (clusterId != null) {
+      const cluster = clusterMap.get(clusterId) || null;
+      if (cluster && (cluster.size || 0) >= 2) {
+        if (cluster._settledOverlayStamp !== overlayStamp) {
+          cluster._settledOverlayStamp = overlayStamp;
+          const proxyBodies = (cluster.frontierProxyBodies && cluster.frontierProxyBodies.length)
+            ? cluster.frontierProxyBodies
+            : ((cluster.frontierBodies && cluster.frontierBodies.length) ? cluster.frontierBodies : EMPTY_BODY_ARRAY);
+          const proxyLimit = cluster.frontierProxyBodies?.length
+            ? proxyBodies.length
+            : Math.min(proxyBodies.length, 3);
+          for (let j = 0; j < proxyLimit; j += 1) {
+            const proxyBody = proxyBodies[j];
+            if (!proxyBody || proxyBody.plugin?.pendingRemoval || !isFrozenBody(proxyBody)) continue;
+            outBodies.push(proxyBody);
+          }
+        }
+        continue;
+      }
+    }
+    outBodies.push(body);
+  }
+  if (!outBodies.length) return null;
+  const hash = buildSpatialHash(outBodies);
+  hash._proxyFrontier = 1;
+  hash._proxyBodyCount = outBodies.length;
+  return hash;
+}
+
+function shouldUseSettledClusterProxySearch(liveCount = 0, targetCount = 0, seedCount = 0, settledCount = 0) {
+      if (settledCount <= 0 || seedCount <= 0 || targetCount < 2) return false;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      if (liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount)) return true;
+      if (liveCount >= 48 && settledCount >= 2 && seedCount >= 2) return true;
+      return false;
+    }
+
+function shouldUseSettledFrontierOverlaySearch(liveCount = 0, targetCount = 0, seedCount = 0, settledCount = 0) {
+  if (!shouldUseSettledClusterProxySearch(liveCount, targetCount, seedCount, settledCount)) return false;
+  const dynamicCount = state.dynamicBodies?.length || 0;
+  if (liveCount >= 62 && isMostlyFrozenCrowd(liveCount, dynamicCount)) return true;
+  if (liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount) && targetCount >= 5) return true;
+  return liveCount >= 52 && settledCount >= 2 && targetCount >= 6;
+}
+
+function compressSeedBodiesBySettledCluster(seedBodies) {
+  if (!Array.isArray(seedBodies) || seedBodies.length < 2) return seedBodies;
+  const liveCount = state.liveBodies?.length || 0;
+  const dynamicCount = state.dynamicBodies?.length || 0;
+  if (liveCount < 48 || !isHeavyCrowdStable(liveCount, dynamicCount)) return seedBodies;
+  const clusterMap = state.settledClusterById;
+  if (!(clusterMap instanceof Map) || !clusterMap.size) return seedBodies;
+  const dedupStamp = (state.proxySeedDedupStamp || 0) + 1;
+  state.proxySeedDedupStamp = dedupStamp;
+  let write = 0;
+  for (let i = 0; i < seedBodies.length; i += 1) {
+    const body = seedBodies[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    const clusterId = settledClusterIdForBody(body);
+    if (clusterId != null) {
+      const cluster = clusterMap.get(clusterId) || null;
+      if (cluster) {
+        if (cluster._proxySeedDedupStamp === dedupStamp) continue;
+        cluster._proxySeedDedupStamp = dedupStamp;
+      }
+    }
+    seedBodies[write++] = body;
+  }
+  if (write < seedBodies.length) seedBodies.length = write;
+  return seedBodies;
+}
+
+function visitClusterProxyFrontiers(cluster, overlaySource, fn) {
+  if (!cluster || typeof fn !== 'function') return false;
+  const useOverlayFrontier = !!overlaySource?._proxyFrontier;
+  if (overlaySource?._proxyRegistry && overlaySource.dirtyCellSet instanceof Set) {
+    const dirtyCellSet = overlaySource.dirtyCellSet;
+    const proxyColumns = cluster.frontierProxyColumns;
+    const proxyCells = cluster.frontierProxyCells || EMPTY_ID_ARRAY;
+    let foundDirtyFrontier = false;
+    if (proxyColumns instanceof Map && proxyColumns.size && proxyCells.length) {
+      for (let i = 0; i < proxyCells.length; i += 1) {
+        const cell = proxyCells[i];
+        if (!dirtyCellSet.has(cell)) continue;
+        const bucket = proxyColumns.get(cell);
+        if (!bucket?.length) continue;
+        foundDirtyFrontier = true;
+        for (let j = 0; j < bucket.length; j += 1) {
+          if (fn(bucket[j]) === true) return true;
+        }
+      }
+    }
+    if (foundDirtyFrontier) return false;
+  }
+  const frontierBodies = useOverlayFrontier && cluster.frontierProxyBodies?.length
+    ? cluster.frontierProxyBodies
+    : ((cluster.frontierBodies && cluster.frontierBodies.length)
+        ? cluster.frontierBodies
+        : (cluster.bodies || EMPTY_BODY_ARRAY));
+  const frontierLimit = useOverlayFrontier && cluster.frontierProxyBodies?.length
+    ? frontierBodies.length
+    : (frontierBodies === cluster.frontierBodies
+        ? frontierBodies.length
+        : Math.min(frontierBodies.length, 3));
+  for (let j = 0; j < frontierLimit; j += 1) {
+    if (fn(frontierBodies[j]) === true) return true;
+  }
+  return false;
+}
+
+function buildTouchGroupsViaSettledClusterProxy(sourceBodies, seedBodies, pad = 0.5, touchNow = performance.now(), prebuiltHash = null, matchOther = null) {
+  if (!sourceBodies.length || !seedBodies.length) return [];
+  const hash = prebuiltHash || buildSpatialHash(sourceBodies);
+  const useOverlayFrontier = !!hash?._proxyFrontier;
+  const eligibleStamp = sourceBodies._eligibleGroupStamp || 0;
+  const acceptOther = typeof matchOther === 'function' ? matchOther : null;
+  const visitStamp = (state.touchGroupVisitStamp || 0) + 1;
+  state.touchGroupVisitStamp = visitStamp;
+  const settledRevision = state.frozenSpatialHashRevision || 0;
+  const clusterMap = state.settledClusterById || EMPTY_LOOKUP_MAP;
+  const bodyStack = scratchTouchStack;
+  const clusterStack = scratchSettledProxyClusterStack;
+  const groupClusters = scratchSettledProxyGroupClusters;
+  const groups = [];
+  const clusterForBodyFast = (body) => {
+    if (!body || body.plugin?.pendingRemoval) return null;
+    const clusterId = settledClusterIdForBody(body);
+    if (clusterId == null) return null;
+    return clusterMap.get(clusterId) || null;
+  };
+  const pushClusterNode = (cluster) => {
+    if (!cluster || (cluster.size || 0) < 2) return;
+    if (touchNow - (cluster.maxSpawnAt || 0) <= 220) return;
+    if (cluster._touchVisitStamp === visitStamp) return;
+    cluster._touchVisitStamp = visitStamp;
+    clusterStack.push(cluster);
+  };
+  const pushBodyNode = (body) => {
+    if (!body || body.plugin?.pendingRemoval) return;
+    body.plugin = body.plugin || {};
+    if (eligibleStamp && body.plugin._eligibleGroupStamp !== eligibleStamp) return;
+    if (body.plugin._touchVisitStamp === visitStamp) return;
+    body.plugin._touchVisitStamp = visitStamp;
+    bodyStack.push(body);
+  };
+  const visitProxyNeighbor = (refBody, other) => {
+    if (!other || other.id === refBody.id || other.plugin?.pendingRemoval) return false;
+    const refClusterId = settledClusterIdForBody(refBody);
+    const otherClusterId = settledClusterIdForBody(other);
+    if (refClusterId != null && refClusterId === otherClusterId) return false;
+    if (acceptOther && !acceptOther(other, refBody)) return false;
+    if (!touchingWithPad(refBody, other, pad, touchNow)) return false;
+    if (otherClusterId != null) {
+      const otherCluster = clusterMap.get(otherClusterId) || null;
+      if (otherCluster) {
+        pushClusterNode(otherCluster);
+        return false;
+      }
+    }
+    pushBodyNode(other);
+    return false;
+  };
+
+  for (let i = 0; i < seedBodies.length; i += 1) {
+    const root = seedBodies[i];
+    if (!root || root.plugin?.pendingRemoval) continue;
+    root.plugin = root.plugin || {};
+    if (eligibleStamp && root.plugin._eligibleGroupStamp !== eligibleStamp) continue;
+    const rootCluster = clusterForBodyFast(root);
+    if (rootCluster) {
+      if (rootCluster._touchVisitStamp === visitStamp || touchNow - (rootCluster.maxSpawnAt || 0) <= 220) continue;
+    } else if (root.plugin._touchVisitStamp === visitStamp) {
+      continue;
+    }
+
+    bodyStack.length = 0;
+    clusterStack.length = 0;
+    groupClusters.length = 0;
+    const groupBodies = [];
+
+    if (rootCluster) pushClusterNode(rootCluster);
+    else pushBodyNode(root);
+
+    while (bodyStack.length || clusterStack.length) {
+      while (bodyStack.length) {
+        const current = bodyStack.pop();
+        if (!current || current.plugin?.pendingRemoval) continue;
+        groupBodies.push(current);
+        visitTouchGraphNeighbors(current, touchNow, other => visitProxyNeighbor(current, other));
+        visitNearbyFromHash(hash, current, 1, other => visitProxyNeighbor(current, other));
+      }
+      while (clusterStack.length) {
+        const cluster = clusterStack.pop();
+        if (!cluster) continue;
+        groupClusters.push(cluster);
+        visitClusterProxyFrontiers(cluster, hash, frontier => {
+          if (!frontier || frontier.plugin?.pendingRemoval) return false;
+          visitTouchGraphNeighbors(frontier, touchNow, other => visitProxyNeighbor(frontier, other));
+          return visitNearbyFromHash(hash, frontier, 1, other => visitProxyNeighbor(frontier, other)) === true;
+        });
+      }
+    }
+
+    if (!groupBodies.length && !groupClusters.length) continue;
+    if (!groupClusters.length) {
+      groups.push(groupBodies.slice());
+      continue;
+    }
+    const group = createLazyGroupDescriptor(groupBodies, groupClusters);
+    if (group) groups.push(group);
+  }
+
+  bodyStack.length = 0;
+  clusterStack.length = 0;
+  groupClusters.length = 0;
+  return groups;
+}
+
+function shouldUseSettledHybridGroupSearch(liveCount = 0, targetCount = 0, seedCount = 0) {
+      if (targetCount < 2) return false;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      if (seedCount > 0 && seedCount >= targetCount * 0.72 && targetCount <= 10) return false;
+      if (liveCount >= 58 && isMostlyFrozenCrowd(liveCount, dynamicCount)) return true;
+      if (liveCount >= 48 && isHeavyCrowdStable(liveCount, dynamicCount) && targetCount >= 5) return true;
+      return false;
+    }
+
+    
+function collectHybridFrontierSeeds(targetBodies, settledStamp = 0, scanNow = performance.now(), outSeeds = scratchHybridSeedBodies) {
+  outSeeds.length = 0;
+  const liveCount = state.liveBodies?.length || 0;
+  const boardHeight = state.boardRectCache?.height || boardLogicalRect().height || 0;
+  const repairIds = state.repairQueueIds;
+  const dirtyIds = state.groupScanDirtyIds;
+  const activeIds = state.activeBodyIds;
+  const surfaceCache = liveCount >= 56 ? buildFrozenSurfaceCache() : null;
+  const surfaceRevision = surfaceCache?.revision || (state.frozenSurfaceRevision || 0);
+  const recentWindowMs = liveCount >= 72 ? 920 : (liveCount >= 60 ? 1120 : 1360);
+  for (let i = 0; i < targetBodies.length; i += 1) {
+    const body = targetBodies[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    body.plugin = body.plugin || {};
+    const settledCovered = settledClusterIdForBody(body) != null;
+    const urgent = repairIds?.has(body.id)
+      || dirtyIds?.has(body.id)
+      || activeIds?.has(body.id)
+      || body.outOfRangeSince
+      || body.floatStartAt
+      || (body.plugin.highPrecisionUntil || 0) > scanNow;
+    const recent = scanNow - (body.spawnAt || 0) < recentWindowMs;
+    const graphSparse = !settledCovered
+      && !(state.liveTouchAdj?.get(body.id)?.size || 0)
+      && !(state.settledTouchAdj?.get(body.id)?.size || 0);
+    const buriedFrozen = settledCovered
+      && !!surfaceCache
+      && isFrozenBody(body)
+      && body.plugin._frozenSurfaceRevision === surfaceRevision
+      && body.plugin._frozenSurfaceShell === 0
+      && isBuriedFrozenStableBody(body, surfaceCache, liveCount, scanNow);
+    const frontier = urgent
+      || recent
+      || !isFrozenBody(body)
+      || !settledCovered
+      || graphSparse
+      || !boardHeight
+      || (!buriedFrozen && !isDeepQuietBody(body, boardHeight, liveCount, scanNow));
+    if (!frontier) continue;
+    outSeeds.push(body);
+  }
+  const denseLimit = denseScanSeedLimit(liveCount);
+  if (denseLimit && outSeeds.length > Math.max(denseLimit * 2, 14)) prioritizeDenseScanSeeds(outSeeds, liveCount, scanNow);
+  return outSeeds;
+}
+
+    
+function buildHybridTouchGroups(targetBodies, gameType, contentIndex = null, pad = 0.5, seedBodies = null, scanNow = performance.now(), prebuiltHash = null, matchOther = null) {
+  if (!targetBodies.length) return [];
+  const settledCache = buildSettledGroupCacheForKey(gameType, contentIndex);
+  const settledGroups = materializeSettledGroupsFromCache(settledCache, 220, scanNow, scratchSettledHybridGroups);
+  const settledRevision = settledGroups._settledClusterRevision || (state.frozenSpatialHashRevision || 0);
+  const seeds = Array.isArray(seedBodies) && seedBodies.length
+    ? seedBodies
+    : collectHybridFrontierSeeds(targetBodies, settledRevision, scanNow, scratchHybridSeedBodies);
+  if (seeds?.length > 1) compressSeedBodiesBySettledCluster(seeds);
+  if ((!seeds || !seeds.length) && settledGroups.length) return settledGroups.slice();
+  const liveCount = state.liveBodies?.length || 0;
+  const useProxy = shouldUseSettledClusterProxySearch(liveCount, targetBodies.length, seeds?.length || 0, settledGroups.length);
+  const useOverlayProxy = shouldUseSettledFrontierOverlaySearch(liveCount, targetBodies.length, seeds?.length || 0, settledGroups.length);
+  let refinedGroups = [];
+  if (seeds?.length) {
+    if (useProxy && useOverlayProxy) {
+      const overlaySource = buildSettledProxyOverlayRegistryFromDirtyLanes(
+        targetBodies,
+        seeds,
+        gameType,
+        contentIndex,
+        settledCache,
+        settledRevision
+      ) || buildSettledProxyOverlayHashFromDirtyLanes(
+        targetBodies,
+        seeds,
+        gameType,
+        contentIndex,
+        settledCache,
+        settledRevision,
+        scratchSettledProxyOverlayBodies
+      ) || buildSettledProxyOverlayHash(targetBodies, settledRevision, scratchSettledProxyOverlayBodies);
+      if (overlaySource) refinedGroups = buildTouchGroupsViaSettledClusterProxy(targetBodies, seeds, pad, scanNow, overlaySource, matchOther);
+    }
+    if (!refinedGroups.length) {
+      refinedGroups = useProxy
+        ? buildTouchGroupsViaSettledClusterProxy(targetBodies, seeds, pad, scanNow, prebuiltHash, matchOther)
+        : buildTouchGroupsNearSeeds(targetBodies, seeds, pad, scanNow, prebuiltHash, matchOther);
+    } else if (useProxy && useOverlayProxy) {
+      const recentTouchWindowMs = liveCount >= 64 ? 220 : 260;
+      const recentDynamicTouch = recentTouchPairs.size > 0 && (scanNow - (state.lastRecentTouchAt || 0) <= recentTouchWindowMs);
+      const needsExactFallback = refinedGroups.every(group => (group?.length || 0) < 2)
+        && (recentDynamicTouch || (state.groupScanDirtyIds?.size || 0) > 0 || (state.repairQueueIds?.size || 0) > 0);
+      if (needsExactFallback) {
+        refinedGroups = buildTouchGroupsViaSettledClusterProxy(targetBodies, seeds, pad, scanNow, prebuiltHash, matchOther);
+      }
+    }
+    if (useProxy && !refinedGroups.length) {
+      refinedGroups = buildTouchGroupsNearSeeds(targetBodies, seeds, pad, scanNow, prebuiltHash, matchOther);
+    }
+  }
+  if (!settledGroups.length) return refinedGroups;
+  const coveredClusterIds = new Set();
+  const coveredBodyIds = new Set();
+  for (let i = 0; i < refinedGroups.length; i += 1) {
+    groupCollectCoverage(refinedGroups[i], coveredClusterIds, coveredBodyIds, settledRevision);
+  }
+  const merged = refinedGroups.slice();
+  for (let i = 0; i < settledGroups.length; i += 1) {
+    const group = settledGroups[i];
+    if (groupLength(group) <= 0) continue;
+    const clusterId = groupPrimaryClusterId(group, settledRevision);
+    if (clusterId != null) {
+      if (coveredClusterIds.has(clusterId)) continue;
+      merged.push(group);
+      continue;
+    }
+    let overlapped = false;
+    forEachGroupBodyId(group, id => {
+      if (coveredBodyIds.has(id)) {
+        overlapped = true;
+      }
+    });
+    if (!overlapped) merged.push(group);
+  }
+  return merged;
+}
+    function currentTouchMemoryTtlMs() {
+      const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const stableHeavyCrowd = liveCount >= 52 && isHeavyCrowdStable(liveCount, dynamicCount);
+      if (ultraDenseQuiet) return liveCount >= 74 ? 84 : (liveCount >= 66 ? 96 : (liveCount >= 58 ? 112 : 132));
+      if (stableHeavyCrowd) return liveCount >= 74 ? 112 : (liveCount >= 66 ? 132 : (liveCount >= 58 ? 150 : 176));
+      if (liveCount >= 60) return 210;
+      if (liveCount >= 46) return 270;
+      return TOUCH_MEMORY_BASE_TTL_MS;
+    }
+    function currentRecentTouchSoftCap() {
+      const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      if (ultraDenseQuiet) {
+        if (liveCount >= 74) return 120;
+        if (liveCount >= 64) return 156;
+        if (liveCount >= 52) return 220;
+        return 360;
+      }
+      if (liveCount >= 74) return 196;
+      if (liveCount >= 64) return 252;
+      if (liveCount >= 52) return 340;
+      return 640;
+    }
+    function currentRecentTouchHardCap() {
+      const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      if (ultraDenseQuiet) {
+        if (liveCount >= 74) return 280;
+        if (liveCount >= 64) return 360;
+        if (liveCount >= 52) return 480;
+        return 700;
+      }
+      if (liveCount >= 74) return 480;
+      if (liveCount >= 64) return 620;
+      if (liveCount >= 52) return 760;
+      return 1200;
+    }
     let lastCommentSpawnAt = 0;
     let activeBoardCharacterLayer = 'front';
     const avatarVariants = {
@@ -2304,6 +4079,10 @@
       win:['assets/audio/voice_mc_win_01.wav','assets/audio/voice_mc_win_02.wav','assets/audio/voice_mc_win_03.wav','assets/audio/voice_mc_win_04.wav'],
       lose:['assets/audio/voice_mc_lose_01.wav','assets/audio/voice_mc_lose_02.wav','assets/audio/voice_mc_lose_03.wav','assets/audio/voice_mc_lose_04.wav']
     };
+    const COMPRESSED_AUDIO_EXT = '.m4a';
+    Object.keys(voicePools).forEach(key => {
+      voicePools[key] = (voicePools[key] || []).map(path => String(path || '').replace(/\.wav$/i, COMPRESSED_AUDIO_EXT));
+    });
 
     const VOICE_TEXT_MAP = {
       'voice_mc_start_01.wav':'配信スタートっ！ねぇ、私がいっちばん可愛いでしょ？',
@@ -2561,6 +4340,11 @@
       frozenSpatialHashCacheStamp:-1,
       frozenSpatialHashCacheRevision:-1,
       frozenSpatialHashRevision:0,
+      frozenSurfaceCache:null,
+      frozenSurfaceCacheRevision:-1,
+      frozenSurfaceBodiesByCell:new Map(),
+      frozenSurfaceTopYByCell:new Map(),
+      frozenSurfaceRevision:0,
       frameStamp:0,
       boardRectCache:null,
       boardMetricsCache:null,
@@ -2632,6 +4416,20 @@
       activeSampleCursor:0,
       lastStableScanCacheKey:'',
       lastStableScanGroups:[],
+      liveTouchAdj:new Map(),
+      liveTouchGraphPairIds:new Map(),
+      settledTouchAdj:new Map(),
+      settledGroupCacheByKey:new Map(),
+      settledClusterById:new Map(),
+      settledGroupCacheFrozenRevision:-1,
+      settledGroupCacheDirtyKeys:new Set(),
+      settledKeysBySurfaceCell:new Map(),
+      settledSurfaceCellsByKey:new Map(),
+      settledGroupVisitStamp:0,
+      settledGroupMaterializeStamp:0,
+      settledClusterSeq:0,
+      hybridGroupIncludeStamp:0,
+      proxySeedDedupStamp:0,
       paused:false
     };
 
@@ -2701,6 +4499,25 @@
       state.activeSampleCursor = 0;
       state.lastStableScanCacheKey = '';
       state.lastStableScanGroups = [];
+      state.liveTouchAdj = new Map();
+      state.liveTouchGraphPairIds = new Map();
+      state.settledTouchAdj = new Map();
+      state.settledGroupCacheByKey = new Map();
+      state.settledClusterById = new Map();
+      state.settledGroupCacheFrozenRevision = -1;
+      state.settledGroupCacheDirtyKeys = new Set();
+      state.settledKeysBySurfaceCell = new Map();
+      state.settledSurfaceCellsByKey = new Map();
+      state.settledGroupVisitStamp = 0;
+      state.settledGroupMaterializeStamp = 0;
+      state.settledClusterSeq = 0;
+      state.hybridGroupIncludeStamp = 0;
+      state.proxySeedDedupStamp = 0;
+      state.frozenSurfaceCache = null;
+      state.frozenSurfaceCacheRevision = -1;
+      state.frozenSurfaceBodiesByCell = new Map();
+      state.frozenSurfaceTopYByCell = new Map();
+      state.frozenSurfaceRevision = 0;
       state.visualPreviewIds = [];
       state.visualNextPreviewIds = [];
       state.visualGlowIds = [];
@@ -2799,6 +4616,10 @@ function isFrozenBody(body) {
 function thawBody(body, now = performance.now(), opts = {}) {
   if (!body || !isFrozenBody(body) || body.plugin?.pendingRemoval) return false;
   body.plugin = body.plugin || {};
+  markSettledCachesDirtyForBody(body);
+  untrackFrozenSurfaceBody(body);
+  removeBodyTouchGraphLinks(body);
+  clearSettledClusterTag(body);
   body.plugin.frozen = false;
   body.plugin.frozenAt = 0;
   unregisterFrozenLiveBody(body);
@@ -2833,6 +4654,8 @@ function thawBody(body, now = performance.now(), opts = {}) {
 function freezeBody(body, now = performance.now()) {
   if (!body || body.plugin?.pendingRemoval || body.gameType === 'wall' || body.isStatic || isFrozenBody(body)) return false;
   body.plugin = body.plugin || {};
+  markSettledCachesDirtyForBody(body);
+  removeBodyTouchGraphLinks(body);
   Body.setVelocity(body, { x:0, y:0 });
   Body.setAngularVelocity(body, 0);
   Body.setStatic(body, true);
@@ -2845,6 +4668,7 @@ function freezeBody(body, now = performance.now()) {
     if (Array.isArray(state.activeBodies)) removeBodyFromArrayById(state.activeBodies, body.id);
   }
   state.frozenBodyCount = (state.frozenBodyCount || 0) + 1;
+  trackFrozenSurfaceBody(body);
   bumpFrozenSpatialHashRevision();
   body.plugin.frozenAt = now;
   body.plugin.restStartAt = now;
@@ -2891,18 +4715,31 @@ function bodyHasSupportBelowCached(body, hash, boardH = 0, slack = 16) {
   return value;
 }
 
-function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVelocityY = 0.08) {
+function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVelocityY = 0.08, opts = null) {
   if (!seedBody || !isFrozenBody(seedBody)) return 0;
   const clusterStamp = (state.touchGroupSourceStamp || 0) + 1;
   state.touchGroupSourceStamp = clusterStamp;
   const stack = [seedBody];
+  const maxCount = Math.max(0, Math.floor(opts?.maxCount || 0));
+  const sourceX = Number.isFinite(opts?.sourceX)
+    ? opts.sourceX
+    : (Number.isFinite(opts?.sourceBody?.position?.x) ? opts.sourceBody.position.x : Number.NaN);
+  const sourceY = Number.isFinite(opts?.sourceY)
+    ? opts.sourceY
+    : (Number.isFinite(opts?.sourceBody?.position?.y) ? opts.sourceBody.position.y : Number.NaN);
+  const maxDistance = Number.isFinite(opts?.maxDistance) ? Math.max(0, opts.maxDistance) : 0;
+  const maxDistanceSq = maxDistance > 0 && Number.isFinite(sourceX) && Number.isFinite(sourceY)
+    ? maxDistance * maxDistance
+    : 0;
   let count = 0;
   seedBody.plugin = seedBody.plugin || {};
   seedBody.plugin._frozenClusterStamp = clusterStamp;
   while (stack.length) {
+    if (maxCount && count >= maxCount) break;
     const current = stack.pop();
     if (!current || !isFrozenBody(current)) continue;
     if (thawBody(current, now, { vy:Math.max(0.08, seedVelocityY) })) count += 1;
+    if (maxCount && count >= maxCount) continue;
     visitNearbyFromHash(frozenHash, current, 1, other => {
       if (!other || !isFrozenBody(other)) return false;
       other.plugin = other.plugin || {};
@@ -2911,6 +4748,12 @@ function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVe
       const dy = other.position.y - current.position.y;
       const reach = (current.circleRadius || 0) + (other.circleRadius || 0) + 6;
       if (dx * dx + dy * dy > reach * reach) return false;
+      if (maxDistanceSq > 0) {
+        const sdx = other.position.x - sourceX;
+        const sdy = other.position.y - sourceY;
+        if (sdx * sdx + sdy * sdy > maxDistanceSq) return false;
+      }
+      if (maxCount && count + stack.length >= maxCount) return false;
       other.plugin._frozenClusterStamp = clusterStamp;
       stack.push(other);
       return false;
@@ -2919,10 +4762,113 @@ function thawFrozenCluster(seedBody, frozenHash, now = performance.now(), seedVe
   return count;
 }
 
+
+function thawFrozenSurfaceShell(seedBody, frozenHash, now = performance.now(), seedVelocityY = 0.08, opts = null) {
+  if (!seedBody || !isFrozenBody(seedBody)) return 0;
+  const sourceBody = opts?.sourceBody || null;
+  const sourceX = Number.isFinite(opts?.sourceX)
+    ? opts.sourceX
+    : (Number.isFinite(sourceBody?.position?.x) ? sourceBody.position.x : (seedBody.position?.x || 0));
+  const sourceY = Number.isFinite(opts?.sourceY)
+    ? opts.sourceY
+    : (Number.isFinite(sourceBody?.position?.y) ? sourceBody.position.y : (seedBody.position?.y || 0));
+  const maxCount = Math.max(1, Math.floor(opts?.maxCount || 0) || 1);
+  const maxDistance = Number.isFinite(opts?.maxDistance)
+    ? Math.max(0, opts.maxDistance)
+    : Math.max(108, (seedBody.circleRadius || 0) * 3.6 + 28);
+  const maxDistanceSq = maxDistance > 0 ? maxDistance * maxDistance : 0;
+  const liveCount = state.liveBodies?.length || 0;
+  const surfaceCache = opts?.surfaceCache || buildFrozenSurfaceCache();
+  const shellDepth = Number.isFinite(opts?.shellDepth)
+    ? Math.max(0, opts.shellDepth)
+    : frozenSurfaceShellDepthThreshold(liveCount, seedBody);
+  const candidates = scratchFrozenSurfaceWakeBodies;
+  candidates.length = 0;
+  const stamp = (state.touchGroupSourceStamp || 0) + 1;
+  state.touchGroupSourceStamp = stamp;
+  const collectCandidate = (body, seedBonus = 0, force = false) => {
+    if (!body || body.plugin?.pendingRemoval || !isFrozenBody(body)) return false;
+    body.plugin = body.plugin || {};
+    if (body.plugin._frozenClusterStamp === stamp) return false;
+    const dx = (body.position?.x || 0) - sourceX;
+    const dy = (body.position?.y || 0) - sourceY;
+    if (maxDistanceSq > 0 && dx * dx + dy * dy > maxDistanceSq) return false;
+    const depth = force ? 0 : frozenSurfaceDepth(body, surfaceCache);
+    const allowedDepth = Math.max(shellDepth, frozenSurfaceShellDepthThreshold(liveCount, body));
+    if (!force && depth > allowedDepth) return false;
+    body.plugin._frozenClusterStamp = stamp;
+    body.plugin._surfaceWakeScore = dx * dx + dy * dy + depth * depth * 4 + Math.max(0, (body.position?.y || 0) - sourceY) * 6 - seedBonus;
+    candidates.push(body);
+    return false;
+  };
+  collectCandidate(seedBody, 1024, true);
+
+  let frontierHits = 0;
+  const seedCluster = ensureSettledClusterForBody(seedBody);
+  if (seedCluster) {
+    const before = candidates.length;
+    collectClusterFrontierBodiesNear(seedCluster, sourceX, sourceY, maxDistance, stamp, candidates, seedBody, true);
+    if (sourceBody && sourceBody !== seedBody) {
+      const localRadius = Math.min(maxDistance, Math.max(64, (seedBody.circleRadius || 0) * 2.8 + 20));
+      collectClusterFrontierBodiesNear(
+        seedCluster,
+        Number.isFinite(seedBody.position?.x) ? seedBody.position.x : sourceX,
+        Number.isFinite(seedBody.position?.y) ? seedBody.position.y : sourceY,
+        localRadius,
+        stamp,
+        candidates,
+        seedBody,
+        true
+      );
+    }
+    frontierHits = candidates.length - before;
+    if (frontierHits < Math.max(maxCount, 2)) {
+      collectClusterFrontierBodiesNear(seedCluster, sourceX, sourceY, maxDistance, stamp, candidates, seedBody, false);
+      if (sourceBody && sourceBody !== seedBody) {
+        const localRadius = Math.min(maxDistance, Math.max(64, (seedBody.circleRadius || 0) * 2.8 + 20));
+        collectClusterFrontierBodiesNear(
+          seedCluster,
+          Number.isFinite(seedBody.position?.x) ? seedBody.position.x : sourceX,
+          Number.isFinite(seedBody.position?.y) ? seedBody.position.y : sourceY,
+          localRadius,
+          stamp,
+          candidates,
+          seedBody,
+          false
+        );
+      }
+      frontierHits = candidates.length - before;
+    }
+  }
+
+  const needHashFallback = !frontierHits || candidates.length < Math.max(maxCount * 2, 6);
+  if (needHashFallback) {
+    const cellSize = Math.max(1, frozenHash?.cellSize || SPATIAL_HASH_CELL);
+    const radiusCells = Math.max(1, Math.min(2, Math.ceil(maxDistance / cellSize)));
+    visitNearbyFromHash(frozenHash, sourceBody || seedBody, radiusCells, other => collectCandidate(other, other?.id === seedBody.id ? 256 : 0, false));
+    if (sourceBody && sourceBody !== seedBody) visitNearbyFromHash(frozenHash, seedBody, 1, other => collectCandidate(other, other?.id === seedBody.id ? 256 : 0, false));
+  }
+
+  if (!candidates.length) return 0;
+  candidates.sort((a, b) => (a?.plugin?._surfaceWakeScore || 0) - (b?.plugin?._surfaceWakeScore || 0));
+  let thawed = 0;
+  for (let i = 0; i < candidates.length && thawed < maxCount; i += 1) {
+    const body = candidates[i];
+    if (!body || !isFrozenBody(body)) continue;
+    if (thawBody(body, now, { vy:Math.max(0.08, seedVelocityY) })) thawed += 1;
+  }
+  candidates.length = 0;
+  return thawed;
+}
+
 function thawFrozenBodiesNearActive(now = performance.now()) {
   if ((state.frozenBodyCount || 0) <= 0 || (state.activeMovingCount || 0) <= 0) return 0;
   const activeBodies = getActiveBodies();
   if (!activeBodies.length) return 0;
+  const liveCount = state.liveBodies?.length || 0;
+  const dynamicCount = state.dynamicBodies?.length || 0;
+  const ultraDenseStable = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+  const surfaceCache = ultraDenseStable ? buildFrozenSurfaceCache() : null;
   scratchActiveBodies.length = 0;
   for (let i = 0; i < activeBodies.length; i += 1) {
     const body = activeBodies[i];
@@ -2942,15 +4888,53 @@ function thawFrozenBodiesNearActive(now = performance.now()) {
   let thawed = 0;
   for (let i = 0; i < scratchActiveBodies.length; i += 1) {
     const body = scratchActiveBodies[i];
-    const wakePad = (perfSettings.freezeWakePad || 16) + Math.min(22, Math.max(Math.abs(body.velocity?.x || 0), Math.abs(body.velocity?.y || 0)) * 2.4);
+    const maxSpeed = Math.max(Math.abs(body.velocity?.x || 0), Math.abs(body.velocity?.y || 0));
+    const wakePad = (perfSettings.freezeWakePad || 16) + Math.min(22, maxSpeed * 2.4);
+    const localWakeLimit = ultraDenseStable
+      ? (liveCount >= 72 ? 4 : (liveCount >= 64 ? 5 : (liveCount >= 56 ? 6 : 8)))
+      : 0;
+    const localWakeRadius = localWakeLimit
+      ? Math.max(108, wakePad * 2.4 + (body.circleRadius || 0) * 1.8 + maxSpeed * 11)
+      : 0;
+    const shellDepth = localWakeLimit
+      ? Math.max(frozenSurfaceShellDepthThreshold(liveCount, body), liveCount >= 72 ? 30 : (liveCount >= 64 ? 36 : 44))
+      : 0;
+    let localThawed = 0;
     visitNearbyFromHash(hash, body, 1, frozen => {
       if (!frozen || !isFrozenBody(frozen)) return false;
+      if (localWakeLimit && localThawed >= localWakeLimit) return true;
       const dx = frozen.position.x - body.position.x;
       const dy = frozen.position.y - body.position.y;
       const reach = (body.circleRadius || 0) + (frozen.circleRadius || 0) + wakePad;
       if (dx * dx + dy * dy > reach * reach) return false;
-      thawed += thawFrozenCluster(frozen, hash, now, body.velocity?.y || 0.1);
-      return false;
+      const count = localWakeLimit
+        ? thawFrozenSurfaceShell(
+            frozen,
+            hash,
+            now,
+            body.velocity?.y || 0.1,
+            {
+              maxCount:Math.max(1, localWakeLimit - localThawed),
+              sourceBody:body,
+              sourceX:body.position.x,
+              sourceY:body.position.y,
+              maxDistance:localWakeRadius,
+              shellDepth,
+              surfaceCache
+            }
+          )
+        : thawFrozenCluster(
+            frozen,
+            hash,
+            now,
+            body.velocity?.y || 0.1,
+            null
+          );
+      if (count > 0) {
+        thawed += count;
+        localThawed += count;
+      }
+      return localWakeLimit > 0 && localThawed >= localWakeLimit;
     });
   }
   return thawed;
@@ -2975,24 +4959,32 @@ function freezeRestedBodies(now = performance.now()) {
     && freezeSignature === (state.lastStableFreezeHashSignature ?? -1)
     && now < (state.lastStableFreezeResumeAt || 0)) return 0;
   const mostlyFrozenCrowd = isMostlyFrozenCrowd(liveCount, dynamicCount);
-  const fullSweepWindowMs = mostlyFrozenCrowd
-    ? (liveCount >= 60 ? 1860 : (liveCount >= 48 ? 1620 : 1460))
-    : (liveCount >= 52 ? 1380 : 1960);
+  const ultraDenseStable = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+  const fullSweepWindowMs = ultraDenseStable
+    ? (liveCount >= 72 ? 1180 : (liveCount >= 64 ? 1340 : 1520))
+    : (mostlyFrozenCrowd
+        ? (liveCount >= 60 ? 1860 : (liveCount >= 48 ? 1620 : 1460))
+        : (liveCount >= 52 ? 1380 : 1960));
   const fullSweep = sourceCount <= 14 || now - (state.lastFullFreezeSweepAt || 0) > fullSweepWindowMs;
   if (fullSweep) state.lastFullFreezeSweepAt = now;
   let bodies = sourceBodies;
   if (!fullSweep) {
-    const budget = sourceCount >= 48 ? 34 : (sourceCount >= 36 ? 30 : (sourceCount >= 26 ? 26 : (sourceCount >= 18 ? 22 : 0)));
+    const budget = ultraDenseStable
+      ? (sourceCount >= 48 ? 30 : (sourceCount >= 36 ? 26 : (sourceCount >= 26 ? 22 : (sourceCount >= 18 ? 18 : 0))))
+      : (sourceCount >= 48 ? 34 : (sourceCount >= 36 ? 30 : (sourceCount >= 26 ? 26 : (sourceCount >= 18 ? 22 : 0))));
     if (budget) bodies = sliceSweepCandidatesWindow(sourceBodies, 'freeze', budget);
   }
   const boardH = boardLogicalRect().height || 0;
   const hash = worldSpatialHash();
   if (!hash) return 0;
-  const settleMs = (perfSettings.freezeSettleMs || 980) * (liveCount >= 66 ? 0.24 : (liveCount >= 58 ? 0.30 : (liveCount >= 52 ? 0.38 : (liveCount >= 42 ? 0.54 : (liveCount >= 32 ? 0.7 : (liveCount >= 24 ? 0.84 : 1))))));
+  const settleMs = (perfSettings.freezeSettleMs || 980) * (ultraDenseStable
+    ? (liveCount >= 72 ? 0.11 : (liveCount >= 64 ? 0.15 : (liveCount >= 56 ? 0.20 : 0.28)))
+    : (liveCount >= 66 ? 0.24 : (liveCount >= 58 ? 0.30 : (liveCount >= 52 ? 0.38 : (liveCount >= 42 ? 0.54 : (liveCount >= 32 ? 0.7 : (liveCount >= 24 ? 0.84 : 1)))))));
   const linearThresholdBase = perfSettings.freezeLinearThreshold || 0.03;
   const angularThresholdBase = perfSettings.freezeAngularThreshold || 0.02;
-  const linearThreshold = liveCount >= 66 ? linearThresholdBase * 2.15 : (liveCount >= 58 ? linearThresholdBase * 1.95 : (liveCount >= 52 ? linearThresholdBase * 1.72 : (liveCount >= 42 ? linearThresholdBase * 1.45 : (liveCount >= 32 ? linearThresholdBase * 1.25 : linearThresholdBase))));
-  const angularThreshold = liveCount >= 66 ? angularThresholdBase * 2.2 : (liveCount >= 58 ? angularThresholdBase * 2.0 : (liveCount >= 52 ? angularThresholdBase * 1.78 : (liveCount >= 42 ? angularThresholdBase * 1.48 : (liveCount >= 32 ? angularThresholdBase * 1.28 : angularThresholdBase))));
+  const linearThreshold = liveCount >= 66 ? linearThresholdBase * 2.4 : (liveCount >= 58 ? linearThresholdBase * 2.1 : (liveCount >= 52 ? linearThresholdBase * 1.82 : (liveCount >= 42 ? linearThresholdBase * 1.45 : (liveCount >= 32 ? linearThresholdBase * 1.25 : linearThresholdBase))));
+  const angularThreshold = liveCount >= 66 ? angularThresholdBase * 2.45 : (liveCount >= 58 ? angularThresholdBase * 2.15 : (liveCount >= 52 ? angularThresholdBase * 1.88 : (liveCount >= 42 ? angularThresholdBase * 1.48 : (liveCount >= 32 ? angularThresholdBase * 1.28 : angularThresholdBase))));
+  scratchNewlyFrozenBodies.length = 0;
   let frozenCount = 0;
   for (let i = 0; i < bodies.length; i += 1) {
     const body = bodies[i];
@@ -3016,8 +5008,12 @@ function freezeRestedBodies(now = performance.now()) {
     if (!body.plugin.restStartAt) body.plugin.restStartAt = now;
     const settledFor = now - body.plugin.restStartAt;
     if (settledFor < settleMs) continue;
-    if (freezeBody(body, now)) frozenCount += 1;
+    if (freezeBody(body, now)) {
+      frozenCount += 1;
+      scratchNewlyFrozenBodies.push(body);
+    }
   }
+  if (scratchNewlyFrozenBodies.length) refreshSettledTouchGraphForBodies(scratchNewlyFrozenBodies, frozenSpatialHash(), now);
   if (fullSweep) {
     if (frozenCount === 0 && quietStableSweep) {
       state.lastStableFreezeHashSignature = freezeSignature;
@@ -3079,14 +5075,30 @@ function refreshActiveBodies(now = performance.now()) {
   const dynamicBodies = state.dynamicBodies || EMPTY_BODY_ARRAY;
   const liveCount = state.liveBodies?.length || 0;
   const crowdTier = liveCount >= 64 ? 4 : (liveCount >= 54 ? 3 : (liveCount >= 44 ? 2 : (liveCount >= 34 ? 1 : 0)));
-  const activeWindowMs = crowdTier >= 4 ? 84 : (crowdTier >= 3 ? 108 : (crowdTier >= 2 ? 136 : (crowdTier >= 1 ? 176 : 320)));
-  const moveThreshold = crowdTier >= 4 ? 0.085 : (crowdTier >= 3 ? 0.07 : (crowdTier >= 2 ? 0.058 : (crowdTier >= 1 ? 0.048 : 0.04)));
-  const moveAngularThreshold = crowdTier >= 4 ? 0.05 : (crowdTier >= 3 ? 0.04 : (crowdTier >= 2 ? 0.032 : (crowdTier >= 1 ? 0.026 : 0.02)));
-  const visualThreshold = crowdTier >= 4 ? 0.22 : (crowdTier >= 3 ? 0.18 : (crowdTier >= 2 ? 0.14 : (crowdTier >= 1 ? 0.1 : 0.06)));
-  const visualAngularThreshold = crowdTier >= 4 ? 0.14 : (crowdTier >= 3 ? 0.11 : (crowdTier >= 2 ? 0.09 : (crowdTier >= 1 ? 0.075 : 0.06)));
+  const stableDenseCrowd = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicBodies.length);
+  const ultraDenseQuiet = liveCount >= 62 && stableDenseCrowd && (state.fastMovingBodiesCount || 0) <= 0 && (state.highPrecisionBodyCount || 0) <= 0;
+  const activeWindowMs = stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (liveCount >= 74 ? 22 : (liveCount >= 66 ? 28 : (liveCount >= 58 ? 38 : 52)))
+        : (liveCount >= 74 ? 28 : (liveCount >= 66 ? 36 : (liveCount >= 58 ? 46 : 58))))
+    : (crowdTier >= 4 ? 84 : (crowdTier >= 3 ? 108 : (crowdTier >= 2 ? 136 : (crowdTier >= 1 ? 176 : 320))));
+  const moveThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (liveCount >= 66 ? 0.124 : (liveCount >= 58 ? 0.112 : 0.098))
+        : (liveCount >= 66 ? 0.118 : (liveCount >= 58 ? 0.106 : 0.092)))
+    : (crowdTier >= 4 ? 0.085 : (crowdTier >= 3 ? 0.07 : (crowdTier >= 2 ? 0.058 : (crowdTier >= 1 ? 0.048 : 0.04))));
+  const moveAngularThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.072 : 0.056) : (crowdTier >= 4 ? 0.064 : 0.052))
+    : (crowdTier >= 4 ? 0.05 : (crowdTier >= 3 ? 0.04 : (crowdTier >= 2 ? 0.032 : (crowdTier >= 1 ? 0.026 : 0.02))));
+  const visualThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.30 : 0.23) : (crowdTier >= 4 ? 0.27 : 0.21))
+    : (crowdTier >= 4 ? 0.22 : (crowdTier >= 3 ? 0.18 : (crowdTier >= 2 ? 0.14 : (crowdTier >= 1 ? 0.1 : 0.06))));
+  const visualAngularThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.18 : 0.135) : (crowdTier >= 4 ? 0.165 : 0.124))
+    : (crowdTier >= 4 ? 0.14 : (crowdTier >= 3 ? 0.11 : (crowdTier >= 2 ? 0.09 : (crowdTier >= 1 ? 0.075 : 0.06))));
   const fastThreshold = crowdTier >= 3 ? 2.55 : 2.25;
-  const recentSpawnWindow = crowdTier >= 3 ? 560 : 720;
-  const restingAgeMs = crowdTier >= 4 ? 320 : (crowdTier >= 3 ? 360 : 420);
+  const recentSpawnWindow = stableDenseCrowd ? (ultraDenseQuiet ? (crowdTier >= 3 ? 320 : 400) : (crowdTier >= 3 ? 340 : 430)) : (crowdTier >= 3 ? 560 : 720);
+  const restingAgeMs = stableDenseCrowd ? (ultraDenseQuiet ? (crowdTier >= 4 ? 140 : 190) : (crowdTier >= 4 ? 170 : 225)) : (crowdTier >= 4 ? 320 : (crowdTier >= 3 ? 360 : 420));
   let movingCount = 0;
   let visualHotBodiesCount = 0;
   let fastMovingBodiesCount = 0;
@@ -3169,13 +5181,29 @@ function refreshTrackedActiveBodies(now = performance.now()) {
   nextIds.clear();
   nextVisualHotBodies.length = 0;
   const crowdTier = liveCount >= 64 ? 4 : (liveCount >= 54 ? 3 : (liveCount >= 44 ? 2 : (liveCount >= 34 ? 1 : 0)));
-  const activeWindowMs = crowdTier >= 4 ? 84 : (crowdTier >= 3 ? 108 : (crowdTier >= 2 ? 136 : (crowdTier >= 1 ? 176 : 320)));
-  const moveThreshold = crowdTier >= 4 ? 0.085 : (crowdTier >= 3 ? 0.07 : (crowdTier >= 2 ? 0.058 : (crowdTier >= 1 ? 0.048 : 0.04)));
-  const moveAngularThreshold = crowdTier >= 4 ? 0.05 : (crowdTier >= 3 ? 0.04 : (crowdTier >= 2 ? 0.032 : (crowdTier >= 1 ? 0.026 : 0.02)));
-  const visualThreshold = crowdTier >= 4 ? 0.22 : (crowdTier >= 3 ? 0.18 : (crowdTier >= 2 ? 0.14 : (crowdTier >= 1 ? 0.1 : 0.06)));
-  const visualAngularThreshold = crowdTier >= 4 ? 0.14 : (crowdTier >= 3 ? 0.11 : (crowdTier >= 2 ? 0.09 : (crowdTier >= 1 ? 0.075 : 0.06)));
+  const stableDenseCrowd = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+  const ultraDenseQuiet = liveCount >= 62 && stableDenseCrowd && (state.fastMovingBodiesCount || 0) <= 0 && (state.highPrecisionBodyCount || 0) <= 0;
+  const activeWindowMs = stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (liveCount >= 74 ? 22 : (liveCount >= 66 ? 28 : (liveCount >= 58 ? 38 : 52)))
+        : (liveCount >= 74 ? 28 : (liveCount >= 66 ? 36 : (liveCount >= 58 ? 46 : 58))))
+    : (crowdTier >= 4 ? 84 : (crowdTier >= 3 ? 108 : (crowdTier >= 2 ? 136 : (crowdTier >= 1 ? 176 : 320))));
+  const moveThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (liveCount >= 66 ? 0.124 : (liveCount >= 58 ? 0.112 : 0.098))
+        : (liveCount >= 66 ? 0.118 : (liveCount >= 58 ? 0.106 : 0.092)))
+    : (crowdTier >= 4 ? 0.085 : (crowdTier >= 3 ? 0.07 : (crowdTier >= 2 ? 0.058 : (crowdTier >= 1 ? 0.048 : 0.04))));
+  const moveAngularThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.072 : 0.056) : (crowdTier >= 4 ? 0.064 : 0.052))
+    : (crowdTier >= 4 ? 0.05 : (crowdTier >= 3 ? 0.04 : (crowdTier >= 2 ? 0.032 : (crowdTier >= 1 ? 0.026 : 0.02))));
+  const visualThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.30 : 0.23) : (crowdTier >= 4 ? 0.27 : 0.21))
+    : (crowdTier >= 4 ? 0.22 : (crowdTier >= 3 ? 0.18 : (crowdTier >= 2 ? 0.14 : (crowdTier >= 1 ? 0.1 : 0.06))));
+  const visualAngularThreshold = stableDenseCrowd
+    ? (ultraDenseQuiet ? (crowdTier >= 4 ? 0.18 : 0.135) : (crowdTier >= 4 ? 0.165 : 0.124))
+    : (crowdTier >= 4 ? 0.14 : (crowdTier >= 3 ? 0.11 : (crowdTier >= 2 ? 0.09 : (crowdTier >= 1 ? 0.075 : 0.06))));
   const fastThreshold = crowdTier >= 3 ? 2.55 : 2.25;
-  const recentSpawnWindow = crowdTier >= 3 ? 560 : 720;
+  const recentSpawnWindow = stableDenseCrowd ? (ultraDenseQuiet ? (crowdTier >= 3 ? 320 : 400) : (crowdTier >= 3 ? 340 : 430)) : (crowdTier >= 3 ? 560 : 720);
   let movingCount = 0;
   let visualHotBodiesCount = 0;
   let fastMovingBodiesCount = 0;
@@ -3244,7 +5272,11 @@ function refreshTrackedActiveBodies(now = performance.now()) {
   }
   trackedBodies.length = write;
 
-  const sampleBudget = Math.min(dynamicCount, dynamicCount >= 72 ? 16 : (dynamicCount >= 58 ? 14 : (dynamicCount >= 44 ? 12 : 10)));
+  const sampleBudget = Math.min(dynamicCount, stableDenseCrowd
+    ? (ultraDenseQuiet
+        ? (dynamicCount >= 72 ? 4 : (dynamicCount >= 58 ? 5 : (dynamicCount >= 44 ? 6 : 5)))
+        : (dynamicCount >= 72 ? 5 : (dynamicCount >= 58 ? 6 : (dynamicCount >= 44 ? 7 : 6))))
+    : (dynamicCount >= 72 ? 16 : (dynamicCount >= 58 ? 14 : (dynamicCount >= 44 ? 12 : 10))));
   if (sampleBudget > 0) {
     let cursor = state.activeSampleCursor || 0;
     for (let i = 0; i < sampleBudget; i += 1) {
@@ -3293,6 +5325,113 @@ function isMostlyFrozenCrowd(liveCount = state.liveBodies?.length || 0, dynamicC
     && !(state.repairQueueIds?.size || 0);
 }
 
+function isHeavyCrowdStable(liveCount = state.liveBodies?.length || 0, dynamicCount = state.dynamicBodies?.length || 0) {
+  return liveCount >= 44
+    && isMostlyFrozenCrowd(liveCount, dynamicCount)
+    && (state.fastMovingBodiesCount || 0) <= (liveCount >= 60 ? 0 : 1)
+    && (state.activeMovingCount || 0) <= Math.max(1, Math.floor(liveCount * 0.05))
+    && !(state.groupScanDirtyIds?.size || 0)
+    && !(state.repairQueueIds?.size || 0)
+    && recentTouchPairs.size === 0;
+}
+
+function isUltraDenseQuietCrowd(liveCount = state.liveBodies?.length || 0, dynamicCount = state.dynamicBodies?.length || 0) {
+  return liveCount >= 62
+    && isHeavyCrowdStable(liveCount, dynamicCount)
+    && (state.fastMovingBodiesCount || 0) <= 0
+    && (state.highPrecisionBodyCount || 0) <= 0
+    && recentTouchPairs.size === 0;
+}
+
+function denseQuietLowerBandY(boardHeight = boardLogicalRect().height || 0, liveCount = state.liveBodies?.length || 0) {
+  if (!boardHeight) return 0;
+  const ratio = liveCount >= 74 ? 0.56 : (liveCount >= 66 ? 0.58 : (liveCount >= 58 ? 0.60 : 0.62));
+  return boardHeight * ratio;
+}
+
+function isDeepQuietBody(body, boardHeight = boardLogicalRect().height || 0, liveCount = state.liveBodies?.length || 0, now = performance.now()) {
+  if (!body || !boardHeight || liveCount < 56) return false;
+  if ((body.gameType || 'content') !== 'content') return false;
+  if (!Number.isFinite(body.position?.y) || body.position.y <= denseQuietLowerBandY(boardHeight, liveCount)) return false;
+  if (body.contentIndex === state.trendIndex || body.contentIndex === state.nextTrendIndex) return false;
+  if (state.repairQueueIds?.has(body.id) || state.groupScanDirtyIds?.has(body.id)) return false;
+  const plugin = body.plugin || {};
+  if ((plugin.highPrecisionUntil || 0) > now) return false;
+  const age = now - (body.spawnAt || 0);
+  const minAge = liveCount >= 72 ? 1280 : (liveCount >= 64 ? 1120 : 980);
+  if (age < minAge) return false;
+  const maxLinear = liveCount >= 72 ? 0.055 : 0.065;
+  const maxAngular = liveCount >= 72 ? 0.022 : 0.03;
+  const quiet = Math.abs(body.velocity?.x || 0) <= maxLinear
+    && Math.abs(body.velocity?.y || 0) <= maxLinear
+    && Math.abs(body.angularVelocity || 0) <= maxAngular
+    && (body.speed || 0) <= maxLinear * 1.2;
+  if (!quiet) return false;
+  return isFrozenBody(body) || body.isSleeping || body.isStatic;
+}
+
+function prioritizeDenseMaintenanceCandidates(candidates, boardHeight = boardLogicalRect().height || 0, liveCount = state.liveBodies?.length || 0, now = performance.now()) {
+  if (!Array.isArray(candidates) || candidates.length < 2 || liveCount < 56 || !boardHeight) return candidates;
+  const out = scratchDenseMaintenanceBodies;
+  out.length = 0;
+  for (let i = 0; i < candidates.length; i += 1) {
+    const body = candidates[i];
+    if (!body || body.plugin?.pendingRemoval) continue;
+    const mustKeep = !!body.floatStartAt
+      || !!body.outOfRangeSince
+      || !!body.plugin?.pendingClear
+      || state.repairQueueIds?.has(body.id)
+      || state.groupScanDirtyIds?.has(body.id);
+    if (mustKeep || !isDeepQuietBody(body, boardHeight, liveCount, now)) out.push(body);
+  }
+  return out.length ? out : candidates;
+}
+
+function denseScanSeedLimit(liveCount = state.liveBodies?.length || 0) {
+  if (liveCount >= 74) return 6;
+  if (liveCount >= 66) return 7;
+  if (liveCount >= 58) return 8;
+  if (liveCount >= 48) return 10;
+  return 0;
+}
+
+function denseScanSeedScore(body, scanNow = performance.now(), repairIds = null, dirtyIds = null) {
+  if (!body) return Number.NEGATIVE_INFINITY;
+  let score = 0;
+  if (repairIds?.has(body.id)) score += 16;
+  else if (dirtyIds?.has(body.id)) score += 10;
+  if (body.plugin?.highPrecisionUntil && body.plugin.highPrecisionUntil > scanNow) score += 8;
+  if (body.outOfRangeSince || body.floatStartAt) score += 7;
+  const speed = body.speed || 0;
+  if (speed > 0.14 || Math.abs(body.velocity?.x || 0) > 0.12 || Math.abs(body.velocity?.y || 0) > 0.14) score += 6;
+  if (body.gameType === 'hazard' || body.gameType === 'buzz') score += 4;
+  else if (body.gameType === 'content' && body.contentIndex === state.trendIndex) score += 3;
+  const age = scanNow - (body.spawnAt || 0);
+  if (age < 760) score += 3;
+  if (body.plugin?.lastActiveAt) score += Math.max(0, 420 - Math.min(420, scanNow - body.plugin.lastActiveAt)) * 0.01;
+  const y = Number.isFinite(body.position?.y) ? body.position.y : 9999;
+  score += Math.max(0, 900 - Math.min(900, y)) * 0.006;
+  return score;
+}
+
+function prioritizeDenseScanSeeds(seedBodies, liveCount = state.liveBodies?.length || 0, scanNow = performance.now()) {
+  if (!Array.isArray(seedBodies)) return seedBodies;
+  const limit = denseScanSeedLimit(liveCount);
+  if (!limit || seedBodies.length <= limit) return seedBodies;
+  const repairIds = state.repairQueueIds;
+  const dirtyIds = state.groupScanDirtyIds;
+  seedBodies.sort((a, b) => {
+    const scoreDiff = denseScanSeedScore(b, scanNow, repairIds, dirtyIds) - denseScanSeedScore(a, scanNow, repairIds, dirtyIds);
+    if (scoreDiff) return scoreDiff;
+    const ay = Number.isFinite(a?.position?.y) ? a.position.y : Number.POSITIVE_INFINITY;
+    const by = Number.isFinite(b?.position?.y) ? b.position.y : Number.POSITIVE_INFINITY;
+    if (ay !== by) return ay - by;
+    return (b?.plugin?.lastActiveAt || 0) - (a?.plugin?.lastActiveAt || 0);
+  });
+  seedBodies.length = limit;
+  return seedBodies;
+}
+
 function maybeRefreshActiveBodies(now = performance.now(), force = false) {
   const dynamicRevision = state.dynamicRegistryRevision || 0;
   if (force || dynamicRevision !== (state.activeBodiesLiveRevision || -1)) return refreshActiveBodies(now);
@@ -3309,13 +5448,23 @@ function maybeRefreshActiveBodies(now = performance.now(), force = false) {
     && (state.fastMovingBodiesCount || 0) <= 0
     && (state.highPrecisionBodyCount || 0) <= 0
     && !(state.repairQueueIds?.size || 0);
+  const stableHeavyCrowd = isHeavyCrowdStable(liveCount, dynamicCount);
+  const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
   const minGap = idleBoard
     ? (mostlyFrozenCrowd
-        ? (liveCount >= 60 ? 0.18 : (liveCount >= 48 ? 0.15 : (liveCount >= 36 ? 0.12 : 0.08)))
+        ? (ultraDenseQuiet
+            ? (liveCount >= 74 ? 0.56 : (liveCount >= 66 ? 0.48 : (liveCount >= 58 ? 0.40 : 0.32)))
+            : (stableHeavyCrowd
+                ? (liveCount >= 74 ? 0.46 : (liveCount >= 66 ? 0.40 : (liveCount >= 58 ? 0.34 : 0.27)))
+                : (liveCount >= 68 ? 0.26 : (liveCount >= 60 ? 0.22 : (liveCount >= 48 ? 0.17 : (liveCount >= 36 ? 0.13 : 0.08))))))
         : (liveCount >= 60 ? 0.11 : (liveCount >= 48 ? 0.086 : (liveCount >= 36 ? 0.064 : 0))))
     : (quietCrowd
         ? (mostlyFrozenCrowd
-            ? (liveCount >= 60 ? 0.034 : (liveCount >= 48 ? 0.026 : 0.018))
+            ? (ultraDenseQuiet
+                ? (liveCount >= 74 ? 0.14 : (liveCount >= 66 ? 0.118 : (liveCount >= 58 ? 0.096 : 0.072)))
+                : (stableHeavyCrowd
+                    ? (liveCount >= 74 ? 0.112 : (liveCount >= 66 ? 0.096 : (liveCount >= 58 ? 0.078 : 0.056)))
+                    : (liveCount >= 68 ? 0.056 : (liveCount >= 60 ? 0.046 : (liveCount >= 48 ? 0.032 : 0.02)))))
             : (liveCount >= 60 ? 0.022 : (liveCount >= 48 ? 0.016 : 0.012)))
         : 0);
   if (!minGap || now - (state.lastActiveRefreshAt || 0) >= minGap * 1000) return refreshActiveBodies(now);
@@ -3458,12 +5607,12 @@ function sliceSweepCandidatesWindow(candidates, cursorKey = 'rescue', limit = 0)
       let peakLen = 0;
       for (let i = 0; i < groups.length; i += 1) {
         const group = groups[i];
-        const len = group?.length || 0;
+        const len = groupLength(group);
         if (len < minLen) continue;
-        const ids = new Array(len);
-        for (let j = 0; j < len; j += 1) {
-          const id = group[j].id;
-          ids[j] = id;
+        const ids = groupIdsSnapshot(group);
+        if (!ids.length) continue;
+        for (let j = 0; j < ids.length; j += 1) {
+          const id = ids[j];
           const prevLen = lensMap.get(id) || 0;
           if (len > prevLen) lensMap.set(id, len);
         }
@@ -3597,6 +5746,7 @@ function registerLiveBody(body) {
       if (body.plugin.frozen) {
         registerFrozenLiveBody(body);
         state.frozenBodyCount = (state.frozenBodyCount || 0) + 1;
+        trackFrozenSurfaceBody(body);
         bumpFrozenSpatialHashRevision();
       } else {
         registerDynamicLiveBody(body);
@@ -3613,6 +5763,12 @@ function registerLiveBody(body) {
     
 function unregisterLiveBody(body) {
       if (!body?.plugin?._liveRegistered) return;
+      if (body.plugin?.frozen) {
+        markSettledCachesDirtyForBody(body);
+        untrackFrozenSurfaceBody(body);
+        clearSettledClusterTag(body);
+      }
+      removeBodyTouchGraphLinks(body);
       const refs = body.plugin._liveRefs || {};
       unregisterDynamicLiveBody(body);
       unregisterFrozenLiveBody(body);
@@ -4656,9 +6812,16 @@ function syncBodyVisuals() {
         node.hidden = false;
         const zValue = String(100 + Math.round(rawY * 10) + (body.id % 10));
         const filterValue = (body.gameType === 'hazard' || body.gameType === 'fire' || body.gameType === 'buzz') ? 'none' : (trendBody ? 'saturate(1.1)' : 'none');
+        const liveCountForVisuals = state.liveBodies?.length || 0;
         const crowdVisualSkip = !state.forceFullVisualSync
-          && (state.liveBodies?.length || 0) >= 40
-          && (state.fastMovingBodiesCount || 0) <= ((state.liveBodies?.length || 0) >= 58 ? 0 : 1);
+          && liveCountForVisuals >= 40
+          && (state.fastMovingBodiesCount || 0) <= (liveCountForVisuals >= 58 ? 0 : 1);
+        const stableHeavyVisualCrowd = crowdVisualSkip
+          && liveCountForVisuals >= 48
+          && (state.highPrecisionBodyCount || 0) <= 0
+          && (state.activeMovingCount || 0) <= (liveCountForVisuals >= 60 ? 0 : 1)
+          && !(state.repairQueueIds?.size || 0)
+          && !(state.groupScanDirtyIds?.size || 0);
         const stationaryVisualSkip = crowdVisualSkip
           && !trendBody
           && !forecastReady
@@ -4669,15 +6832,24 @@ function syncBodyVisuals() {
           && Math.abs(body.velocity?.x || 0) < 0.06
           && Math.abs(body.velocity?.y || 0) < 0.065
           && Math.abs(body.angularVelocity || 0) < 0.03;
+        const deepQuietVisual = stableHeavyVisualCrowd
+          && !trendBody
+          && !forecastReady
+          && !previewLen
+          && !nextPreviewLen
+          && !glowSet?.has(body.id)
+          && isDeepQuietBody(body, boardH, liveCountForVisuals, now);
+        const positionThreshold = (stationaryVisualSkip ? perfSettings.transformPositionThreshold * 0.44 : perfSettings.transformPositionThreshold) * (stableHeavyVisualCrowd ? 1.85 : 1) * (deepQuietVisual ? 1.45 : 1);
+        const angleThreshold = (stationaryVisualSkip ? perfSettings.transformAngleThreshold * 0.5 : perfSettings.transformAngleThreshold) * (stableHeavyVisualCrowd ? 1.58 : 1) * (deepQuietVisual ? 1.36 : 1);
         const canSkipTransform = !!node._transform && !state.forceFullVisualSync
-          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < (stationaryVisualSkip ? perfSettings.transformPositionThreshold * 0.44 : perfSettings.transformPositionThreshold)
-          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < (stationaryVisualSkip ? perfSettings.transformPositionThreshold * 0.44 : perfSettings.transformPositionThreshold)
-          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < (stationaryVisualSkip ? perfSettings.transformAngleThreshold * 0.5 : perfSettings.transformAngleThreshold)
+          && Math.abs((node._drawX ?? nextDrawX) - nextDrawX) < positionThreshold
+          && Math.abs((node._drawY ?? nextDrawY) - nextDrawY) < positionThreshold
+          && Math.abs((node._drawAngle ?? nextAngle) - nextAngle) < angleThreshold
           && Math.abs((node._drawScale ?? scale) - scale) < 0.001
           && node.className === className
           && node._zIndex === zValue
           && node._filter === filterValue
-          && (body.isSleeping || stationaryVisualSkip);
+          && (body.isSleeping || stationaryVisualSkip || deepQuietVisual);
         if (!canSkipTransform) {
           const transformValue = `translate3d(${nextDrawX}px, ${nextDrawY}px, 0) rotate(${nextAngle}rad) scale(${scale})`;
           if (node._transform !== transformValue) {
@@ -4710,7 +6882,7 @@ function syncBodyVisuals() {
 
     const BASE_STAGE_W = 1206;
     const BASE_STAGE_H = 2144;
-    const BUILD_ID = "v149_perfmax_hashsig_freezeskip_maintcache";
+    const BUILD_ID = "v163_incremental_frozen_roofline_v16";
 
     function measureViewportSize() {
       const docEl = document.documentElement;
@@ -6406,7 +8578,14 @@ function makeBody(x, y, index, specialType = false) {
       state.frozenSpatialHashCache = null;
       state.frozenSpatialHashCacheStamp = -1;
       state.frozenSpatialHashCacheRevision = -1;
-      if (resetRevision) state.frozenSpatialHashRevision = 0;
+      if (resetRevision) {
+        state.frozenSpatialHashRevision = 0;
+        state.frozenSurfaceCache = null;
+        state.frozenSurfaceCacheRevision = -1;
+        state.frozenSurfaceBodiesByCell = new Map();
+        state.frozenSurfaceTopYByCell = new Map();
+        state.frozenSurfaceRevision = 0;
+      }
     }
 
     function bumpFrozenSpatialHashRevision() {
@@ -6551,9 +8730,15 @@ function makeBody(x, y, index, specialType = false) {
       const liveCount = state.liveBodies?.length || 0;
       const dynamicCount = state.dynamicBodies?.length || 0;
       const frozenHeavy = liveCount >= 36 && dynamicCount <= Math.max(4, Math.floor(liveCount * 0.18));
-      const maxAgeMs = frozenHeavy
-        ? (liveCount >= 60 ? 168 : (liveCount >= 48 ? 132 : 96))
-        : (liveCount >= 60 ? 108 : (liveCount >= 48 ? 88 : (liveCount >= 36 ? 64 : 0)));
+      const stableHeavyCrowd = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+      const ultraDenseQuiet = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const maxAgeMs = ultraDenseQuiet
+        ? (liveCount >= 72 ? 760 : (liveCount >= 64 ? 600 : 460))
+        : (stableHeavyCrowd
+            ? (liveCount >= 72 ? 520 : (liveCount >= 64 ? 420 : 320))
+            : (frozenHeavy
+                ? (liveCount >= 60 ? 168 : (liveCount >= 48 ? 132 : 96))
+                : (liveCount >= 60 ? 108 : (liveCount >= 48 ? 88 : (liveCount >= 36 ? 64 : 0)))));
       if (!force && state.boardStatsCache) {
         if (state.boardStatsCacheRevision === revision) return state.boardStatsCache;
         if (maxAgeMs > 0 && now - (state.boardStatsCacheAt || 0) <= maxAgeMs) return state.boardStatsCache;
@@ -6620,18 +8805,27 @@ function rescueFloatingBodies() {
       const boardWidth = boardInfo.width || 0;
       const now = performance.now();
       const dynamicCount = state.dynamicBodies?.length || 0;
+      const liveCount = state.liveBodies?.length || 0;
       const mostlyFrozenCrowd = isMostlyFrozenCrowd(bodies.length, dynamicCount);
+      const ultraDenseStable = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
       const worldRevision = currentWorldHashSignature();
       if (worldRevision === (state.lastRescueFullSweepHashRevision ?? -1)
         && !(state.repairQueueIds?.size || 0)
         && (state.activeMovingCount || 0) <= 0
         && (state.highPrecisionBodyCount || 0) <= 0) return;
-      const fullSweepIntervalMs = mostlyFrozenCrowd ? (bodies.length >= 60 ? 4200 : 3400) : 2800;
+      const fullSweepIntervalMs = ultraDenseStable
+        ? (liveCount >= 64 ? 13600 : 10400)
+        : (mostlyFrozenCrowd ? (liveCount >= 60 ? 6200 : 4600) : 2800);
       const fullSweep = dynamicCount <= 12 || now - (state.lastFullRescueSweepAt || 0) > fullSweepIntervalMs || (state.repairQueueIds?.size || 0) >= 4;
       if (fullSweep) state.lastFullRescueSweepAt = now;
       let candidates = getHeavySweepCandidates(fullSweep);
+      if (!fullSweep && ultraDenseStable) candidates = prioritizeDenseMaintenanceCandidates(candidates, boardHeight, liveCount, now);
       if (!fullSweep) {
-        const budget = dynamicCount >= 30 ? 8 : (dynamicCount >= 22 ? 10 : (dynamicCount >= 16 ? 12 : (dynamicCount >= 10 ? 14 : 0)));
+        const budget = ultraDenseStable
+          ? (dynamicCount >= 30 ? 1 : (dynamicCount >= 22 ? 2 : (dynamicCount >= 16 ? 3 : (dynamicCount >= 10 ? 4 : 0))))
+          : (mostlyFrozenCrowd
+              ? (dynamicCount >= 30 ? 6 : (dynamicCount >= 22 ? 8 : (dynamicCount >= 16 ? 10 : (dynamicCount >= 10 ? 12 : 0))))
+              : (dynamicCount >= 30 ? 8 : (dynamicCount >= 22 ? 10 : (dynamicCount >= 16 ? 12 : (dynamicCount >= 10 ? 14 : 0)))));
         if (budget) candidates = sliceSweepCandidatesWindow(candidates, 'rescue', budget);
       }
       if (!candidates.length) return;
@@ -6643,6 +8837,7 @@ function rescueFloatingBodies() {
         const age = now - (body.spawnAt || 0);
         if (age < 260) continue;
         if (body.position.y < 72 || body.position.y > boardHeight - 60) continue;
+        if (!fullSweep && ultraDenseStable && isDeepQuietBody(body, boardHeight, liveCount, now) && !body.floatStartAt && !body.outOfRangeSince) continue;
         const movingEnough = Math.abs(body.velocity?.y || 0) > 0.12 || Math.abs(body.velocity?.x || 0) > 0.16 || Math.abs(body.angularVelocity || 0) > 0.04;
         if (movingEnough) {
           body.floatStartAt = 0;
@@ -6694,18 +8889,27 @@ function rescueFloatingBodies() {
       const boardHeight = boardInfo.height || 0;
       const now = performance.now();
       const dynamicCount = state.dynamicBodies?.length || 0;
+      const liveCount = state.liveBodies?.length || 0;
       const mostlyFrozenCrowd = isMostlyFrozenCrowd(bodies.length, dynamicCount);
+      const ultraDenseStable = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
       const worldRevision = currentWorldHashSignature();
       if (worldRevision === (state.lastOverlapFullSweepHashRevision ?? -1)
         && !(state.repairQueueIds?.size || 0)
         && (state.activeMovingCount || 0) <= 0
         && (state.highPrecisionBodyCount || 0) <= 0) return 0;
-      const fullSweepIntervalMs = mostlyFrozenCrowd ? (bodies.length >= 60 ? 3800 : 3200) : 2600;
+      const fullSweepIntervalMs = ultraDenseStable
+        ? (liveCount >= 64 ? 14400 : 11200)
+        : (mostlyFrozenCrowd ? (liveCount >= 60 ? 5600 : 4000) : 2600);
       const fullSweep = dynamicCount <= 12 || now - (state.lastFullOverlapSweepAt || 0) > fullSweepIntervalMs || (state.repairQueueIds?.size || 0) >= 4;
       if (fullSweep) state.lastFullOverlapSweepAt = now;
       let candidateBodies = getHeavySweepCandidates(fullSweep);
+      if (!fullSweep && ultraDenseStable) candidateBodies = prioritizeDenseMaintenanceCandidates(candidateBodies, boardHeight, liveCount, now);
       if (!fullSweep) {
-        const budget = dynamicCount >= 30 ? 10 : (dynamicCount >= 22 ? 12 : (dynamicCount >= 16 ? 14 : (dynamicCount >= 10 ? 16 : 0)));
+        const budget = ultraDenseStable
+          ? (dynamicCount >= 30 ? 1 : (dynamicCount >= 22 ? 2 : (dynamicCount >= 16 ? 3 : (dynamicCount >= 10 ? 4 : 0))))
+          : (mostlyFrozenCrowd
+              ? (dynamicCount >= 30 ? 8 : (dynamicCount >= 22 ? 10 : (dynamicCount >= 16 ? 12 : (dynamicCount >= 10 ? 14 : 0))))
+              : (dynamicCount >= 30 ? 10 : (dynamicCount >= 22 ? 12 : (dynamicCount >= 16 ? 14 : (dynamicCount >= 10 ? 16 : 0)))));
         if (budget) candidateBodies = sliceSweepCandidatesWindow(candidateBodies, 'overlap', budget);
       }
       if (candidateBodies.length < 1) return 0;
@@ -6724,9 +8928,12 @@ function rescueFloatingBodies() {
         const body = candidateBodies[i];
         if (!body || body.plugin?.pendingRemoval) continue;
         if (now - (body.spawnAt || 0) < 220) continue;
+        const bodyDeepQuiet = !fullSweep && ultraDenseStable && isDeepQuietBody(body, boardHeight, liveCount, now);
+        if (bodyDeepQuiet && !body.floatStartAt && !body.outOfRangeSince) continue;
         visitNearbyFromHash(hash, body, 1, other => {
           if (!other || other.id === body.id || other.plugin?.pendingRemoval) return false;
           other.plugin = other.plugin || {};
+          if (bodyDeepQuiet && !fullSweep && ultraDenseStable && isDeepQuietBody(other, boardHeight, liveCount, now)) return false;
           if (other.plugin._overlapCandidateStamp === candidateStamp && body.id > other.id) return false;
           const dx = other.position.x - body.position.x;
           const dy = other.position.y - body.position.y;
@@ -6860,13 +9067,49 @@ function purgeBrokenBodies() {
 
     function pruneRecentTouchPairs(now = performance.now()) {
       recentTouchPairs.forEach((at, key) => {
-        if (now - at > TOUCH_MEMORY_TTL_MS) recentTouchPairs.delete(key);
+        if (now - at <= currentTouchMemoryTtlMs()) return;
+        recentTouchPairs.delete(key);
+        disconnectLiveTouchGraphPair(key);
       });
     }
 
     function rememberRecentTouch(a, b, now = performance.now()) {
       if (!a || !b || a.id == null || b.id == null) return;
-      recentTouchPairs.set(touchPairKey(a, b), now);
+      const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const graphRelevant = pairSupportsPersistentTouchGraph(a, b);
+      if (isUltraDenseQuietCrowd(liveCount, dynamicCount)) {
+        const boardHeight = state.boardRectCache?.height || boardLogicalRect().height || 0;
+        if (boardHeight > 0 && isDeepQuietBody(a, boardHeight, liveCount, now) && isDeepQuietBody(b, boardHeight, liveCount, now)) return;
+        const recentWindow = liveCount >= 74 ? 360 : (liveCount >= 66 ? 440 : 520);
+        const topBand = liveCount >= 72 ? 360 : (liveCount >= 64 ? 400 : 440);
+        const aPlugin = a.plugin || {};
+        const bPlugin = b.plugin || {};
+        const recentA = now - (a.spawnAt || 0) < recentWindow
+          || (aPlugin.highPrecisionUntil || 0) > now
+          || state.repairQueueIds?.has(a.id)
+          || state.groupScanDirtyIds?.has(a.id)
+          || !a.isSleeping;
+        const recentB = now - (b.spawnAt || 0) < recentWindow
+          || (bPlugin.highPrecisionUntil || 0) > now
+          || state.repairQueueIds?.has(b.id)
+          || state.groupScanDirtyIds?.has(b.id)
+          || !b.isSleeping;
+        const maxSpeed = Math.max(
+          a.speed || 0,
+          b.speed || 0,
+          Math.abs(a.velocity?.x || 0),
+          Math.abs(a.velocity?.y || 0),
+          Math.abs(b.velocity?.x || 0),
+          Math.abs(b.velocity?.y || 0)
+        );
+        const maxAngular = Math.max(Math.abs(a.angularVelocity || 0), Math.abs(b.angularVelocity || 0));
+        const topRelevant = Math.min(Number.isFinite(a.position?.y) ? a.position.y : 9999, Number.isFinite(b.position?.y) ? b.position.y : 9999) <= topBand;
+        if (!recentA && !recentB && !topRelevant && maxSpeed < 0.36 && maxAngular < 0.06) return;
+      }
+      const key = touchPairKey(a, b);
+      recentTouchPairs.set(key, now);
+      if (graphRelevant) connectLiveTouchGraphPair(a, b);
       state.lastRecentTouchAt = now;
     }
 
@@ -6875,26 +9118,66 @@ function purgeBrokenBodies() {
       const key = touchPairKey(a, b);
       const at = recentTouchPairs.get(key);
       if (at == null) return false;
-      if (now - at > TOUCH_MEMORY_TTL_MS) {
+      if (now - at > currentTouchMemoryTtlMs()) {
         recentTouchPairs.delete(key);
+        disconnectLiveTouchGraphPair(key, a.id, b.id);
         return false;
       }
       return true;
     }
 
+    function isScanRelevantContentIndex(index) {
+      if (!Number.isInteger(index)) return false;
+      if (state.clipTime > 0) return true;
+      return index === state.trendIndex || index === state.nextTrendIndex;
+    }
+
+    function isGroupScanRelevantBody(body) {
+      if (!body || body.plugin?.pendingRemoval) return false;
+      const type = body.gameType;
+      if (type === 'content') return isScanRelevantContentIndex(body.contentIndex);
+      return type === 'hazard' || type === 'buzz';
+    }
+
+    function pairSupportsTouchMemory(a, b) {
+      if (!a || !b) return false;
+      const typeA = a.gameType;
+      if (typeA !== b.gameType) return false;
+      if (typeA === 'content') return a.contentIndex === b.contentIndex && isScanRelevantContentIndex(a.contentIndex);
+      return typeA === 'hazard' || typeA === 'buzz';
+    }
+
     function processCollisionTouches(event, activePhase = false) {
       const now = performance.now();
       const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const stableHeavyCrowd = activePhase && isHeavyCrowdStable(liveCount, dynamicCount);
+      const ultraDenseQuiet = activePhase && isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const boardHeight = ultraDenseQuiet ? (state.boardRectCache?.height || boardLogicalRect().height || 0) : 0;
       if (activePhase) {
-        const minGap = liveCount >= 54 ? 132 : (liveCount >= 42 ? 110 : (liveCount >= 32 ? 72 : (liveCount >= 22 ? 42 : 0)));
+        const minGap = ultraDenseQuiet
+          ? (liveCount >= 72 ? 520 : (liveCount >= 64 ? 440 : (liveCount >= 56 ? 360 : 280)))
+          : (stableHeavyCrowd
+              ? (liveCount >= 72 ? 380 : (liveCount >= 64 ? 328 : (liveCount >= 56 ? 272 : 212)))
+              : (liveCount >= 60 ? 138 : (liveCount >= 48 ? 114 : (liveCount >= 36 ? 82 : (liveCount >= 24 ? 46 : 0)))));
         if (minGap && now - (state.lastCollisionActiveRememberAt || 0) < minGap) return;
         state.lastCollisionActiveRememberAt = now;
       }
       const pairs = event?.pairs || EMPTY_BODY_ARRAY;
       const activeIds = state.activeBodyIds;
       const pairLimit = activePhase
-        ? (liveCount >= 60 ? 24 : (liveCount >= 50 ? 32 : (liveCount >= 42 ? 42 : (liveCount >= 34 ? 60 : (liveCount >= 26 ? 84 : pairs.length)))))
+        ? (ultraDenseQuiet
+            ? (liveCount >= 72 ? 1 : (liveCount >= 64 ? 2 : (liveCount >= 56 ? 3 : 5)))
+            : (stableHeavyCrowd
+                ? (liveCount >= 72 ? 3 : (liveCount >= 64 ? 4 : (liveCount >= 56 ? 5 : 8)))
+                : (liveCount >= 64 ? 20 : (liveCount >= 54 ? 28 : (liveCount >= 44 ? 36 : (liveCount >= 34 ? 52 : (liveCount >= 26 ? 76 : pairs.length)))))))
         : pairs.length;
+      if (!pairs.length || pairLimit <= 0) return;
+      const denseSampling = activePhase && liveCount >= 40 && pairs.length > pairLimit * (ultraDenseQuiet ? 2 : (stableHeavyCrowd ? 3 : 5));
+      const scanBudget = denseSampling ? Math.min(pairs.length, pairLimit * (ultraDenseQuiet ? 1 : (stableHeavyCrowd ? 2 : 4))) : pairs.length;
+      const scanStride = denseSampling ? Math.max(1, Math.ceil(pairs.length / Math.max(1, scanBudget))) : 1;
+      const scanStart = denseSampling ? ((state.collisionPairCursor || 0) % pairs.length) : 0;
+      if (denseSampling) state.collisionPairCursor = (scanStart + scanBudget * scanStride) % pairs.length;
       const collisionMarkStamp = (state.collisionMarkStamp || 0) + 1;
       state.collisionMarkStamp = collisionMarkStamp;
       const markDirtyOnce = (body) => {
@@ -6905,28 +9188,54 @@ function purgeBrokenBodies() {
         markGroupScanDirty(body);
       };
       let processed = 0;
-      for (let i = 0; i < pairs.length; i += 1) {
-        if (processed >= pairLimit) break;
-        const pair = pairs[i];
+      const handlePair = (pair) => {
+        if (!pair || processed >= pairLimit) return;
         const a = pair?.bodyA;
         const b = pair?.bodyB;
-        if (!a || !b || a.isStatic || b.isStatic) continue;
-        if (a.plugin?.pendingRemoval || b.plugin?.pendingRemoval) continue;
+        if (!a || !b || a.isStatic || b.isStatic) return;
+        if (a.plugin?.pendingRemoval || b.plugin?.pendingRemoval) return;
         const activeTouch = !activePhase
           || activeIds?.has(a.id)
           || activeIds?.has(b.id)
           || !a.isSleeping
           || !b.isSleeping;
-        if (!activeTouch) continue;
-        rememberRecentTouch(a, b, now);
-        if (!activePhase || activeIds?.has(a.id)) markDirtyOnce(a);
-        if (!activePhase || activeIds?.has(b.id)) markDirtyOnce(b);
+        if (!activeTouch) return;
+        const graphTouchRelevant = pairSupportsPersistentTouchGraph(a, b);
+        const touchMemoryRelevant = pairSupportsTouchMemory(a, b);
+        const markA = isGroupScanRelevantBody(a);
+        const markB = isGroupScanRelevantBody(b);
+        if (!graphTouchRelevant && !markA && !markB) return;
+        if (ultraDenseQuiet) {
+          if (boardHeight > 0 && isDeepQuietBody(a, boardHeight, liveCount, now) && isDeepQuietBody(b, boardHeight, liveCount, now)) return;
+          const topBand = liveCount >= 72 ? 360 : (liveCount >= 64 ? 400 : 440);
+          const recentWindow = liveCount >= 72 ? 360 : (liveCount >= 64 ? 440 : 520);
+          const aActive = activeIds?.has(a.id) || (a.plugin?.highPrecisionUntil || 0) > now || now - (a.spawnAt || 0) < recentWindow || !a.isSleeping;
+          const bActive = activeIds?.has(b.id) || (b.plugin?.highPrecisionUntil || 0) > now || now - (b.spawnAt || 0) < recentWindow || !b.isSleeping;
+          const topRelevant = Math.min(Number.isFinite(a.position?.y) ? a.position.y : 9999, Number.isFinite(b.position?.y) ? b.position.y : 9999) <= topBand;
+          if (!aActive && !bActive && !topRelevant) return;
+        }
+        if (graphTouchRelevant || touchMemoryRelevant) rememberRecentTouch(a, b, now);
+        if (markA && (!activePhase || activeIds?.has(a.id) || ultraDenseQuiet)) markDirtyOnce(a);
+        if (markB && (!activePhase || activeIds?.has(b.id) || ultraDenseQuiet)) markDirtyOnce(b);
         processed += 1;
+      };
+      if (denseSampling) {
+        for (let scan = 0, offset = 0; scan < scanBudget && processed < pairLimit; scan += 1, offset += scanStride) {
+          handlePair(pairs[(scanStart + offset) % pairs.length]);
+        }
+      } else {
+        for (let i = 0; i < pairs.length && processed < pairLimit; i += 1) {
+          handlePair(pairs[i]);
+        }
       }
-      if (now >= recentTouchPairsNextPruneAt || recentTouchPairs.size > 640) {
-        recentTouchPairsNextPruneAt = now + 140;
+      const recentTouchSoftCap = currentRecentTouchSoftCap();
+      if (now >= recentTouchPairsNextPruneAt || recentTouchPairs.size > recentTouchSoftCap) {
+        recentTouchPairsNextPruneAt = now + (ultraDenseQuiet ? 96 : 120);
         pruneRecentTouchPairs(now);
-        if (recentTouchPairs.size > 1200) recentTouchPairs.clear();
+        if (recentTouchPairs.size > currentRecentTouchHardCap()) {
+          recentTouchPairs.clear();
+          clearAllLiveTouchGraph();
+        }
       }
     }
 
@@ -7012,7 +9321,19 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null, scanNow = perf
       const matchOther = useWorldHash
         ? ((other) => !!other && !other.plugin?.pendingRemoval && other.gameType === 'content' && other.contentIndex === targetIndex && other.plugin?._eligibleGroupStamp === targetBodies._eligibleGroupStamp)
         : null;
-      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, 0.5, scanNow, prebuiltHash, matchOther);
+      const useHybrid = shouldUseSettledHybridGroupSearch(liveCount, targetBodies.length, Array.isArray(seedBodies) ? seedBodies.length : 0);
+      if (!Array.isArray(seedBodies) || !seedBodies.length) {
+        if (useHybrid) {
+          const hybridGroups = buildHybridTouchGroups(targetBodies, 'content', targetIndex, 0.5, null, scanNow, prebuiltHash, matchOther);
+          if (hybridGroups.length) return hybridGroups;
+        }
+        const useTouchGraph = shouldUseTouchGraphGroupSearch(liveCount, targetBodies.length, targetBodies.length);
+        if (useTouchGraph) {
+          const graphGroups = buildTouchGroupsFromGraph(targetBodies, null, scanNow, matchOther);
+          if (graphGroups.some(group => (group?.length || 0) >= 2)) return graphGroups;
+        }
+        return buildTouchGroupsFromBodies(targetBodies, 0.5, scanNow, prebuiltHash, matchOther);
+      }
       scratchGroupSeedBodies.length = 0;
       const now = scanNow;
       for (let i = 0; i < seedBodies.length; i += 1) {
@@ -7023,6 +9344,15 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null, scanNow = perf
         scratchGroupSeedBodies.push(body);
       }
       if (!scratchGroupSeedBodies.length) return [];
+      if (useHybrid) {
+        const hybridGroups = buildHybridTouchGroups(targetBodies, 'content', targetIndex, 0.5, scratchGroupSeedBodies, scanNow, prebuiltHash, matchOther);
+        if (hybridGroups.some(group => (group?.length || 0) >= 2) || (liveCount >= 52 && targetBodies.length >= 6)) return hybridGroups;
+      }
+      const useTouchGraph = shouldUseTouchGraphGroupSearch(liveCount, targetBodies.length, scratchGroupSeedBodies.length);
+      if (useTouchGraph) {
+        const graphGroups = buildTouchGroupsFromGraph(targetBodies, scratchGroupSeedBodies, scanNow, matchOther);
+        if (graphGroups.some(group => (group?.length || 0) >= 2) || (liveCount >= 52 && targetBodies.length >= 6)) return graphGroups;
+      }
       return buildTouchGroupsNearSeeds(targetBodies, scratchGroupSeedBodies, 0.5, scanNow, prebuiltHash, matchOther);
     }
 
@@ -7031,6 +9361,7 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null, scanNow = perf
       if ((state.activeMovingCount || 0) > 0) return '';
       if ((state.highPrecisionBodyCount || 0) > 0) return '';
       if ((state.groupScanDirtyIds?.size || 0) > 0) return '';
+      if ((state.settledGroupCacheDirtyKeys?.size || 0) > 0) return '';
       if ((state.repairQueueIds?.size || 0) > 0) return '';
       if (recentTouchPairs.size > 0) return '';
       if (!(state.liveBodies?.length || 0)) return '';
@@ -7048,12 +9379,12 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null, scanNow = perf
         const preview = [];
         for (let idx = 0; idx < CONTENTS.length; idx += 1) preview.push(...buildTouchGroupsForIndex(idx, null, scanNow));
         applyPreviewState(preview, EMPTY_ID_ARRAY);
-        result = preview.filter(g => g.length >= 2 && g.every(body => body.speed < 4.8));
+        result = preview.filter(g => groupLength(g) >= 2 && groupBodiesBelowSpeed(g, 4.8));
       } else {
         const groups = buildTouchGroupsForIndex(state.trendIndex, null, scanNow);
         const nextGroups = buildTouchGroupsForIndex(state.nextTrendIndex, null, scanNow);
         applyPreviewState(groups, nextGroups);
-        result = groups.filter(g => g.length >= 3 && g.every(body => body.speed < 4.8));
+        result = groups.filter(g => groupLength(g) >= 3 && groupBodiesBelowSpeed(g, 4.8));
       }
       if (cacheKey) {
         state.lastStableScanCacheKey = cacheKey;
@@ -7082,15 +9413,23 @@ function buildTouchGroupsForIndex(targetIndex, seedBodies = null, scanNow = perf
       const base = activeScan ? responsiveBase : (perfSettings.scanInterval || 0.82);
       const crowdBoost = activeScan
         ? (liveCount >= 56 ? 1.12 : (liveCount >= 42 ? 1.06 : 1))
-        : (liveCount >= 60 ? 1.74 : (liveCount >= 50 ? 1.56 : (liveCount >= 40 ? 1.34 : (liveCount >= 30 ? 1.18 : 1))));
+        : (liveCount >= 60 ? 1.82 : (liveCount >= 50 ? 1.62 : (liveCount >= 40 ? 1.38 : (liveCount >= 30 ? 1.18 : 1))));
       const frozenHeavyBoost = !activeScan && liveCount >= 40 && dynamicCount <= Math.max(4, Math.floor(liveCount * 0.22))
-        ? (liveCount >= 60 ? 1.18 : 1.1)
+        ? (liveCount >= 60 ? 1.22 : 1.12)
         : 1;
       const mostlyFrozenCrowd = !activeScan && isMostlyFrozenCrowd(liveCount, dynamicCount);
-      const quietCrowdBoost = mostlyFrozenCrowd
-        ? (liveCount >= 64 ? 1.34 : (liveCount >= 52 ? 1.22 : 1.12))
+      const ultraDenseQuiet = !activeScan && isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const quietCrowdBoost = ultraDenseQuiet
+        ? (liveCount >= 72 ? 1.52 : (liveCount >= 64 ? 1.42 : 1.28))
+        : (mostlyFrozenCrowd
+            ? (liveCount >= 64 ? 1.34 : (liveCount >= 52 ? 1.22 : 1.12))
+            : 1);
+      const stableHeavyBoost = isHeavyCrowdStable(liveCount, dynamicCount)
+        ? (ultraDenseQuiet
+            ? (liveCount >= 72 ? 2.64 : (liveCount >= 64 ? 2.28 : (liveCount >= 56 ? 1.92 : 1.5)))
+            : (liveCount >= 72 ? 1.98 : (liveCount >= 64 ? 1.78 : (liveCount >= 56 ? 1.54 : (liveCount >= 48 ? 1.3 : 1.16)))))
         : 1;
-      return base * crowdFactor * crowdBoost * frozenHeavyBoost * quietCrowdBoost;
+      return base * crowdFactor * crowdBoost * frozenHeavyBoost * quietCrowdBoost * stableHeavyBoost;
     }
 
 
@@ -7107,7 +9446,19 @@ function buildTouchGroupsForType(gameType, contentIndex = null, seedBodies = nul
       const matchOther = useWorldHash
         ? ((other) => !!other && !other.plugin?.pendingRemoval && other.gameType === gameType && (gameType !== 'content' || other.contentIndex === contentIndex) && other.plugin?._eligibleGroupStamp === targetBodies._eligibleGroupStamp)
         : null;
-      if (!Array.isArray(seedBodies) || !seedBodies.length) return buildTouchGroupsFromBodies(targetBodies, loosePad, scanNow, prebuiltHash, matchOther);
+      const useHybrid = shouldUseSettledHybridGroupSearch(liveCount, targetBodies.length, Array.isArray(seedBodies) ? seedBodies.length : 0);
+      if (!Array.isArray(seedBodies) || !seedBodies.length) {
+        if (useHybrid) {
+          const hybridGroups = buildHybridTouchGroups(targetBodies, gameType, contentIndex, loosePad, null, scanNow, prebuiltHash, matchOther);
+          if (hybridGroups.length) return hybridGroups;
+        }
+        const useTouchGraph = shouldUseTouchGraphGroupSearch(liveCount, targetBodies.length, targetBodies.length);
+        if (useTouchGraph) {
+          const graphGroups = buildTouchGroupsFromGraph(targetBodies, null, scanNow, matchOther);
+          if (graphGroups.some(group => (group?.length || 0) >= 2)) return graphGroups;
+        }
+        return buildTouchGroupsFromBodies(targetBodies, loosePad, scanNow, prebuiltHash, matchOther);
+      }
       scratchGroupSeedBodies.length = 0;
       const now = scanNow;
       for (let i = 0; i < seedBodies.length; i += 1) {
@@ -7118,6 +9469,15 @@ function buildTouchGroupsForType(gameType, contentIndex = null, seedBodies = nul
         scratchGroupSeedBodies.push(body);
       }
       if (!scratchGroupSeedBodies.length) return [];
+      if (useHybrid) {
+        const hybridGroups = buildHybridTouchGroups(targetBodies, gameType, contentIndex, loosePad, scratchGroupSeedBodies, scanNow, prebuiltHash, matchOther);
+        if (hybridGroups.some(group => (group?.length || 0) >= 2) || (liveCount >= 48 && targetBodies.length >= 5)) return hybridGroups;
+      }
+      const useTouchGraph = shouldUseTouchGraphGroupSearch(liveCount, targetBodies.length, scratchGroupSeedBodies.length);
+      if (useTouchGraph) {
+        const graphGroups = buildTouchGroupsFromGraph(targetBodies, scratchGroupSeedBodies, scanNow, matchOther);
+        if (graphGroups.some(group => (group?.length || 0) >= 2) || (liveCount >= 48 && targetBodies.length >= 5)) return graphGroups;
+      }
       return buildTouchGroupsNearSeeds(targetBodies, scratchGroupSeedBodies, loosePad, scanNow, prebuiltHash, matchOther);
     }
 
@@ -7134,7 +9494,7 @@ function scanAllClearableGroups() {
       if (state.groupScanDirtyIds instanceof Set) {
         state.groupScanDirtyIds.forEach(id => {
           const body = bodyById(id);
-          if (!body || body.plugin?.pendingRemoval) return;
+          if (!body || body.plugin?.pendingRemoval || !isGroupScanRelevantBody(body)) return;
           body.plugin = body.plugin || {};
           if (body.plugin._scanSeedStamp === seedStamp) return;
           body.plugin._scanSeedStamp = seedStamp;
@@ -7143,7 +9503,7 @@ function scanAllClearableGroups() {
       }
       for (let i = 0; i < active.length; i += 1) {
         const body = active[i];
-        if (!body || body.plugin?.pendingRemoval) continue;
+        if (!body || body.plugin?.pendingRemoval || !isGroupScanRelevantBody(body)) continue;
         body.plugin = body.plugin || {};
         if (body.plugin._scanSeedStamp === seedStamp) continue;
         body.plugin._scanSeedStamp = seedStamp;
@@ -7151,10 +9511,29 @@ function scanAllClearableGroups() {
       }
       const seedBodies = scratchScanSeedBodies;
       const liveCount = state.liveBodies?.length || 0;
+      const dynamicCount = state.dynamicBodies?.length || 0;
+      const stableHeavyCrowd = liveCount >= 56 && isHeavyCrowdStable(liveCount, dynamicCount);
+      const ultraDenseQuiet = liveCount >= 62 && stableHeavyCrowd && (state.fastMovingBodiesCount || 0) <= 0 && (state.highPrecisionBodyCount || 0) <= 0;
+      if (stableHeavyCrowd && seedBodies.length > denseScanSeedLimit(liveCount)) prioritizeDenseScanSeeds(seedBodies, liveCount, scanNow);
+      if (ultraDenseQuiet && seedBodies.length > 4) {
+        const boardHeight = boardLogicalRect().height || 0;
+        const surfaceCache = buildFrozenSurfaceCache();
+        let write = 0;
+        for (let i = 0; i < seedBodies.length; i += 1) {
+          const body = seedBodies[i];
+          if (!body) continue;
+          if (surfaceCache && isBuriedFrozenStableBody(body, surfaceCache, liveCount, scanNow)) continue;
+          if (boardHeight > 0 && isDeepQuietBody(body, boardHeight, liveCount, scanNow)) continue;
+          seedBodies[write++] = body;
+        }
+        if (write < seedBodies.length) seedBodies.length = write;
+      }
       const bigBuzzPairs = state.clipTime > 0;
       const fullScanIntervalMs = bigBuzzPairs
-        ? (liveCount >= 46 ? 1380 : (liveCount >= 34 ? 1200 : 1600))
-        : (liveCount >= 56 ? 4600 : (liveCount >= 42 ? 3800 : (liveCount >= 34 ? 3200 : 2400)));
+        ? (ultraDenseQuiet ? (liveCount >= 46 ? 1960 : 2140) : (liveCount >= 46 ? 1480 : (liveCount >= 34 ? 1260 : 1680)))
+        : (ultraDenseQuiet
+            ? (liveCount >= 70 ? 11800 : (liveCount >= 60 ? 9600 : 8200))
+            : (liveCount >= 56 ? 5600 : (liveCount >= 42 ? 4300 : (liveCount >= 34 ? 3400 : 2400))));
       const periodicFullScan = now - (state.lastFullGroupScanAt || 0) > fullScanIntervalMs;
       const crowded = liveCount >= 28;
       const tooManySeeds = seedBodies.length >= Math.max(12, liveCount * 0.45);
@@ -7230,10 +9609,10 @@ function scanAllClearableGroups() {
       }
       state.groupScanDirtyIds?.clear();
       return groups.filter(g => {
-        const type = g[0]?.gameType;
+        const type = groupType(g);
         const special = type === 'hazard' || type === 'buzz';
         const minLen = special ? 3 : contentMinLen;
-        return g.length >= minLen && g.every(body => body.speed < (special ? 6.4 : 4.8));
+        return groupLength(g) >= minLen && groupBodiesBelowSpeed(g, special ? 6.4 : 4.8);
       });
     }
 
@@ -7293,22 +9672,24 @@ function scanAllClearableGroups() {
     }
 
     function queueGroupClear(group) {
-      if (!group?.length) return false;
+      if (groupLength(group) <= 0) return false;
+      const bodies = materializeGroupBodies(group, scratchMaterializedGroupBodies);
+      if (!bodies.length) return false;
       const now = performance.now();
-      const contentIndex = group[0].contentIndex;
+      const contentIndex = bodies[0].contentIndex;
       const pending = state.pendingTrendClear;
       if (!pending || pending.contentIndex !== contentIndex) {
-        state.pendingTrendClear = { contentIndex, ids:group.map(body => body.id), dueAt:now + 200 };
+        state.pendingTrendClear = { contentIndex, ids:bodies.map(body => body.id), dueAt:now + 200 };
       } else {
-        const merged = new Set([...(pending.ids || []), ...group.map(body => body.id)]);
+        const merged = new Set([...(pending.ids || []), ...bodies.map(body => body.id)]);
         pending.ids = Array.from(merged);
         pending.dueAt = Math.max(pending.dueAt || 0, now + 200);
       }
       const accent = CONTENTS[contentIndex]?.accent || '#ffffff';
-      const center = group.reduce((acc, body) => { acc.x += body.position.x; acc.y += body.position.y; return acc; }, { x:0, y:0 });
-      center.x /= group.length;
-      center.y /= group.length;
-      addRing(center.x, center.y, accent, 16 + group.length * 2, 150);
+      const center = bodies.reduce((acc, body) => { acc.x += body.position.x; acc.y += body.position.y; return acc; }, { x:0, y:0 });
+      center.x /= bodies.length;
+      center.y /= bodies.length;
+      addRing(center.x, center.y, accent, 16 + bodies.length * 2, 150);
       updatePendingClearVisual(state.pendingTrendClear.ids);
       return true;
     }
@@ -7318,8 +9699,8 @@ function scanAllClearableGroups() {
       if (liveSpecialCount('hazard') >= 3) groups.push(...buildTouchGroupsForType('hazard', null, null, scanNow));
       if (liveSpecialCount('buzz') >= 3) groups.push(...buildTouchGroupsForType('buzz', null, null, scanNow));
       return groups.filter(g => {
-        const type = g[0]?.gameType;
-        return (type === 'hazard' || type === 'buzz') && g.length >= 3 && g.every(body => body.speed < 6.4);
+        const type = groupType(g);
+        return (type === 'hazard' || type === 'buzz') && groupLength(g) >= 3 && groupBodiesBelowSpeed(g, 6.4);
       });
     }
 
@@ -7339,22 +9720,24 @@ function scanAllClearableGroups() {
       let bestY = Number.POSITIVE_INFINITY;
       for (let i = 0; i < groups.length; i += 1) {
         const group = groups[i];
-        if (!group?.length) continue;
-        const type = group[0]?.gameType;
+        const len = groupLength(group);
+        if (len <= 0) continue;
+        const type = groupType(group);
         const priority = type === 'hazard' ? 3 : (type === 'buzz' ? 2 : 1);
-        let ySum = 0;
-        for (let j = 0; j < group.length; j += 1) ySum += group[j].position.y;
+        const ySum = groupYSum(group);
         if (priority > bestPriority
-          || (priority === bestPriority && group.length > bestLen)
-          || (priority === bestPriority && group.length === bestLen && ySum < bestY)) {
+          || (priority === bestPriority && len > bestLen)
+          || (priority === bestPriority && len === bestLen && ySum < bestY)) {
           bestGroup = group;
           bestPriority = priority;
-          bestLen = group.length;
+          bestLen = len;
           bestY = ySum;
         }
       }
       if (!bestGroup) return false;
-      clearGroup(bestGroup);
+      const bodies = materializeGroupBodies(bestGroup, scratchMaterializedGroupBodies);
+      if (!bodies.length) return false;
+      clearGroup(bodies);
       return true;
     }
 
@@ -8331,32 +10714,49 @@ function stepPhysics(frameDt) {
   const baseFixedDeltaMs = state.fixedDeltaMs || (1000 / 36);
   const highPrecision = needsHighPrecisionPhysics(now);
   const liveCount = state.liveBodies?.length || 0;
+  const dynamicCount = state.dynamicBodies?.length || 0;
   const crowdRelaxed = !highPrecision
     && liveCount >= 40
     && (state.highPrecisionBodyCount || 0) <= 0
     && (state.fastMovingBodiesCount || 0) <= (liveCount >= 58 ? 0 : 1)
-    && (state.activeMovingCount || 0) <= Math.max(4, Math.floor(liveCount * 0.14))
+    && (state.activeMovingCount || 0) <= Math.max(3, Math.floor(liveCount * 0.12))
+    && !(state.repairQueueIds?.size || 0);
+  const ultraRelaxed = crowdRelaxed && isHeavyCrowdStable(liveCount, dynamicCount);
+  const ultraDenseStable = ultraRelaxed && liveCount >= 56;
+  const ultraDenseQuiet = ultraDenseStable
+    && recentTouchPairs.size === 0
+    && (state.fastMovingBodiesCount || 0) <= 0
+    && (state.highPrecisionBodyCount || 0) <= 0
+    && (state.activeMovingCount || 0) <= 1
     && !(state.repairQueueIds?.size || 0);
   const fixedDeltaMs = highPrecision
     ? Math.min(baseFixedDeltaMs, 1000 / 48)
-    : (crowdRelaxed
-        ? Math.max(baseFixedDeltaMs, liveCount >= 64 ? 1000 / 24 : (liveCount >= 54 ? 1000 / 26 : (liveCount >= 44 ? 1000 / 28 : 1000 / 30)))
-        : baseFixedDeltaMs);
+    : (ultraDenseQuiet
+        ? Math.max(baseFixedDeltaMs, liveCount >= 74 ? 1000 / 16 : (liveCount >= 66 ? 1000 / 17 : (liveCount >= 58 ? 1000 / 18 : 1000 / 19)))
+        : (ultraRelaxed
+            ? Math.max(baseFixedDeltaMs, liveCount >= 74 ? 1000 / 17 : (liveCount >= 66 ? 1000 / 18 : (liveCount >= 58 ? 1000 / 19 : 1000 / 20)))
+            : (crowdRelaxed
+                ? Math.max(baseFixedDeltaMs, liveCount >= 68 ? 1000 / 22 : (liveCount >= 58 ? 1000 / 24 : (liveCount >= 48 ? 1000 / 26 : 1000 / 28)))
+                : baseFixedDeltaMs)));
   const maxSteps = highPrecision ? Math.max(2, state.maxPhysicsSteps || 1) : 1;
   applyPhysicsQuality(highPrecision);
   if (liveCount > 0 && (state.activeMovingCount || 0) <= 0 && (state.highPrecisionBodyCount || 0) <= 0 && !(state.repairQueueIds?.size) && !(state.groupScanDirtyIds?.size)) {
     state.physicsAccumulator = 0;
     return;
   }
-  const thawIntervalMs = crowdRelaxed
-    ? (liveCount >= 52 ? 156 : (liveCount >= 38 ? 124 : 88))
-    : (liveCount >= 52 ? 124 : (liveCount >= 38 ? 96 : (liveCount >= 26 ? 68 : 44)));
+  const thawIntervalMs = ultraDenseQuiet
+    ? (liveCount >= 70 ? 320 : (liveCount >= 60 ? 272 : 224))
+    : (ultraRelaxed
+        ? (liveCount >= 70 ? 256 : (liveCount >= 60 ? 220 : 176))
+        : (crowdRelaxed
+            ? (liveCount >= 52 ? 156 : (liveCount >= 38 ? 124 : 88))
+            : (liveCount >= 52 ? 124 : (liveCount >= 38 ? 96 : (liveCount >= 26 ? 68 : 44)))));
   if (now - (state.lastThawNearActiveAt || 0) >= thawIntervalMs) {
     state.lastThawNearActiveAt = now;
     thawFrozenBodiesNearActive(now);
   }
-  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + (crowdRelaxed ? 1.85 : 1.35)));
-  if (crowdRelaxed && state.physicsAccumulator < fixedDeltaMs * 0.96) return;
+  state.physicsAccumulator = Math.min((state.physicsAccumulator || 0) + frameDt * 1000, fixedDeltaMs * (maxSteps + (ultraDenseQuiet ? 0.44 : (ultraDenseStable ? 0.64 : (ultraRelaxed ? 0.9 : (crowdRelaxed ? 1.7 : 1.35))))));
+  if ((ultraDenseQuiet && state.physicsAccumulator < fixedDeltaMs * 0.9995) || (ultraRelaxed && state.physicsAccumulator < fixedDeltaMs * 0.998) || (crowdRelaxed && state.physicsAccumulator < fixedDeltaMs * 0.97)) return;
   let steps = 0;
   while (state.physicsAccumulator >= fixedDeltaMs && steps < maxSteps) {
     Engine.update(engine, fixedDeltaMs);
@@ -8369,9 +10769,9 @@ function stepPhysics(frameDt) {
     const dynamicCount = state.dynamicBodies?.length || 0;
     const canUseTrackedRefresh = !highPrecision
       && steps <= 1
-      && liveCount >= 46
-      && dynamicCount >= 18
-      && dynamicCount > ((state.activeBodies?.length || 0) + 6)
+      && liveCount >= 40
+      && dynamicCount >= 14
+      && dynamicCount > ((state.activeBodies?.length || 0) + 4)
       && (state.highPrecisionBodyCount || 0) <= 0
       && (state.fastMovingBodiesCount || 0) <= (liveCount >= 60 ? 0 : 1)
       && !(state.repairQueueIds?.size || 0);
@@ -8396,8 +10796,20 @@ function requestLoop(ts) {
       stepPhysics(frameDt);
 
       state.visualTimer += frameDt;
+      const visualLiveCount = state.liveBodies?.length || 0;
+      const visualDynamicCount = state.dynamicBodies?.length || 0;
       const forceVisualNow = hasFastMovingBodies();
-      if (state.visualTimer >= perfSettings.visualInterval || forceVisualNow) {
+      const stableHeavyVisualCrowd = isHeavyCrowdStable(visualLiveCount, visualDynamicCount);
+      const ultraDenseQuietVisualCrowd = stableHeavyVisualCrowd
+        && visualLiveCount >= 62
+        && (state.activeMovingCount || 0) <= 0
+        && recentTouchPairs.size === 0;
+      const visualInterval = stableHeavyVisualCrowd
+        ? perfSettings.visualInterval * (ultraDenseQuietVisualCrowd
+            ? (visualLiveCount >= 74 ? 3.16 : (visualLiveCount >= 66 ? 2.74 : (visualLiveCount >= 58 ? 2.26 : 1.84)))
+            : (visualLiveCount >= 74 ? 2.86 : (visualLiveCount >= 66 ? 2.46 : (visualLiveCount >= 58 ? 2.04 : 1.68))))
+        : perfSettings.visualInterval;
+      if (state.visualTimer >= visualInterval || forceVisualNow) {
         const visualDt = forceVisualNow ? Math.max(frameDt, state.visualTimer) : state.visualTimer;
         if (state.particles.length || state.rings.length || state.fxNeedsClear) updateFx(visualDt);
         if (hasPendingVisualWork()) syncBodyVisuals();
@@ -8413,8 +10825,21 @@ function requestLoop(ts) {
         && (state.highPrecisionBodyCount || 0) <= 0
         && (state.activeMovingCount || 0) <= 1
         && recentTouchPairs.size === 0) || staticCrowdLogic;
+      const stableHeavyLogicCrowd = isHeavyCrowdStable(preLogicLiveCount, preLogicDynamicCount);
+      const ultraDenseQuietLogic = stableHeavyLogicCrowd
+        && preLogicLiveCount >= 62
+        && (state.activeMovingCount || 0) <= 0
+        && recentTouchPairs.size === 0;
       const logicFrameMs = crowdLogicRelaxed
-        ? Math.max(perfSettings.logicFrameMs || 0, staticCrowdLogic ? (preLogicLiveCount >= 60 ? 52 : 46) : (preLogicLiveCount >= 60 ? 42 : 36))
+        ? Math.max(perfSettings.logicFrameMs || 0, staticCrowdLogic
+            ? (ultraDenseQuietLogic
+                ? (preLogicLiveCount >= 74 ? 132 : (preLogicLiveCount >= 66 ? 112 : (preLogicLiveCount >= 58 ? 92 : (preLogicLiveCount >= 48 ? 70 : 52))))
+                : (preLogicLiveCount >= 74 ? 116 : (preLogicLiveCount >= 66 ? 98 : (preLogicLiveCount >= 58 ? 82 : (preLogicLiveCount >= 48 ? 62 : 48)))))
+            : (stableHeavyLogicCrowd
+                ? (ultraDenseQuietLogic
+                    ? (preLogicLiveCount >= 74 ? 86 : (preLogicLiveCount >= 66 ? 74 : (preLogicLiveCount >= 58 ? 62 : 48)))
+                    : (preLogicLiveCount >= 74 ? 74 : (preLogicLiveCount >= 66 ? 64 : (preLogicLiveCount >= 58 ? 54 : 44))))
+                : (preLogicLiveCount >= 60 ? 42 : 36)))
         : (perfSettings.logicFrameMs || 0);
       if (state.lastLogicTs && ts - state.lastLogicTs < logicFrameMs) return;
       const dt = clamp((ts - state.lastLogicTs) / 1000, 0.001, 0.08);
@@ -8547,9 +10972,10 @@ function requestLoop(ts) {
       state.freezeTimer += dt;
       const dynamicCount = state.dynamicBodies?.length || 0;
       const mostlyFrozenCrowd = isMostlyFrozenCrowd(liveCount, dynamicCount);
-      const freezeInterval = (perfSettings.freezeCheckInterval || 0.42) * Math.min(1.12, 0.94 + (crowdFactor - 1) * 0.08) * (mostlyFrozenCrowd ? 1.08 : 1);
-      const cleanupInterval = perfSettings.cleanupInterval * crowdFactor * (mostlyFrozenCrowd ? 1.32 : 1);
-      const rescueInterval = perfSettings.rescueInterval * Math.min(1.18, 0.92 + (crowdFactor - 1) * 0.16) * (mostlyFrozenCrowd ? 1.44 : 1);
+      const ultraDenseQuietCrowd = isUltraDenseQuietCrowd(liveCount, dynamicCount);
+      const freezeInterval = (perfSettings.freezeCheckInterval || 0.42) * Math.min(1.12, 0.94 + (crowdFactor - 1) * 0.08) * (mostlyFrozenCrowd ? (ultraDenseQuietCrowd ? 1.16 : 1.08) : 1);
+      const cleanupInterval = perfSettings.cleanupInterval * crowdFactor * (mostlyFrozenCrowd ? (ultraDenseQuietCrowd ? 1.46 : 1.32) : 1);
+      const rescueInterval = perfSettings.rescueInterval * Math.min(1.18, 0.92 + (crowdFactor - 1) * 0.16) * (mostlyFrozenCrowd ? (ultraDenseQuietCrowd ? 1.72 : 1.44) : 1);
       if (state.freezeTimer >= freezeInterval) {
         state.freezeTimer = 0;
         const maintenanceNow = performance.now();
@@ -8916,10 +11342,7 @@ ${gap > 0 ? `${crownName} まであと ${fmt(gap)}` : '今日の王冠を獲得'
     renderPreview();
     dom.bestScore.textContent = fmt(save.bestScore || 0);
   })();
-  
-  
-  
-  
-  </script>
+
+</script>
 </body>
 </html>
