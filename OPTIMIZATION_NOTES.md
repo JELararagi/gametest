@@ -1,59 +1,45 @@
-# 最適化内容 v15
+# 最適化内容 v18
 
-見た目と演出を大きく変えず、特に **大量に重なって静止山が大きくなった場面** で残っていた
-**dirty lane overlay の再構築コスト** をさらに削るため、`game.js` に
-**Zero-Copy Dirty Lane Proxy Registry** を追加しました。
+見た目と演出をできるだけ維持したまま、特に **大量に重なって表面 shell まで増えた場面** で残っていた
+**Matter.js に残る frozen body 数** をさらに削るため、`game.js` / `index.html` に
+**Sparse Surface Support Mesh + Local Surface Rehydration** を追加しました。
 
 ## 今回の新アルゴリズム
-- **zero-copy dirty lane proxy registry**
-  - heavy crowd 時の overlay 候補を、毎回 `proxy body 配列 -> spatial hash` に作り直す方式から、
-    **settled cluster cache の `proxyClustersByCell` をそのまま参照する registry** 方式へ変更
-  - 静止山の proxy body を毎回 materialize / hash 化しないので、
-    **大量重なり時の配列生成・Map 生成・GC** をかなり減らせます
-- **dirty-frontier walker**
-  - cluster 展開時も、`frontierProxyBodies` 全体をなめるのではなく、
-    **dirty lane に重なる frontier cell の proxy** を優先して探索
-  - 関係ない列の表面 proxy を毎回問い合わせに行きにくくしました
-- **dynamic hash reuse**
-  - dynamic body 側は overlay 用に別配列を作らず、
-    **既存の dynamic spatial hash をそのまま再利用**
+- **sparse surface support mesh**
+  - frozen surface cache の **各 x レーンごとに上面代表 body だけ** を物理 world に残し、
+    それ以外の quiet frozen body を追加で park する方式です
+  - 深部だけでなく、**大量密集で増えた表面 shell も lane 単位で間引く** ので、
+    broadphase / collision candidate / support check / rescue の対象数をさらに削減できます
+- **local surface rehydration**
+  - active body や clear の近傍では、**そのレーン周辺の parked body だけ局所復帰** します
+  - 山全体を戻さず、**いま触っている表面だけ** を物理 world に戻します
+- **keep-lane preservation**
+  - 物理に残す body は proxy ではなく **実 body の代表点** を使うので、
+    見た目差と当たり判定のズレを抑えやすい構成です
 
 ## 効く場面
-- アイテムが増えて、**下層が巨大な静止山** になっている場面
-- clear 判定のたびに、**dirty lane 周辺だけ見ればよいのに overlay を作り直していた** 場面
-- proxy body の再配列化や `buildSpatialHash()` が積み重なって、
-  **フレーム時間が跳ねやすかった** 場面
+- アイテムが増えて、**下層だけでなく表面 shell も厚くなった終盤**
+- 深部 parking 後でも、**まだ表面 frozen body 数が多く残っていた** 場面
+- 上の一部だけが動いているのに、**静止表面全体が Matter world に残っていた** 場面
 
 ## 主な実装変更
-- `visitNearbyFromHash()`
-  - `_proxyRegistry` を理解する分岐を追加
-- `visitNearbyFromProxyRegistry()` を追加
-  - dirty lane cell から **cluster proxy を直接列挙**
-  - dynamic body は **dynamic hash** から再利用
-- `buildSettledProxyOverlayRegistryFromDirtyLanes()` を追加
-  - dirty lane overlay を **zero-copy registry** として構築
-- `visitClusterProxyFrontiers()` を追加
-  - cluster 展開時に **dirty lane に重なる frontier** を優先
-- `buildHybridTouchGroups()` を変更
-  - overlay 探索時にまず **registry 方式** を使い、必要時だけ従来 overlay hash にフォールバック
-- `BUILD_ID` を `v162_zero_copy_dirty_lane_registry_v15` に更新
+- `refreshSurfaceSupportMesh()` を追加
+  - frozen surface cache の **各セル上面代表 body** を keep し、keep body は自動で unpark
+- `canParkSurfaceSupportVirtualBody()` を追加
+  - quiet な frozen surface body を **keep から外れたものだけ追加で park**
+- `parkDeepFrozenBodies()` を拡張
+  - deep parking に加えて **surface support mesh parking** を統合
+- `thawFrozenBodiesNearActive()` を変更
+  - active body の近傍で **parked surface body を局所復帰**
+- `BUILD_ID` を `v165_sparse_surface_support_mesh_v18` に更新
 
 ## 狙い
-- 大量密集時に、**overlay 候補を毎回作り直す処理そのもの** を削る
-- 見た目・演出はほぼ維持しつつ、
-  **動いている lane 周辺だけに探索と判定を集中** させる
-- 静止山の内部や遠方 proxy を、dirty lane に無関係な限りなるべく巻き込まない
+- 大量密集時に、**Matter.js が持つ表面 body 数そのもの** をさらに減らす
+- 見た目・演出はほぼ維持したまま、**静止山の物理表面をレーン単位で疎化** する
+- 接触や clear が起きた時だけ、必要な近傍レーンを戻して見た目差を抑える
 
 ## 変更ファイル
 - `game.js`
 - `index.html`
+- `sw.js`
 - `OPTIMIZATION_NOTES.md`
-
-
-## v16 - Incremental Frozen Roofline + Dirty-Key Settled Cache
-- `BUILD_ID` を `v163_incremental_frozen_roofline_v16` に更新
-- frozen surface cache を **全体再構築型** から **セル単位の増分更新型** に変更
-- freeze / thaw / remove で、影響セルだけ `topY` を更新するように変更
-- settled cluster cache を **global revision 全消し** から **dirty key + surface cell index** で局所 invalidation
-- 近い x 列に影響がない種類・クラスタは、前回の settled cache をそのまま再利用
-- これにより、大量重なり時に残っていた **静止山の再集計・再フロンティア化** を大きく削減

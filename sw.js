@@ -1,4 +1,4 @@
-const CACHE_NAME = "limit-meltdown-v149-hashsig-freezeskip-maintcache";
+const CACHE_NAME = "limit-meltdown-v151-sparse-surface-support-mesh";
 const PRECACHE = [
   "./",
   "./index.html",
