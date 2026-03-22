@@ -1,4 +1,4 @@
-const CACHE_NAME = "limit-meltdown-v151-sparse-surface-support-mesh";
+const CACHE_NAME = "limit-meltdown-v151-opaque-settled-scan-prune-v19";
 const PRECACHE = [
   "./",
   "./index.html",

@@ -1,42 +1,42 @@
-# 最適化内容 v18
+# 最適化内容 v19
 
-見た目と演出をできるだけ維持したまま、特に **大量に重なって表面 shell まで増えた場面** で残っていた
-**Matter.js に残る frozen body 数** をさらに削るため、`game.js` / `index.html` に
-**Sparse Surface Support Mesh + Local Surface Rehydration** を追加しました。
+見た目と演出をできるだけ維持したまま、特に **大量に重なって巨大な静止山ができた場面** の
+**clear 判定探索 / seed 選定 / overlay 候補数** をさらに削るため、`game.js` / `index.html` に
+**Opaque Settled Core Scan Pruning** を追加しました。
 
 ## 今回の新アルゴリズム
-- **sparse surface support mesh**
-  - frozen surface cache の **各 x レーンごとに上面代表 body だけ** を物理 world に残し、
-    それ以外の quiet frozen body を追加で park する方式です
-  - 深部だけでなく、**大量密集で増えた表面 shell も lane 単位で間引く** ので、
-    broadphase / collision candidate / support check / rescue の対象数をさらに削減できます
-- **local surface rehydration**
-  - active body や clear の近傍では、**そのレーン周辺の parked body だけ局所復帰** します
-  - 山全体を戻さず、**いま触っている表面だけ** を物理 world に戻します
-- **keep-lane preservation**
-  - 物理に残す body は proxy ではなく **実 body の代表点** を使うので、
-    見た目差と当たり判定のズレを抑えやすい構成です
+- **opaque settled core scan pruning**
+  - v18 で骨格化してもなお物理 world に残っていた **深部の静止 body** を、
+    group scan 上は **opaque core** として扱い、探索候補から外すように変更
+  - clear 判定は **surface shell / dynamic body / urgent body** を優先し、
+    cluster 全体は既存の settled cache メタデータで補います
+- **hybrid exact fallback**
+  - opaque prune 後も、必要なら従来の full body 側で touch graph / exact へ戻るため、
+    見た目差や取りこぼしを抑えています
+- **seed suppression for buried cores**
+  - buried で静かな settled body を frontier seed から外し、
+    密集終盤での proxy 探索起点数をさらに削減
 
 ## 効く場面
-- アイテムが増えて、**下層だけでなく表面 shell も厚くなった終盤**
-- 深部 parking 後でも、**まだ表面 frozen body 数が多く残っていた** 場面
-- 上の一部だけが動いているのに、**静止表面全体が Matter world に残っていた** 場面
+- アイテムが増えて、**下層に巨大な静止山** ができた終盤
+- 物理骨格は減っているのに、clear 判定ではまだ **深い静止 body** が source に残っていた場面
+- trend / special 判定のたびに、**cluster 内部まで seed 候補や近傍候補に入っていた** 場面
 
 ## 主な実装変更
-- `refreshSurfaceSupportMesh()` を追加
-  - frozen surface cache の **各セル上面代表 body** を keep し、keep body は自動で unpark
-- `canParkSurfaceSupportVirtualBody()` を追加
-  - quiet な frozen surface body を **keep から外れたものだけ追加で park**
-- `parkDeepFrozenBodies()` を拡張
-  - deep parking に加えて **surface support mesh parking** を統合
-- `thawFrozenBodiesNearActive()` を変更
-  - active body の近傍で **parked surface body を局所復帰**
-- `BUILD_ID` を `v165_sparse_surface_support_mesh_v18` に更新
+- `shouldUseOpaqueSettledScanPruning()` / `isOpaqueSettledCoreBody()` / `pruneOpaqueSettledBodiesForScan()` を追加
+  - hybrid group scan 前に、**opaque core body を source から pruning**
+- `collectHybridFrontierSeeds()` を変更
+  - buried で静かな settled core を **seed 候補から除外**
+- `buildHybridTouchGroups()` を変更
+  - prebuilt settled cache を受け取れるようにして、prune 後の再探索で **cache 再構築を抑制**
+- `buildTouchGroupsForIndex()` / `buildTouchGroupsForType()` を変更
+  - **pruned source 優先 + full source fallback** に変更
+- `BUILD_ID` を `v166_opaque_settled_scan_prune_v19` に更新
 
 ## 狙い
-- 大量密集時に、**Matter.js が持つ表面 body 数そのもの** をさらに減らす
-- 見た目・演出はほぼ維持したまま、**静止山の物理表面をレーン単位で疎化** する
-- 接触や clear が起きた時だけ、必要な近傍レーンを戻して見た目差を抑える
+- v18 の「物理 body 数削減」に加えて、**群判定の探索対象数そのもの** をさらに減らす
+- clear / preview / overlay が、**静止山の内部ではなく表面中心** に動くようにする
+- 見た目差を抑えつつ、大量重なり時の残コストをもう一段削る
 
 ## 変更ファイル
 - `game.js`
